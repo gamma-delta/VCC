@@ -38,7 +38,7 @@ HAMMING_DECODE:
     QUERY 0x0A R0 ; query how many datafaces are at that index
     ; We're hoping for exactly 1; so we decrement and see if it's 0
     DEC R0
-    JZ GOOD_DATAFACE_COUNT
+    JZ R0 GOOD_DATAFACE_COUNT
     ; heck
     MOV ERROR_BAD_DATAFACE_COUNT R0
     RET
@@ -63,9 +63,9 @@ HAMMING_DECODE:
     ; Collect the locations of all the on bits, and XOR them together.
     #def MAX_BIT_IDX 63
 
-    MOV R1 0 ; Running XOR
-    MOV R2 MAX_BIT_IDX ; Index
-    MOV R3 0 ; Running parity
+    MOV 0 R1 ; Running XOR
+    MOV MAX_BIT_IDX R2 ; Index
+    MOV 0 R3 ; Running parity
     FOLD_XORS:
         ; Iterate *backwards* from highest to lowest
         ; We want a mask here only letting through the R2'th bit.
@@ -87,7 +87,7 @@ HAMMING_DECODE:
         INC R3
         NOT_ON:
         POP R2 ; Pop our index back off the stack
-        JZ END_FOLD_XORS ; we're done!
+        JZ R2 END_FOLD_XORS ; we're done!
         DEC R2
         JMP FOLD_XORS ; back to the top
 
@@ -103,12 +103,14 @@ HAMMING_DECODE:
     0_ERROR:
         ; Either there was *no* error, or the error is at position 0
 
-        JZ REMOVE_PARITY_BITS ; eyy there was no problem at all.
-                              ; Also note, R3 will have 0 in it as a result
+        JZ R3 REMOVE_PARITY_BITS ; eyy there was no problem at all.
+                                 ; Also note, R3 will have 0 in it as a result
+                                 ; so the diagnostic is already correct.
+
         ; Oh noes, bit #0 was flipped. This doesn't actualy cause any problems
         ; but we fix and report it anyways.
         XOR R0 0x8000_0000_0000_0000 ; this has only the highest bit set
-        MOV R3 2 ; and add our diagnostic
+        MOV 2 R3 ; and add our diagnostic
         JMP REMOVE_PARITY_BITS
     SOME_ERROR:
         ; R1 will have the position of our error.
@@ -123,7 +125,7 @@ HAMMING_DECODE:
         MOV 1 R2
         SHL R2 R1
         XOR R0 R2 ; flip our bit
-        MOV R3 2 ; Add our diagnostic
+        MOV 2 R3 ; Add our diagnostic
 
     REMOVE_PARITY_BITS:
         ; Let's save our diagnostic:
@@ -168,7 +170,7 @@ HAMMING_DECODE:
             ; Use R1 for the check
             MOV R3 R1
             SUB R1 128
-            JGZ REMOVE_BIT
+            JGZ R1 REMOVE_BIT
         ; And we're done!
         ; Put the diagnostic code in and that's all she wrote
         POP R3 ; get our diagnostic

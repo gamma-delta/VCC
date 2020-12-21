@@ -1,6 +1,8 @@
 package me.gammadelta.common.program.compilation;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Lex an input string into tokens.
@@ -26,27 +28,52 @@ public class CodeLexer {
 		this.input = input.toCharArray();
 	}
 
-	/** Test if the rest of the string is nonempty and [0-9]. */
-	private static boolean isNumeric(String str, int offset) {
+	/** Test if the rest of the string is nonempty and [0-9_]. */
+	private static boolean isDec(String str, int offset) {
 		if (str.length() <= offset) {
 			return false;
 		}
 		for (int i = offset; i < str.length(); i++) {
 			char ch = str.charAt(i);
-			if (ch < '0' || ch > '9') {
+			if (i == offset && ch == '_') {
+				// no underscores first
+				return false;
+			}
+			if ((ch < '0' || ch > '9') && ch != '_') {
 				return false;
 			}
 		}
 		return true;
 	}
-	/** Test if the rest of the string is nonempty and [0-9a-fA-F]. */
+	/** Test if the rest of the string is nonempty and [0-9a-fA-F_]. */
 	private static boolean isHex(String str, int offset) {
 		if (str.length() <= offset) {
 			return false;
 		}
 		for (int i = offset; i < str.length(); i++) {
 			char ch = Character.toUpperCase(str.charAt(i));
-			if ((ch < '0' || ch > '9') && (ch < 'A' || ch > 'F')) {
+			if (i == offset && ch == '_') {
+				// no underscores first
+				return false;
+			}
+			if ((ch < '0' || ch > '9') && (ch < 'A' || ch > 'F') && ch != '_') {
+				return false;
+			}
+		}
+		return true;
+	}
+	/** Test if the rest of the string is nonempty and [01_] */
+	private static boolean isBin(String str, int offset) {
+		if (str.length() <= offset) {
+			return false;
+		}
+		for (int i = offset; i < str.length(); i++) {
+			char ch = Character.toUpperCase(str.charAt(i));
+			if (i == offset && ch == '_') {
+				// no underscores first
+				return false;
+			}
+			if (ch != '0' && ch != '1' && ch != '_') {
 				return false;
 			}
 		}
@@ -76,23 +103,31 @@ public class CodeLexer {
 		if (body.charAt(0) == '#') {
 			return Token.Type.PREPROCESSOR;
 		}
-		if (Character.toUpperCase(body.charAt(0)) == 'R' && isNumeric(body, 1)) {
+		if (
+				(Character.toUpperCase(body.charAt(0)) == 'R' && isDec(body, 1))
+				|| body.toUpperCase().equals("NIL")
+				|| body.toUpperCase().equals("IP")
+				|| body.toUpperCase().equals("SP")
+				|| body.toUpperCase().equals("FLAGS")
+		) {
 			return Token.Type.REGISTER;
 		}
-		if (Character.toUpperCase(body.charAt(0)) == 'D' && isNumeric(body, 1)) {
+		if (Character.toUpperCase(body.charAt(0)) == 'D' && isDec	(body, 1)) {
 			return Token.Type.DATAFACE;
 		}
 		if (findStackvalue(body) != null) {
 			return Token.Type.STACKVALUE;
 		}
-		if (isNumeric(body, 0)) {
+		if (isDec(body, 0)) {
 			return Token.Type.DECIMAL;
 		}
-		if (body.startsWith("0x") && isHex(body, 2)) {
+		if (body.toLowerCase().startsWith("0x") && isHex(body, 2)) {
 			return Token.Type.HEXADECIMAL;
 		}
+		if (body.toLowerCase().startsWith("0b") && isBin(body, 2)) {
+			return Token.Type.BINARY;
+		}
 		if (body.endsWith(":")) {
-			lastNewline = true;
 			return Token.Type.LABEL;
 		}
 		return Token.Type.NAME;
@@ -128,7 +163,7 @@ public class CodeLexer {
 				// periods would end comments.
 				while (offset < input.length && input[offset] != '\n') offset++;
 			}
-			if (offset < input.length && TERMINATORS.indexOf(input[offset]) == -1) {
+			if (offset < input.length && TERMINATORS.indexOf(input[offset]) != -1) {
 				// this is a newline
 				offset++;
 				row++;

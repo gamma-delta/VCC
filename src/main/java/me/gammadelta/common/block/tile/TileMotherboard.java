@@ -141,50 +141,7 @@ public class TileMotherboard extends TileEntity {
      */
     public Read<Opcode> readOpcode(int index, Permissions perms) throws Emergency {
         byte opcByte = this.readByte(index, perms);
-        // Match that opcode
-        Opcode opcode = Opcode.ILLEGAL;
-        // Extend to a short here because bytes are signed.
-        // and we won't be able to match the upper values otherwise.
-        // must do this bullshit `&` because java doesn't like unsigned bytes;
-        // we're matching on an int now.
-        switch (opcByte & 0xff) {
-            case 0x00: opcode = Opcode.NOP; break;
-
-            case 0x10: opcode = Opcode.MOV; break;
-            case 0x11: opcode = Opcode.MOVK; break;
-            case 0x12: opcode = Opcode.SWP; break;
-            case 0x18: opcode = Opcode.READ; break;
-            case 0x19: opcode = Opcode.WRITE; break;
-            case 0x1A: opcode = Opcode.COPY; break;
-            case 0x1B: opcode = Opcode.PUSH; break;
-            case 0x1C: opcode = Opcode.POP; break;
-
-            case 0x30: opcode = Opcode.ADD; break;
-            case 0x31: opcode = Opcode.SUB; break;
-            case 0x40: opcode = Opcode.INC; break;
-            case 0x41: opcode = Opcode.DEC; break;
-            case 0x42: opcode = Opcode.NEG; break;
-            case 0x43: opcode = Opcode.INV; break;
-            case 0x44: opcode = Opcode.AND; break;
-            case 0x45: opcode = Opcode.OR; break;
-            case 0x46: opcode = Opcode.XOR; break;
-            case 0x47: opcode = Opcode.NOT; break;
-            case 0x48: opcode = Opcode.SHL; break;
-            case 0x49: opcode = Opcode.SHR; break;
-            case 0x4A: opcode = Opcode.SHRU; break;
-
-            case 0x50: opcode = Opcode.JMP; break;
-            case 0x51: opcode = Opcode.JZ; break;
-            case 0x52: opcode = Opcode.JNZ; break;
-            case 0x53: opcode = Opcode.JGZ; break;
-            case 0x54: opcode = Opcode.JLZ; break;
-            case 0x58: opcode = Opcode.CALL; break;
-            case 0x59: opcode = Opcode.RET; break;
-
-            case 0xF0: opcode = Opcode.QUERY; break;
-            case 0xFF: opcode = Opcode.EMERGENCY; break;
-        }
-
+        Opcode opcode = Opcode.OPCODES_TO_BYTECODE.inverse().getOrDefault((short) opcByte, Opcode.ILLEGAL);
         return new Read<>(opcode, 1);
     }
 
@@ -207,7 +164,7 @@ public class TileMotherboard extends TileEntity {
         /** NIL, IP, SP, or FLAGS */
         static class Special extends Register {
             enum Which {
-                NIL, IP, SP, FLAGS;
+                NIL, IP, SP, FLAGS
             }
             Which which;
 

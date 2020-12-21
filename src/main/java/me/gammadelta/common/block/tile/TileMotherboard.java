@@ -2,6 +2,7 @@ package me.gammadelta.common.block.tile;
 
 import me.gammadelta.Utils;
 import me.gammadelta.common.program.*;
+import me.gammadelta.common.program.compilation.Opcode;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.world.World;
@@ -148,6 +149,7 @@ public class TileMotherboard extends TileEntity {
         // we're matching on an int now.
         switch (opcByte & 0xff) {
             case 0x00: opcode = Opcode.NOP; break;
+
             case 0x10: opcode = Opcode.MOV; break;
             case 0x11: opcode = Opcode.MOVK; break;
             case 0x12: opcode = Opcode.SWP; break;
@@ -156,15 +158,21 @@ public class TileMotherboard extends TileEntity {
             case 0x1A: opcode = Opcode.COPY; break;
             case 0x1B: opcode = Opcode.PUSH; break;
             case 0x1C: opcode = Opcode.POP; break;
+
             case 0x30: opcode = Opcode.ADD; break;
             case 0x31: opcode = Opcode.SUB; break;
             case 0x40: opcode = Opcode.INC; break;
             case 0x41: opcode = Opcode.DEC; break;
             case 0x42: opcode = Opcode.NEG; break;
-            case 0x43: opcode = Opcode.NOT; break;
+            case 0x43: opcode = Opcode.INV; break;
+            case 0x44: opcode = Opcode.AND; break;
+            case 0x45: opcode = Opcode.OR; break;
+            case 0x46: opcode = Opcode.XOR; break;
+            case 0x47: opcode = Opcode.NOT; break;
             case 0x48: opcode = Opcode.SHL; break;
             case 0x49: opcode = Opcode.SHR; break;
             case 0x4A: opcode = Opcode.SHRU; break;
+
             case 0x50: opcode = Opcode.JMP; break;
             case 0x51: opcode = Opcode.JZ; break;
             case 0x52: opcode = Opcode.JNZ; break;
@@ -172,6 +180,7 @@ public class TileMotherboard extends TileEntity {
             case 0x54: opcode = Opcode.JLZ; break;
             case 0x58: opcode = Opcode.CALL; break;
             case 0x59: opcode = Opcode.RET; break;
+
             case 0xF0: opcode = Opcode.QUERY; break;
             case 0xFF: opcode = Opcode.EMERGENCY; break;
         }

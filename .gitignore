@@ -26,3 +26,6 @@ forge*changelog.txt
 
 # Ignore the wiki
 wiki/
+
+# ignore the langserver server
+langserver/server

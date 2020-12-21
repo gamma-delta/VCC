@@ -1,0 +1,100 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "VCC Assembly",
+    "patterns": [
+        {
+            "include": "#comment"
+        },
+        {
+            "include": "#keyword"
+        },
+        {
+            "include": "#variable"
+        },
+        {
+            "include": "#entity"
+        },
+        {
+            "include": "#constant"
+        }
+    ],
+    "repository": {
+        "comment": {
+            "patterns": [
+                {
+                    "name": "comment.line.semicolon.vccasm",
+                    "match": ";[^;].*$"
+                },
+                {
+                    "name": "comment.line.documentation.vccasm",
+                    "match": ";;.*$"
+                }
+            ]
+        },
+        "keyword": {
+            "patterns": [
+                {
+                    "name": "keyword.control.opcode.vccasm",
+                    "match": "\\b(?i:(ADD|AND|CALL|COPY|DEC|EMERGENCY|INC|INV|JMP|JZ|JNZ|JGZ|JLZ|MOV|MOVK|NEG|NOP|NOT|POP|PUSH|QUERY|READ|RET|SHL|SHR|SHRU|SUB|SWP|WRITE))\\b"
+                },
+                {
+                    "name": "keyword.control.directive.vccasm",
+                    "match": "#\\w+\\b"
+                }
+            ]
+        },
+        "variable": {
+            "patterns": [
+                {
+                    "name": "variable.language.register.vccasm",
+                    "match": "\\b(?i:(R[0-9]+|IP|SP|FLAGS|NIL))\\b"
+                },
+                {
+                    "name": "variable.language.dataface.vccasm",
+                    "match": "\\b[Dd][0-9]+\\b"
+                },
+                {
+                    "name": "variable.language.stackvalue.vccasm",
+                    "match": "@([0-9]+)'(-?[0-9_]+|\\w+)",
+                    "captures": {
+                        "1": {
+                            "name": "constant.numeric.decimal.vccasm"
+                        },
+                        "2": {
+                            "name": "variable.language.stackvalue.offset.vccasm"
+                        }
+                    }
+                }
+            ]
+        },
+        "entity": {
+            "patterns": [
+                {
+                    "name": "entity.name.section.label.vccasm",
+                    "match": "\\b[A-Za-z]\\w*:[\\s\\n]"
+                }
+            ]
+        },
+        "constant": {
+            "patterns": [
+                {
+                    "name": "constant.numeric.hexadecimal.vccasm",
+                    "match": "0x[0-9A-Fa-f_]+"
+                },
+                {
+                    "name": "constant.numeric.binary.vccasm",
+                    "match": "0b[01_]+"
+                },
+                {
+                    "name": "constant.numeric.decimal.vccasm",
+                    "match": "[0-9_-]+"
+                },
+                {
+                    "name": "constant.other.defined.vccasm",
+                    "match": "(?<!#)\\b[A-Za-z]\\w*\\b"
+                }
+            ]
+        }
+    },
+    "scopeName": "source.vccasm"
+}

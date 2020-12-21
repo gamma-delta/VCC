@@ -1,0 +1,41 @@
+{
+    "name": "vccasm-for-vscode",
+    "displayName": "VCCASM For VSCode",
+    "description": "VSCode language support for the VCC mod's assembly language",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.52.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [
+            {
+                "id": "vccasm",
+                "aliases": [
+                    "VCC Assembly",
+                    "vccasm"
+                ],
+                "extensions": [
+                    ".vcc",
+                    ".vccasm",
+                    ".vcc-asm"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "vccasm",
+                "scopeName": "source.vccasm",
+                "path": "./syntaxes/vccasm.tmLanguage.json"
+            }
+        ],
+        "configuration": {
+            "type": "object",
+            "title": "VCC Assembly Configuration",
+            "properties": {}
+        }
+    }
+}

@@ -1,5 +1,8 @@
 package me.gammadelta.common.program.compilation;
 
+import org.junit.jupiter.api.Test;
+
+import java.math.BigInteger;
 import java.util.*;
 
 /**
@@ -44,6 +47,9 @@ public class BytecodeWriter {
                 }
             }
         }
+
+        // TODO
+        return null;
     }
 
     private byte writeRegister(Instruction.Arg arg) {
@@ -73,59 +79,67 @@ public class BytecodeWriter {
         }
     }
 
-    private byte[] writeLiteral(Instruction.Arg arg) throws BytecodeWriteException {
-        if (arg.token.type == Token.Type.HEXADECIMAL) {
-            // Save these from least -> most significant.
-            ArrayList<Byte> value = new ArrayList<>();
-            byte wip = 0;
-            int seenNibbles = 0;
+    public static byte[] writeLiteral(Instruction.Arg arg) throws BytecodeWriteException {
+        if (arg.token.type == Token.Type.HEXADECIMAL || arg.token.type == Token.Type.BINARY) {
+            // Don't worry about negatives here
+            int radix = arg.token.type == Token.Type.HEXADECIMAL ? 16 : 2;
+            int charsPerByte = arg.token.type == Token.Type.HEXADECIMAL ? 2 : 8;
 
-            char[] toParse = arg.token.value.substring(2).toCharArray();
-            for (int idx = toParse.length - 1; idx >= 0; idx--) {
-                char c = toParse[idx];
-                if (c == '_') {
-                    continue;
-                }
-                byte thisNibble = Byte.parseByte(String.valueOf(c), 16);
-                seenNibbles++;
-                if (seenNibbles % 2 == 1) {
-                    // we're halfway through a nibble
-                    wip = thisNibble;
+            String strValue = arg.token.meat();
+            int leadingZeroes = 0;
+            for (char c : strValue.toCharArray()) {
+                if (c == '0') {
+                    leadingZeroes++;
                 } else {
-                    // we are in the middle of a nibble
-                    // reunite with its fellow nibble.
-                    wip <<= 4;
-                    wip |= thisNibble;
-                    value.add(wip);
-                    wip = 0;
+                    break;
                 }
             }
-            // Get a byte for the size
-            // intellij why do you think this is 0?
-            int size = value.size();
-            if (seenNibbles % 2 == 1) {
-                // we're halfway thru a nibble
-                size++;
+            // Shell out to BigInt
+            BigInteger imLazy = new BigInteger(strValue, radix);
+            if (imLazy.equals(BigInteger.ZERO)) {
+                // 0x0 -> [0], not [0, 0]
+                // 0x00 -> [0, 0], not [0, 0, 0]
+                leadingZeroes--;
             }
-            if (size > 63) {
-                // too many bytes would need to be written ;-;
+            byte[] bigintBytes = imLazy.toByteArray();
+
+
+            // We may need to add leading zeroes!
+            int leadingZeroBytes = leadingZeroes == 0 ? 0 : (leadingZeroes / charsPerByte + 1);
+            int totalValueSize = leadingZeroBytes + bigintBytes.length;
+            if (totalValueSize > 63) {
                 throw new BytecodeWriteException.LiteralTooLong(arg.token);
             }
-
-            ArrayList<Byte> out = new ArrayList<>(size);
+            byte[] out = new byte[totalValueSize + 1]; // add 1 for the size itself
             // Put our size in
+            int futzedSize = totalValueSize & 0b00111111 | 0b01000000;
+            out[0] = (byte) futzedSize;
+            // Put in leading zeroes
+            for (int c = 0; c < leadingZeroBytes; c++) {
+                out[c + 1] = 0;
+            }
+            // And put in the value
+            for (int c = leadingZeroBytes; c < totalValueSize; c++) {
+                int bigintIdx = c - leadingZeroBytes;
+                out[c + 1] = bigintBytes[bigintIdx];
+            }
+            return out;
+        } else {
+            // decimal digit
+            // just shell out to BigInteger, it'll be fine
+            BigInteger imLazy = new BigInteger(arg.token.value);
+            byte[] value = imLazy.toByteArray();
+            int size = value.length;
+            if (size > 63) {
+                throw new BytecodeWriteException.LiteralTooLong(arg.token);
+            }
+            byte[] out = new byte[size + 1]; // have space for our length
             int futzedSize = size & 0b00111111 | 0b01000000;
-            out.add((byte) futzedSize);
-            // If we have an odd number of nibbles, put it on the top.
-            // 0xF1122 -> [22 11] + F -> [0F 11 22]
-            if (seenNibbles % 2 == 1) {
-                out.add(wip);
+            out[0] = (byte) futzedSize;
+            for (int c = 0; c < size; c++) {
+                out[c+1] = value[c];
             }
-            // and pop bytes off
-            for (int c = value.size() - 1; c >= 0; c--) {
-                out.add(value.get(c));
-            }
-
+            return out;
         }
     }
 }

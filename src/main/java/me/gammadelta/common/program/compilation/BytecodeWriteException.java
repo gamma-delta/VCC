@@ -12,12 +12,4 @@ public abstract class BytecodeWriteException extends Exception {
             this.literal = literal;
         }
     }
-
-    public static class LiteralMismatchedSize extends BytecodeWriteException {
-        public final Token literal;
-        public LiteralMismatchedSize(Token literal) {
-            super("Somehow had a different size than expected when writing the literal %s (this should never happen)", literal.canonicalize());
-            this.literal = literal;
-        }
-    }
 }

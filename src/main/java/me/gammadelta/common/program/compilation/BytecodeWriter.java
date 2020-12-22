@@ -70,13 +70,14 @@ public class BytecodeWriter {
                 // We might need to add extra bytes if labelByteIndex itself requires more than one byte to write.
                 // To do this, we find the position of the highest 1 bit of the number, divide by 8, and add 1.
                 // i got this code off stackoverflow
-                int highestBit = labelByteIdx;
-                highestBit |= highestBit >> 1;
-                highestBit |= highestBit >> 2;
-                highestBit |= highestBit >> 4;
-                highestBit |= highestBit >> 8;
-                highestBit |= highestBit >> 16;
-                highestBit -= highestBit >> 1;
+                int highestBit = 0;
+                for (int c = 31; c >= 0; c--) {
+                    int mask = 1 << c;
+                    if ((labelByteIdx & mask) != 0) {
+                        highestBit = c + 1;
+                        break;
+                    }
+                }
                 int extraBytesNeeded = highestBit / 8 + 1;
                 labelByteIdx += extraBytesNeeded;
 
@@ -170,7 +171,6 @@ public class BytecodeWriter {
     private static ArrayList<Byte> writeLiteral(Token literalTok) throws BytecodeWriteException {
         if (literalTok.type == Token.Type.HEXADECIMAL || literalTok.type == Token.Type.BINARY) {
             // Don't worry about negatives here
-            int radix = literalTok.type == Token.Type.HEXADECIMAL ? 16 : 2;
             int charsPerByte = literalTok.type == Token.Type.HEXADECIMAL ? 2 : 8;
 
             String strValue = literalTok.meat();
@@ -182,18 +182,19 @@ public class BytecodeWriter {
                     break;
                 }
             }
+            int leadingZeroBytes = leadingZeroes / charsPerByte;
+
             // Shell out to BigInt
             BigInteger imLazy = Utils.parseBigInt(literalTok.value);
             if (imLazy.equals(BigInteger.ZERO)) {
                 // 0x0 -> [0], not [0, 0]
                 // 0x00 -> [0, 0], not [0, 0, 0]
-                leadingZeroes--;
+                leadingZeroBytes--;
             }
             byte[] bigintBytes = imLazy.toByteArray();
 
 
             // We may need to add leading zeroes!
-            int leadingZeroBytes = leadingZeroes == 0 ? 0 : (leadingZeroes / charsPerByte + 1);
             int totalValueSize = leadingZeroBytes + bigintBytes.length;
             if (totalValueSize > 63) {
                 throw new BytecodeWriteException.LiteralTooLong(literalTok);

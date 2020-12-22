@@ -26,7 +26,7 @@ public class BytecodeWritingTest {
     }
 
     @Test
-    public void runWhateverIsInTheScratchPadBecauseImTiredOfMakingNewTestsForEverything() throws Exception {
+    public void compileWhateverIsInTheScratchPadBecauseImTiredOfMakingNewTestsForEverything() throws Exception {
         URL path = ClassLoader.getSystemResource("Scratchpad.vcc");
         String program = String.join("\n", Files.readAllLines(Paths.get(path.toURI())));
         compileAndDump(program);

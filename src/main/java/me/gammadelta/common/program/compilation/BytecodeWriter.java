@@ -58,6 +58,7 @@ public class BytecodeWriter {
 
         // Do our second pass and fill in the labels expected.
         ArrayList<Byte> out = new ArrayList<>(this.wipProgram.size());
+        int accumulatedExtraBytes = 0;
         for (int byteIdx = 0; byteIdx < this.wipProgram.size(); byteIdx++) {
             if (!labelIVsRequiringFills.containsKey(byteIdx)) {
                 // totally normal write
@@ -65,10 +66,24 @@ public class BytecodeWriter {
             } else {
                 // we must add our byte index instead
                 int labelInstructionIdx = labelIVsRequiringFills.get(byteIdx);
-                int labelByteIdx = instructionStarts.get(labelInstructionIdx);
+                int labelByteIdx = instructionStarts.get(labelInstructionIdx) + accumulatedExtraBytes;
+                // We might need to add extra bytes if labelByteIndex itself requires more than one byte to write.
+                // To do this, we find the position of the highest 1 bit of the number, divide by 8, and add 1.
+                // i got this code off stackoverflow
+                int highestBit = labelByteIdx;
+                highestBit |= highestBit >> 1;
+                highestBit |= highestBit >> 2;
+                highestBit |= highestBit >> 4;
+                highestBit |= highestBit >> 8;
+                highestBit |= highestBit >> 16;
+                highestBit -= highestBit >> 1;
+                int extraBytesNeeded = highestBit / 8 + 1;
+                labelByteIdx += extraBytesNeeded;
+
                 // write this as a literal
                 ArrayList<Byte> labelValue =
                         writeLiteral(new Token(Token.Type.DECIMAL, String.valueOf(labelByteIdx), -1, -1));
+                accumulatedExtraBytes += labelValue.size();
                 out.addAll(labelValue);
             }
         }
@@ -193,8 +208,13 @@ public class BytecodeWriter {
             }
             // And put in the value
             // yes this is the best way to do it, boxing issues otherwise
+            boolean seenANonZero = false;
             for (byte bigintByte : bigintBytes) {
-                out.add(bigintByte);
+                // big int sometimes puts leading zeroes
+                if (seenANonZero || bigintByte != 0) {
+                    seenANonZero = true;
+                    out.add(bigintByte);
+                }
             }
             return out;
         } else {
@@ -209,8 +229,12 @@ public class BytecodeWriter {
             ArrayList<Byte> out = new ArrayList<>(size + 1); // have space for our length
             int futzedSize = size & 0b00111111 | 0b01000000;
             out.add((byte) futzedSize);
+            boolean seenANonZero = false;
             for (byte valByte : value) {
-                out.add(valByte);
+                if (seenANonZero || valByte != 0) {
+                    seenANonZero = true;
+                    out.add(valByte);
+                }
             }
             return out;
         }

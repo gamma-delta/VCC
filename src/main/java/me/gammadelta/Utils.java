@@ -99,7 +99,7 @@ public final class Utils {
             // newline if we weren't perfectly on the money
             bob.append('\n');
         }
-        bob.append(String.format("%08x", bytes.size()));
+        bob.append(String.format("%1$08x  (%1$d bytes)", bytes.size()));
 
         return bob.toString();
     }

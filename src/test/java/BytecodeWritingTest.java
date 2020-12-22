@@ -1,30 +1,43 @@
+import me.gammadelta.Utils;
 import me.gammadelta.common.program.compilation.ASMCompiler;
 import me.gammadelta.common.program.compilation.BytecodeWriter;
 import me.gammadelta.common.program.compilation.Instruction;
 import me.gammadelta.common.program.compilation.Token;
 import org.junit.jupiter.api.Test;
 
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class BytecodeWritingTest {
     @Test
-    public void testLiteralSerialization() throws Exception {
-        for (int test = 0; test < Integer.MAX_VALUE; test++) {
-            String decStr = String.valueOf(test);
-            String hexStr = "0x" + Integer.toString(test, 16);
-            String binStr = "0b" + Integer.toString(test, 2);
+    public void testPrelim() throws Exception {
+        compileAndDump("ADD R0 10. NOP. NOP. NOP. NOP. SUB R0 R1. JLZ R0 3277");
+    }
 
-            Instruction.Arg decArg = new Instruction.Arg(new Token(Token.Type.DECIMAL, decStr, -1, -1), Instruction.Arg.Type.IV);
-            Instruction.Arg hexArg = new Instruction.Arg(new Token(Token.Type.HEXADECIMAL, hexStr, -1, -1), Instruction.Arg.Type.IV);
-            Instruction.Arg binArg = new Instruction.Arg(new Token(Token.Type.BINARY, binStr, -1, -1), Instruction.Arg.Type.IV);
+    @Test
+    public void compileHammingCode() throws Exception {
+        URL path = ClassLoader.getSystemResource("HammingCode.vcc");
+        String program = String.join("\n", Files.readAllLines(Paths.get(path.toURI())));
+        compileAndDump(program);
+    }
 
-            byte[] decBytes = BytecodeWriter.writeLiteral(decArg);
-            byte[] hexBytes = BytecodeWriter.writeLiteral(hexArg);
-            byte[] binBytes = BytecodeWriter.writeLiteral(binArg);
+    @Test
+    public void runWhateverIsInTheScratchPadBecauseImTiredOfMakingNewTestsForEverything() throws Exception {
+        URL path = ClassLoader.getSystemResource("Scratchpad.vcc");
+        String program = String.join("\n", Files.readAllLines(Paths.get(path.toURI())));
+        compileAndDump(program);
+    }
 
-            assert Arrays.equals(decBytes, hexBytes) : String.format("%d became %s vs %s", test, Arrays.toString(decBytes), Arrays.toString(hexBytes));
-            assert Arrays.equals(hexBytes, binBytes) : String.format("%d became %s vs %s", test, Arrays.toString(hexBytes), Arrays.toString(binBytes));
-        }
+    private static void compileAndDump(String program) throws Exception {
+        List<Instruction> instructions = ASMCompiler.lexAndParse(program);
+        List<Byte> bytecode = new BytecodeWriter(instructions).writeProgramToBytecode();
+        System.out.printf("=== Program ===\n%s\n\n"
+                + "=== Intermediate ===\n%s\n\n"
+                + "=== Bytecode ===\n%s\n",
+                program, ASMCompiler.prettyPrintInstructions(instructions), Utils.hexdump(bytecode));
     }
 }

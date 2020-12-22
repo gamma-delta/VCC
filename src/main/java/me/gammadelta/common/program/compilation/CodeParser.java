@@ -23,7 +23,7 @@ public class CodeParser {
 		consumeTokens: for (ListIterator<Token> it = tokens.listIterator(); it.hasNext(); ) {
 			Token next;
 
-			while ((next = it.next()).type == Token.Type.LABEL) {
+			while ((next = it.next()).type == Token.Type.LABEL_DECLARATION) {
 				if (labelOffsets.containsKey(next.meat())) {
 					problems.add(new CodeCompileException.ParseException.ReusedLabel(next, labelOffsets.get(next.meat())));
 				}
@@ -34,6 +34,7 @@ public class CodeParser {
 				continue;
 			}
 			if (next.type != Token.Type.NAME) {
+				// hey we wanted an opcode!
 				problems.add(new CodeCompileException.ParseException.ExpectedOpcode(next));
 				break;
 			}

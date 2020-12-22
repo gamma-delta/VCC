@@ -3,8 +3,7 @@ package me.gammadelta.common.program.compilation;
 import java.util.List;
 
 /**
- * Helpful wrapper class to lex and parse a string into VCC-ASM.
- * All the work is in CodeLexer and CodeParser afaik
+ * Helpful wrapper class to lex and parse a VCC-ASM program.
  */
 public class ASMCompiler {
     public static List<Instruction> lexAndParse(String input) throws CodeCompileException {
@@ -16,12 +15,20 @@ public class ASMCompiler {
         return instrs;
     }
 
+    public static List<Byte> lexParseAndCompile(String input) throws CodeCompileException, BytecodeWriteException {
+        List<Instruction> instructions = lexAndParse(input);
+        return new BytecodeWriter(instructions).writeProgramToBytecode();
+    }
+
     /** Pretty-print a list of instructions */
     public static String prettyPrintInstructions(List<Instruction> instrs) {
         StringBuilder bob = new StringBuilder();
-        for (Instruction i : instrs) {
-            bob.append(i.position); bob.append(": ");
-            bob.append(i.opcode.toString()); bob.append(' ');
+        for (int j = 0; j < instrs.size(); j++) {
+            Instruction i = instrs.get(j);
+            bob.append(i.position);
+            bob.append(": ");
+            bob.append(i.opcode.toString());
+            bob.append(' ');
             for (int c = 0; c < i.args.length; c++) {
                 Instruction.Arg arg = i.args[c];
                 bob.append(String.format("[%s]", arg.canonicalize()));
@@ -29,7 +36,9 @@ public class ASMCompiler {
                     bob.append(' ');
                 }
             }
-            bob.append('\n');
+            if (j != instrs.size() - 1) {
+                bob.append('\n');
+            }
         }
         return bob.toString();
     }

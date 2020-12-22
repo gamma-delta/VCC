@@ -12,4 +12,12 @@ public abstract class BytecodeWriteException extends Exception {
             this.literal = literal;
         }
     }
+
+    public static class StackvalueSizeOutOfBounds extends BytecodeWriteException {
+        public final Token stackvalueSize;
+        public StackvalueSizeOutOfBounds(Token stackvalueSize) {
+            super("Stackvalue %s's size was out of bounds (0-256 inclusive allowed)", stackvalueSize.canonicalize());
+            this.stackvalueSize = stackvalueSize;
+        }
+    }
 }

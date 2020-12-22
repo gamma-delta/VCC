@@ -51,9 +51,34 @@ public class ParsingASMTest  {
     }
 
     @Test
+    public void stackvalues() throws CodeCompileException {
+        String test = "#def DEFINED 4. MOV @4'DEFINED NIL. MOV @4'2 NIL. MOV @4'R0 NIL. MOV @4'UNDEFINED NIL.";
+        List<Instruction> instructs = ASMCompiler.lexAndParse(test);
+        String pretty = ASMCompiler.prettyPrintInstructions(instructs);
+        System.out.println(pretty);
+    }
+
+    @Test
+    public void undefinedDefines() throws CodeCompileException {
+        List<Instruction> instructs = ASMCompiler.lexAndParse("MOV I_NEVER_DEFINED_THIS NIL");
+        String pretty = ASMCompiler.prettyPrintInstructions(instructs);
+        System.out.println(pretty);
+    }
+
+    @Test
     public void parseHammingCode() throws Exception {
         URL path = ClassLoader.getSystemResource("HammingCode.vcc");
         String text = String.join("\n", Files.readAllLines(Paths.get(path.toURI())));
+        List<Instruction> instructs = ASMCompiler.lexAndParse(text);
+        String pretty = ASMCompiler.prettyPrintInstructions(instructs);
+        System.out.println(pretty);
+    }
+
+    @Test
+    public void runWhateverIsInTheScratchPadBecauseImTiredOfMakingNewTestsForEverything() throws Exception {
+        URL path = ClassLoader.getSystemResource("Scratchpad.vcc");
+        String text = String.join("\n", Files.readAllLines(Paths.get(path.toURI())));
+
         List<Instruction> instructs = ASMCompiler.lexAndParse(text);
         String pretty = ASMCompiler.prettyPrintInstructions(instructs);
         System.out.println(pretty);

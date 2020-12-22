@@ -7,7 +7,7 @@ import java.util.Objects;
  * Exposes convenience functions for your convenience.
  */
 public class Token {
-    public final Type type;
+    public Type type;
     public final String value;
     public final Token alias;
     public final int row, col;
@@ -43,10 +43,10 @@ public class Token {
             case NEWLINE:
                 return value;
             case HEXADECIMAL:
-                return value.substring(2).toUpperCase();
+                return value.substring(2).replace("_", "").toUpperCase();
             case BINARY:
-                return value.substring(2);
-            case LABEL:
+                return value.substring(2).replace("_", "");
+            case LABEL_DECLARATION:
                 return value.substring(0, value.length() - 1);
             case STACKVALUE:
                 return value.substring(1, value.length() - 1);
@@ -61,7 +61,8 @@ public class Token {
     public String canonicalize() {
         switch (type) {
             case PREPROCESSOR:
-            case LABEL:
+            case LABEL_DECLARATION:
+            case LABEL_USAGE:
             case DECIMAL:
             case NAME:
             case NEWLINE:
@@ -79,7 +80,7 @@ public class Token {
             case STACKVALUE:
                 return "@" + this.meat() + "'";
             default:
-                return "<unknown (this shouldn't appear)>";
+                return "<unknown token type?>";
         }
     }
 
@@ -91,7 +92,7 @@ public class Token {
     }
 
     /**
-     * Rewrite this token with a different type and value.
+     * Return this token rewritten with a different type and value.
      */
     public Token rewrite(Type type, String value) {
         return new Token(type, value, this, row, col);
@@ -106,8 +107,18 @@ public class Token {
 
     @Override
     public String toString() {
-        String me = String.format("%s at %s:%s", this.canonicalize(), row, col);
-        return alias == null ? me : String.format("%s (aka %s)", original(), me);
+        return String.format("%s at %s:%s", this.canonicalizeWithAlias(), row, col);
+    }
+
+    /**
+     * Get a canonicalized version of this token with aliases, for printing.
+     */
+    public String canonicalizeWithAlias() {
+        if (this.alias == null) {
+            return this.canonicalize();
+        } else {
+            return String.format("%s aka %s", this.canonicalize(), this.alias.canonicalizeWithAlias());
+        }
     }
 
     public enum Type {
@@ -120,7 +131,8 @@ public class Token {
         BINARY,
         STACKVALUE,
 
-        LABEL,
+        LABEL_DECLARATION,
+        LABEL_USAGE,
         NAME,
         NEWLINE;
 
@@ -136,7 +148,7 @@ public class Token {
          * Is this token valid as an IV?
          */
         public boolean isIV() {
-            return isLiteral() || this == Type.REGISTER || this == Type.STACKVALUE;
+            return isLiteral() || this == Type.REGISTER || this == Type.STACKVALUE || this == Type.LABEL_DECLARATION;
         }
 
         /**

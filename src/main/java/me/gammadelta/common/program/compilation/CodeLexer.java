@@ -1,8 +1,6 @@
 package me.gammadelta.common.program.compilation;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Lex an input string into tokens.
@@ -35,9 +33,15 @@ public class CodeLexer {
 		}
 		for (int i = offset; i < str.length(); i++) {
 			char ch = str.charAt(i);
-			if (i == offset && ch == '_') {
-				// no underscores first
-				return false;
+			if (i == offset) {
+				if (ch == '_') {
+					// no underscores first
+					return false;
+				}
+				if (ch == '-') {
+					// negative signs in the front are OK
+					continue;
+				}
 			}
 			if ((ch < '0' || ch > '9') && ch != '_') {
 				return false;
@@ -128,7 +132,7 @@ public class CodeLexer {
 			return Token.Type.BINARY;
 		}
 		if (body.endsWith(":")) {
-			return Token.Type.LABEL;
+			return Token.Type.LABEL_DECLARATION;
 		}
 		return Token.Type.NAME;
 	}
@@ -172,6 +176,9 @@ public class CodeLexer {
 					return nextToken();
 				}
 				lastNewline = true;
+				if (offset >= input.length) {
+					return new Token(Token.Type.NEWLINE, "<EOF>", row, col);
+				}
 				return new Token(Token.Type.NEWLINE, input[offset] == '.' ? "<period>" : "<newline>", row, col);
 			}
 
@@ -211,7 +218,7 @@ public class CodeLexer {
 			tokens.add(next);
 		}
 		if (!lastNewline) {
-			tokens.add(new Token(Token.Type.NEWLINE, "<no EOF>", row, col));
+			tokens.add(new Token(Token.Type.NEWLINE, "<EOF>", row, col));
 		}
 		return tokens;
 	}

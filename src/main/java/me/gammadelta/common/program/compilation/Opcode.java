@@ -46,6 +46,7 @@ public enum Opcode {
 
     // Misc
     QUERY(Instruction.Arg.Type.IV, Instruction.Arg.Type.REGISTER),
+    PRINT(Instruction.Arg.Type.IV),
     EMERGENCY(),
 
     // and an invalid one
@@ -72,42 +73,44 @@ public enum Opcode {
     /**
      * This is a Short map because java bad
      */
-    public static final BiMap<Opcode, Short> OPCODES_TO_BYTECODE = HashBiMap.create();
+    public static final BiMap<Opcode, Byte> OPCODES_TO_BYTECODE = HashBiMap.create();
+
     static {
-        OPCODES_TO_BYTECODE.forcePut(Opcode.NOP, (short) 0x00);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.NOP, (byte) 0x00);
 
-        OPCODES_TO_BYTECODE.forcePut(Opcode.MOV, (short) 0x10);
-        OPCODES_TO_BYTECODE.forcePut(Opcode.MOVK, (short) 0x11);
-        OPCODES_TO_BYTECODE.forcePut(Opcode.SWP, (short) 0x12);
-        OPCODES_TO_BYTECODE.forcePut(Opcode.READ, (short) 0x18);
-        OPCODES_TO_BYTECODE.forcePut(Opcode.WRITE, (short) 0x19);
-        OPCODES_TO_BYTECODE.forcePut(Opcode.COPY, (short) 0x1A);
-        OPCODES_TO_BYTECODE.forcePut(Opcode.PUSH, (short) 0x1B);
-        OPCODES_TO_BYTECODE.forcePut(Opcode.POP, (short) 0x1C);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.MOV, (byte) 0x10);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.MOVK, (byte) 0x11);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.SWP, (byte) 0x12);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.READ, (byte) 0x18);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.WRITE, (byte) 0x19);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.COPY, (byte) 0x1A);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.PUSH, (byte) 0x1B);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.POP, (byte) 0x1C);
 
-        OPCODES_TO_BYTECODE.forcePut(Opcode.ADD, (short) 0x30);
-        OPCODES_TO_BYTECODE.forcePut(Opcode.SUB, (short) 0x31);
-        OPCODES_TO_BYTECODE.forcePut(Opcode.INC, (short) 0x40);
-        OPCODES_TO_BYTECODE.forcePut(Opcode.DEC, (short) 0x41);
-        OPCODES_TO_BYTECODE.forcePut(Opcode.NEG, (short) 0x42);
-        OPCODES_TO_BYTECODE.forcePut(Opcode.INV, (short) 0x43);
-        OPCODES_TO_BYTECODE.forcePut(Opcode.AND, (short) 0x44);
-        OPCODES_TO_BYTECODE.forcePut(Opcode.OR, (short) 0x45);
-        OPCODES_TO_BYTECODE.forcePut(Opcode.XOR, (short) 0x46);
-        OPCODES_TO_BYTECODE.forcePut(Opcode.NOT, (short) 0x47);
-        OPCODES_TO_BYTECODE.forcePut(Opcode.SHL, (short) 0x48);
-        OPCODES_TO_BYTECODE.forcePut(Opcode.SHR, (short) 0x49);
-        OPCODES_TO_BYTECODE.forcePut(Opcode.SHRU, (short) 0x4A);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.ADD, (byte) 0x30);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.SUB, (byte) 0x31);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.INC, (byte) 0x40);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.DEC, (byte) 0x41);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.NEG, (byte) 0x42);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.INV, (byte) 0x43);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.AND, (byte) 0x44);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.OR, (byte) 0x45);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.XOR, (byte) 0x46);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.NOT, (byte) 0x47);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.SHL, (byte) 0x48);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.SHR, (byte) 0x49);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.SHRU, (byte) 0x4A);
 
-        OPCODES_TO_BYTECODE.forcePut(Opcode.JMP, (short) 0x50);
-        OPCODES_TO_BYTECODE.forcePut(Opcode.JZ, (short) 0x51);
-        OPCODES_TO_BYTECODE.forcePut(Opcode.JNZ, (short) 0x52);
-        OPCODES_TO_BYTECODE.forcePut(Opcode.JGZ, (short) 0x53);
-        OPCODES_TO_BYTECODE.forcePut(Opcode.JLZ, (short) 0x54);
-        OPCODES_TO_BYTECODE.forcePut(Opcode.CALL, (short) 0x58);
-        OPCODES_TO_BYTECODE.forcePut(Opcode.RET, (short) 0x59);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.JMP, (byte) 0x50);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.JZ, (byte) 0x51);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.JNZ, (byte) 0x52);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.JGZ, (byte) 0x53);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.JLZ, (byte) 0x54);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.CALL, (byte) 0x58);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.RET, (byte) 0x59);
 
-        OPCODES_TO_BYTECODE.forcePut(Opcode.QUERY, (short) 0xF0);
-        OPCODES_TO_BYTECODE.forcePut(Opcode.EMERGENCY, (short) 0xFF);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.QUERY, (byte) 0xF0);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.PRINT, (byte) 0xF1);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.EMERGENCY, (byte) 0xFF);
     }
 }

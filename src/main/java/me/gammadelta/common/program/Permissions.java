@@ -8,16 +8,11 @@ public class Permissions {
     public boolean write;
     public boolean execute;
 
-    public static Permissions RWX;
-    public static Permissions RW;
-    public static Permissions R;
-    public static Permissions NONE;
-    static {
-        RWX = new Permissions(true, true, true);
-        RW = new Permissions(true, true, false);
-        R = new Permissions(true, false, false);
-        NONE = new Permissions(false, false, false);
-    }
+    public static Permissions RWX = new Permissions(true, true, true);
+    public static Permissions RX = new Permissions(true, false, true);
+    public static Permissions RW = new Permissions(true, true, false);
+    public static Permissions R = new Permissions(true, false, false);
+    public static Permissions NONE = new Permissions(false, false, false);
 
     public Permissions(boolean read, boolean write, boolean execute) {
         this.read = read;

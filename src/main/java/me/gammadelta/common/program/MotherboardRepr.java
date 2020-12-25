@@ -43,7 +43,7 @@ public class MotherboardRepr {
      * Registers, in no particular order.
      * This does not include IP/SP extenders; their reprs are stored in the CPU.
      */
-    private ArrayList<RegisterRepr> registers;
+    public ArrayList<RegisterRepr> registers;
     private static final String REGISTERS_KEY = "registers";
 
     // endregion End serialized values.
@@ -60,6 +60,7 @@ public class MotherboardRepr {
             Integer count = entry.getValue();
             memorySize += mtype.storageAmount * count;
         }
+        // Fill memory with randomness
         this.memory = new byte[memorySize];
         rand.nextBytes(this.memory);
     }
@@ -67,11 +68,20 @@ public class MotherboardRepr {
     /**
      * Execute one step of the computer!
      */
-    private void executeStep(World world) {
+    public void executeStep(World world) {
         for (ArrayList<CPURepr> cpuGroup : this.cpus) {
             int[] indices = Utils.randomIndices(cpuGroup.size(), world.getRandom());
             for (int cpuIdx : indices) {
-                cpuGroup.get(cpuIdx).executeStep(this, world);
+                cpuGroup.get(cpuIdx).executeStep(this, world.rand);
+            }
+        }
+    }
+
+    public void executeStep(Random rand) {
+        for (ArrayList<CPURepr> cpuGroup : this.cpus) {
+            int[] indices = Utils.randomIndices(cpuGroup.size(), rand);
+            for (int cpuIdx : indices) {
+                cpuGroup.get(cpuIdx).executeStep(this, rand);
             }
         }
     }
@@ -86,6 +96,17 @@ public class MotherboardRepr {
      * Effectively, this puts back the abstraction of bytes being stored across many blocks.
      */
     public ByteArrayList readRegion(MemoryType memType, int blockIdx) throws Emergency {
+        int byteIdx = this.getRegionIndex(memType, blockIdx);
+        // and return
+        ByteArrayList bal = new ByteArrayList(memType.storageAmount);
+        bal.addElements(0, this.memory, byteIdx, memType.storageAmount);
+        return bal;
+    }
+
+    /**
+     * Get the index in memory associated with the type and block index
+     */
+    public int getRegionIndex(MemoryType memType, int blockIdx) throws Emergency {
         int totalBlockCount = this.memoryCounts.get(memType);
         if (blockIdx >= totalBlockCount) {
             // uh-oh
@@ -100,10 +121,7 @@ public class MotherboardRepr {
             }
             byteIdx += checkThis.storageAmount * totalBlockCount;
         }
-        // and return
-        ByteArrayList bal = new ByteArrayList(memType.storageAmount);
-        bal.addElements(0, this.memory, byteIdx, memType.storageAmount);
-        return bal;
+        return byteIdx;
     }
 
     // endregion

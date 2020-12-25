@@ -1,5 +1,11 @@
 package me.gammadelta.common.program.compilation;
 
+import it.unimi.dsi.fastutil.bytes.ByteArrayList;
+import it.unimi.dsi.fastutil.bytes.ByteList;
+import it.unimi.dsi.fastutil.ints.Int2IntAVLTreeMap;
+import it.unimi.dsi.fastutil.ints.Int2IntSortedMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import me.gammadelta.Utils;
 import me.gammadelta.common.program.compilation.Instruction.Arg;
 
@@ -11,10 +17,12 @@ import java.util.*;
  */
 public class BytecodeWriter {
     private List<Instruction> program;
-    private List<Byte> wipProgram = new ArrayList<>();
+    private ByteList wipProgram = new ByteArrayList();
 
-    /** Maps instruction indexes to the byte indexes they start at. */
-    private ArrayList<Integer> instructionStarts = new ArrayList<>();
+    /**
+     * Maps instruction indexes to the byte indexes they start at.
+     */
+    private IntList instructionStarts = new IntArrayList();
 
     /**
      * Cache of byte indexes of label IVs we need to fill in.
@@ -31,7 +39,7 @@ public class BytecodeWriter {
     /**
      * Write the program to bytecode.
      */
-    public ArrayList<Byte> writeProgramToBytecode() throws BytecodeWriteException {
+    public ByteList writeProgramToBytecode() throws BytecodeWriteException {
         for (Instruction line : this.program) {
             this.instructionStarts.add(wipProgram.size());
 
@@ -46,45 +54,59 @@ public class BytecodeWriter {
                     byte regi = writeRegister(arg);
                     wipProgram.add(regi);
                 } else if (arg.type == Arg.Type.IV) {
-                    ArrayList<Byte> iv = writeIV(arg);
+                    ByteList iv = writeIV(arg);
                     wipProgram.addAll(iv);
                 } else {
                     // external location arg
-                    ArrayList<Byte> location = writeLocation(arg);
+                    ByteList location = writeLocation(arg);
                     wipProgram.addAll(location);
                 }
             }
         }
 
         // Do our second pass and fill in the labels expected.
-        ArrayList<Byte> out = new ArrayList<>(this.wipProgram.size());
-        int accumulatedExtraBytes = 0;
+        ByteArrayList out = new ByteArrayList(this.wipProgram.size());
+        // As we fill in labels, bytes *after* that space need to be shifted forwards.
+        // Store here a map of [label indices -> extra bytes written]
+        // and only insert the values *up to* the currently writing index
+        // TODO: is an AVL or RB tree map better?
+        Int2IntSortedMap accumulatedExtraBytes = new Int2IntAVLTreeMap();
         for (int byteIdx = 0; byteIdx < this.wipProgram.size(); byteIdx++) {
             if (!labelIVsRequiringFills.containsKey(byteIdx)) {
                 // totally normal write
-                out.add(this.wipProgram.get(byteIdx));
+                out.add(this.wipProgram.getByte(byteIdx));
             } else {
                 // we must add our byte index instead
                 int labelInstructionIdx = labelIVsRequiringFills.get(byteIdx);
-                int labelByteIdx = instructionStarts.get(labelInstructionIdx) + accumulatedExtraBytes;
-                // We might need to add extra bytes if labelByteIndex itself requires more than one byte to write.
-                // To do this, we find the position of the highest 1 bit of the number, divide by 8, and add 1.
-                // i got this code off stackoverflow
-                int highestBit = 0;
-                for (int c = 31; c >= 0; c--) {
-                    int mask = 1 << c;
-                    if ((labelByteIdx & mask) != 0) {
-                        highestBit = c + 1;
-                        break;
+                // get all the extra bytes we inserted *before* this label
+                int extraBytes = accumulatedExtraBytes.headMap(labelInstructionIdx)
+                        .values()
+                        .stream()
+                        .reduce(0, Integer::sum);
+                int labelByteIdx = instructionStarts.getInt(labelInstructionIdx) + extraBytes;
+
+                // If the byte index we are referring to happens *after* this, we need to insert extra bytes
+                // to account for the bytes we are about to write.
+                if (labelByteIdx > byteIdx) {
+                    // To do this, we find the position of the highest 1 bit of the number, divide by 8, and add 1.
+                    // i got this code off stackoverflow
+                    int highestBit = 0;
+                    for (int c = 31; c >= 0; c--) {
+                        int mask = 1 << c;
+                        if ((labelByteIdx & mask) != 0) {
+                            highestBit = c + 1;
+                            break;
+                        }
                     }
+                    int extraBytesDueToLongSize = highestBit / 8 + 1;
+                    labelByteIdx += extraBytesDueToLongSize;
                 }
-                int extraBytesNeeded = highestBit / 8 + 1;
-                labelByteIdx += extraBytesNeeded;
 
                 // write this as a literal
-                ArrayList<Byte> labelValue =
+                ByteList labelValue =
                         writeLiteral(new Token(Token.Type.DECIMAL, String.valueOf(labelByteIdx), -1, -1));
-                accumulatedExtraBytes += labelValue.size();
+                // we already had one byte in the size, so subtract one
+                accumulatedExtraBytes.put(labelByteIdx, labelValue.size() - 1);
                 out.addAll(labelValue);
             }
         }
@@ -98,7 +120,7 @@ public class BytecodeWriter {
         return writeRegister(arg.token);
     }
 
-    private ArrayList<Byte> writeIV(Arg arg) throws BytecodeWriteException {
+    private ByteList writeIV(Arg arg) throws BytecodeWriteException {
         if (arg.token.type != Token.Type.STACKVALUE) {
             return writeIVThatsNotAStackvalue(arg.token);
         } else {
@@ -106,18 +128,18 @@ public class BytecodeWriter {
         }
     }
 
-    private ArrayList<Byte> writeLocation(Arg arg) throws BytecodeWriteException {
+    private ByteList writeLocation(Arg arg) throws BytecodeWriteException {
         if (arg.token.type == Token.Type.DATAFACE) {
             int index = Integer.parseInt(arg.token.meat());
             if (index > 127 || index < 0) {
                 throw new IllegalStateException(String.format("Dataface index was out of bounds %s", arg.token));
             }
             byte dataface = (byte) (0b10000000 | index);
-            return new ArrayList<>(Collections.singletonList(dataface));
+            return new ByteArrayList(Collections.singletonList(dataface));
         } else {
             // Write [0] here and append a literal
-            ArrayList<Byte> address = writeIV(arg);
-            ArrayList<Byte> out = new ArrayList<>(address.size() + 1);
+            ByteList address = writeIV(arg);
+            ByteList out = new ByteArrayList(address.size() + 1);
             out.add((byte) 0);
             out.addAll(address);
             return out;
@@ -128,14 +150,14 @@ public class BytecodeWriter {
 
     // region Writers for all the concrete things the argument types can be
 
-    private ArrayList<Byte> writeIVThatsNotAStackvalue(Token token) throws BytecodeWriteException {
+    private ByteList writeIVThatsNotAStackvalue(Token token) throws BytecodeWriteException {
         if (token.alias != null && token.alias.type == Token.Type.LABEL_USAGE) {
             // this is a label and the original is the *instruction index*.
             return writeLabelIV(token);
         } else if (token.type == Token.Type.DECIMAL || token.type == Token.Type.HEXADECIMAL || token.type == Token.Type.BINARY) {
             return writeLiteral(token);
         } else if (token.type == Token.Type.REGISTER) {
-            return new ArrayList<>(Collections.singletonList(writeRegister(token)));
+            return new ByteArrayList(Collections.singletonList(writeRegister(token)));
         } else {
             throw new IllegalStateException(String.format("bad type %s", token.type));
         }
@@ -168,7 +190,7 @@ public class BytecodeWriter {
         }
     }
 
-    private static ArrayList<Byte> writeLiteral(Token literalTok) throws BytecodeWriteException {
+    private static ByteList writeLiteral(Token literalTok) throws BytecodeWriteException {
         if (literalTok.type == Token.Type.HEXADECIMAL || literalTok.type == Token.Type.BINARY) {
             // Don't worry about negatives here
             int charsPerByte = literalTok.type == Token.Type.HEXADECIMAL ? 2 : 8;
@@ -191,15 +213,24 @@ public class BytecodeWriter {
                 // 0x00 -> [0, 0], not [0, 0, 0]
                 leadingZeroBytes--;
             }
-            byte[] bigintBytes = imLazy.toByteArray();
-
+            byte[] bigintBytesRaw = imLazy.toByteArray();
+            // Slice away leading zero bytes
+            int firstNonZeroByteIdx = 0;
+            for (byte b : bigintBytesRaw) {
+                if (b != 0) {
+                    break;
+                } else {
+                    firstNonZeroByteIdx++;
+                }
+            }
+            ByteList bigintBytes = new ByteArrayList(bigintBytesRaw, firstNonZeroByteIdx, bigintBytesRaw.length - firstNonZeroByteIdx);
 
             // We may need to add leading zeroes!
-            int totalValueSize = leadingZeroBytes + bigintBytes.length;
+            int totalValueSize = leadingZeroBytes + bigintBytes.size();
             if (totalValueSize > 63) {
                 throw new BytecodeWriteException.LiteralTooLong(literalTok);
             }
-            ArrayList<Byte> out = new ArrayList<>(totalValueSize + 1); // add 1 for the size itself
+            ByteList out = new ByteArrayList(totalValueSize + 1); // add 1 for the size itself
             // Put our size in
             int futzedSize = totalValueSize & 0b00111111 | 0b01000000;
             out.add((byte) futzedSize);
@@ -227,28 +258,33 @@ public class BytecodeWriter {
             if (size > 63) {
                 throw new BytecodeWriteException.LiteralTooLong(literalTok);
             }
-            ArrayList<Byte> out = new ArrayList<>(size + 1); // have space for our length
+            ByteList out = new ByteArrayList(size + 1); // have space for our length
             int futzedSize = size & 0b00111111 | 0b01000000;
             out.add((byte) futzedSize);
-            boolean seenANonZero = false;
-            for (byte valByte : value) {
-                if (seenANonZero || valByte != 0) {
-                    seenANonZero = true;
-                    out.add(valByte);
+            if (imLazy.equals(BigInteger.ZERO)) {
+                // just write a zero
+                out.add((byte) 0);
+            } else {
+                boolean seenANonZero = false;
+                for (byte valByte : value) {
+                    if (seenANonZero || valByte != 0) {
+                        seenANonZero = true;
+                        out.add(valByte);
+                    }
                 }
             }
             return out;
         }
     }
 
-    private ArrayList<Byte> writeLabelIV(Token labelTok) {
+    private ByteList writeLabelIV(Token labelTok) {
         // Haha sike we don't write jack shit
         // Save this byte index as requiring a label
         this.labelIVsRequiringFills.put(this.wipProgram.size(), Utils.parseInt(labelTok.value));
-        return new ArrayList<>(Collections.singletonList((byte) 0));
+        return new ByteArrayList(Collections.singletonList((byte) 0));
     }
 
-    private ArrayList<Byte> writeStackvalue(Token svTok, Token sizeTok) throws BytecodeWriteException {
+    private ByteList writeStackvalue(Token svTok, Token sizeTok) throws BytecodeWriteException {
         // Token has the length; stackvaluePosition has the position.
         int size = Integer.parseInt(svTok.meat());
         if (size < 0 || size > 128) {
@@ -256,8 +292,8 @@ public class BytecodeWriter {
         }
         int header = 0b00100000 | size;
 
-        ArrayList<Byte> position = writeIVThatsNotAStackvalue(sizeTok);
-        ArrayList<Byte> out = new ArrayList<>(position.size() + 1);
+        ByteList position = writeIVThatsNotAStackvalue(sizeTok);
+        ByteList out = new ByteArrayList(position.size() + 1);
         out.add((byte) header);
         out.addAll(position);
         return out;

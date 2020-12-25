@@ -1,7 +1,8 @@
 ;! Sample program to correct errors with a Hamming code.
 
 ;; HAMMING_DECODE(u64 dataface_index) -> u64
-;; Read 8 bytes from the dataface given by the index, and decode as a hamming code. 
+;; Read 8 bytes from the dataface given by the index, and decode as a hamming code.
+;;
 ;; The parity bits are clustered at the most significant bytes.
 ;; So, if P is a parity bit and , is a data bit:
 ;;   PPP,P,,, P,,,,,,, P,,,,,,, ,,,,,,,, P,,,,,,, ,,,,,,,, ,,,,,,,, ,,,,,,,,

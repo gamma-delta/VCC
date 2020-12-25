@@ -1,0 +1,23 @@
+MOV 25 R0
+
+;; DISAN(u16 n) -> void
+;; `PRINT` a [Disan Count](https://esolangs.org/wiki/Disan_Count).
+;;
+;; REGISTERS:
+;; - R1: 2 bytes
+;; - R2: 2 bytes
+DISAN:
+    MOV 0 R1
+    DISAN_LOOP:
+        MOV R1 R2
+        AND R2 0b0000_0001
+        JNZ R2 DISAN_END_LOOP ; jump if the last digit is not 1, aka if it's odd
+            PRINT R1
+        DISAN_END_LOOP:
+        INC R1
+        MOV R1 R2
+        SUB R2 R0
+        JNZ R2 DISAN_LOOP
+
+PRINT 0xffff ; just a spacer
+JMP 0

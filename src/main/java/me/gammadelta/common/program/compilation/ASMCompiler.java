@@ -1,5 +1,7 @@
 package me.gammadelta.common.program.compilation;
 
+import it.unimi.dsi.fastutil.bytes.ByteList;
+
 import java.util.List;
 
 /**
@@ -15,7 +17,7 @@ public class ASMCompiler {
         return instrs;
     }
 
-    public static List<Byte> lexParseAndCompile(String input) throws CodeCompileException, BytecodeWriteException {
+    public static ByteList lexParseAndCompile(String input) throws CodeCompileException, BytecodeWriteException {
         List<Instruction> instructions = lexAndParse(input);
         return new BytecodeWriter(instructions).writeProgramToBytecode();
     }

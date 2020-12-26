@@ -55,7 +55,7 @@ HAMMING_DECODE:
     ; [READ; 1] [0x08; 2] [D0; 1]
     ; we want the label + 3
     ADD R0 3
-    WRITE 1 R1 R0
+    WRITE R1 R0
 
     ; the moment of truth
     READ_FROM_DATAFACE_BYTECODE_FUTZING:

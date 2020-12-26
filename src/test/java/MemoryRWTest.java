@@ -1,16 +1,19 @@
 import com.google.common.primitives.Bytes;
 import it.unimi.dsi.fastutil.bytes.ByteArrayList;
+import it.unimi.dsi.fastutil.bytes.ByteList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import me.gammadelta.Utils;
-import me.gammadelta.common.block.tile.TileMotherboard;
 import me.gammadelta.common.program.CPURepr;
 import me.gammadelta.common.program.MemoryType;
 import me.gammadelta.common.program.MotherboardRepr;
 import me.gammadelta.common.program.Permissions;
 import org.junit.jupiter.api.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumMap;
+import java.util.Random;
 
 public class MemoryRWTest {
     @Test
@@ -39,7 +42,8 @@ public class MemoryRWTest {
         memoryCounts.put(MemoryType.EXRAM, 0);
         memoryCounts.put(MemoryType.ROM, 0);
         memoryCounts.put(MemoryType.RAM, 0);
-        MotherboardRepr motherboard = new MotherboardRepr(memoryCounts, new ArrayList<>(), new ArrayList<>(), rand);
+        MotherboardRepr motherboard = new MotherboardRepr(memoryCounts, new ArrayList<>(), new ArrayList<>(),
+                new ArrayList<>(), rand);
 
         // Fill up the memory.
         for (int idx = 0; idx < motherboard.memory.length; idx++) {
@@ -50,8 +54,8 @@ public class MemoryRWTest {
         for (int idx = 0; idx < 256 * 5; idx += 256) {
             System.out.printf("reading from %s:\n", idx);
             for (int count = 0; count < 4; count++) {
-                byte[] read = cpu.read(idx, 10, Permissions.R, motherboard, rand);
-                System.out.printf("- #%d:  %s\n", count + 1, Arrays.toString(read));
+                ByteList read = cpu.read(idx, 10, Permissions.R, motherboard, rand);
+                System.out.printf("- #%d:  %s\n", count + 1, Arrays.toString(read.toArray()));
             }
         }
 
@@ -60,16 +64,16 @@ public class MemoryRWTest {
             int realIdx = idx - 5;
             System.out.printf("reading from %s:\n", realIdx);
             for (int count = 0; count < 4; count++) {
-                byte[] read = cpu.read(realIdx, 10, Permissions.R, motherboard, rand);
-                System.out.printf("- #%d:  %s\n", count + 1, Arrays.toString(read));
+                ByteList read = cpu.read(realIdx, 10, Permissions.R, motherboard, rand);
+                System.out.printf("- #%d:  %s\n", count + 1, Arrays.toString(read.toArray()));
             }
         }
 
         // And finally read a whole lot
         // should be 1/2, then 4, then 3?
         {
-            byte[] read = cpu.read(760, 300, Permissions.R, motherboard, rand);
-            System.out.println(Arrays.toString(read));
+            ByteList read = cpu.read(760, 300, Permissions.R, motherboard, rand);
+            System.out.println(Arrays.toString(read.toArray()));
         }
     }
 
@@ -99,7 +103,7 @@ public class MemoryRWTest {
         memoryCounts.put(MemoryType.EXRAM, 0);
         memoryCounts.put(MemoryType.ROM, 0);
         memoryCounts.put(MemoryType.RAM, 0);
-        MotherboardRepr motherboard = new MotherboardRepr(memoryCounts, new ArrayList<>(), new ArrayList<>(), rand);
+        MotherboardRepr motherboard = new MotherboardRepr(memoryCounts, new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), rand);
 
         // Fill up the memory.
         for (int idx = 0; idx < motherboard.memory.length; idx++) {
@@ -110,13 +114,15 @@ public class MemoryRWTest {
         // Write 0x10 to places in 0
         for (int time = 0; time < 8; time++) {
             int idx = time * 16;
-            cpu.write(idx, new ByteArrayList(new byte[]{0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10}), Permissions.RW, motherboard, rand);
+            cpu.write(idx, new ByteArrayList(new byte[]{0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10}),
+                    Permissions.RW, motherboard, rand);
         }
 
         // Write across the 4-3 memory boundary
         {
             cpu.write(256 * 4 - 8,
-                    new ByteArrayList(new byte[]{0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20}),
+                    new ByteArrayList(
+                            new byte[]{0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20}),
                     Permissions.RW, motherboard, rand);
         }
 

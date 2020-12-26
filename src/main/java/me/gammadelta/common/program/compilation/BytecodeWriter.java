@@ -2,6 +2,7 @@ package me.gammadelta.common.program.compilation;
 
 import it.unimi.dsi.fastutil.bytes.ByteArrayList;
 import it.unimi.dsi.fastutil.bytes.ByteList;
+import it.unimi.dsi.fastutil.bytes.ByteLists;
 import it.unimi.dsi.fastutil.ints.Int2IntAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2IntSortedMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -16,6 +17,9 @@ import java.util.*;
  * Writes the given program to bytes
  */
 public class BytecodeWriter {
+    private static final int LABEL_USAGE_PLACEHOLDER_SIZE = 3;
+    private static final byte LABEL_USAGE_HEADER = (byte) 0b01000000 | (0xff & LABEL_USAGE_PLACEHOLDER_SIZE);
+
     private List<Instruction> program;
     private ByteList wipProgram = new ByteArrayList();
 
@@ -26,8 +30,8 @@ public class BytecodeWriter {
 
     /**
      * Cache of byte indexes of label IVs we need to fill in.
-     * In the initial pass we write [0xCACA] for any label IVs as a placeholder,
-     * and save (byte index => instruction index) here.
+     * In the initial pass we write [header 0 0 0] for any label IVs as a placeholder,
+     * and save (byte index of fill required => instruction index needed) here.
      * In the final pass we use `instructionStarts` to plug in the data.
      */
     private Map<Integer, Integer> labelIVsRequiringFills = new HashMap<>();
@@ -44,8 +48,8 @@ public class BytecodeWriter {
             this.instructionStarts.add(wipProgram.size());
 
             // Write opcode
-            short opcodeShort = Opcode.OPCODES_TO_BYTECODE.get(line.opcode);
-            wipProgram.add((byte) opcodeShort); // this cuts off the top, i checked.
+            byte opcode = Opcode.OPCODES_TO_BYTECODE.get(line.opcode);
+            wipProgram.add(opcode);
 
             // Write arguments
             for (Arg arg : line.args) {
@@ -54,7 +58,7 @@ public class BytecodeWriter {
                     byte regi = writeRegister(arg);
                     wipProgram.add(regi);
                 } else if (arg.type == Arg.Type.IV) {
-                    ByteList iv = writeIV(arg);
+                    ByteList iv = writeIV(arg, 0);
                     wipProgram.addAll(iv);
                 } else {
                     // external location arg
@@ -65,53 +69,25 @@ public class BytecodeWriter {
         }
 
         // Do our second pass and fill in the labels expected.
-        ByteArrayList out = new ByteArrayList(this.wipProgram.size());
-        // As we fill in labels, bytes *after* that space need to be shifted forwards.
-        // Store here a map of [label indices -> extra bytes written]
-        // and only insert the values *up to* the currently writing index
-        // TODO: is an AVL or RB tree map better?
-        Int2IntSortedMap accumulatedExtraBytes = new Int2IntAVLTreeMap();
         for (int byteIdx = 0; byteIdx < this.wipProgram.size(); byteIdx++) {
-            if (!labelIVsRequiringFills.containsKey(byteIdx)) {
-                // totally normal write
-                out.add(this.wipProgram.getByte(byteIdx));
-            } else {
+            if (labelIVsRequiringFills.containsKey(byteIdx)) {
                 // we must add our byte index instead
                 int labelInstructionIdx = labelIVsRequiringFills.get(byteIdx);
-                // get all the extra bytes we inserted *before* this label
-                int extraBytes = accumulatedExtraBytes.headMap(labelInstructionIdx)
-                        .values()
-                        .stream()
-                        .reduce(0, Integer::sum);
-                int labelByteIdx = instructionStarts.getInt(labelInstructionIdx) + extraBytes;
-
-                // If the byte index we are referring to happens *after* this, we need to insert extra bytes
-                // to account for the bytes we are about to write.
-                if (labelByteIdx > byteIdx) {
-                    // To do this, we find the position of the highest 1 bit of the number, divide by 8, and add 1.
-                    // i got this code off stackoverflow
-                    int highestBit = 0;
-                    for (int c = 31; c >= 0; c--) {
-                        int mask = 1 << c;
-                        if ((labelByteIdx & mask) != 0) {
-                            highestBit = c + 1;
-                            break;
-                        }
-                    }
-                    int extraBytesDueToLongSize = highestBit / 8 + 1;
-                    labelByteIdx += extraBytesDueToLongSize;
+                int labelByteIdx = instructionStarts.getInt(labelInstructionIdx);
+                // Turn this into 4 bytes
+                byte[] idxBytes = new byte[LABEL_USAGE_PLACEHOLDER_SIZE];
+                // we only need to write an int, but java will extend it for us
+                Utils.writeLong(labelByteIdx, idxBytes);
+                // write the header
+                this.wipProgram.set(byteIdx++, LABEL_USAGE_HEADER);
+                // and write the label destination to the output
+                for (int i = 0; i < LABEL_USAGE_PLACEHOLDER_SIZE; i++) {
+                    this.wipProgram.set(byteIdx++, idxBytes[i]);
                 }
-
-                // write this as a literal
-                ByteList labelValue =
-                        writeLiteral(new Token(Token.Type.DECIMAL, String.valueOf(labelByteIdx), -1, -1));
-                // we already had one byte in the size, so subtract one
-                accumulatedExtraBytes.put(labelByteIdx, labelValue.size() - 1);
-                out.addAll(labelValue);
             }
         }
 
-        return out;
+        return this.wipProgram;
     }
 
     // region Writers for the three argument types
@@ -120,11 +96,11 @@ public class BytecodeWriter {
         return writeRegister(arg.token);
     }
 
-    private ByteList writeIV(Arg arg) throws BytecodeWriteException {
+    private ByteList writeIV(Arg arg, int labelOffset) throws BytecodeWriteException {
         if (arg.token.type != Token.Type.STACKVALUE) {
-            return writeIVThatsNotAStackvalue(arg.token);
+            return writeIVThatsNotAStackvalue(arg.token, labelOffset);
         } else {
-            return writeStackvalue(arg.token, arg.stackvaluePosition);
+            return writeStackvalue(arg.token, arg.stackvaluePosition, labelOffset);
         }
     }
 
@@ -138,7 +114,8 @@ public class BytecodeWriter {
             return new ByteArrayList(Collections.singletonList(dataface));
         } else {
             // Write [0] here and append a literal
-            ByteList address = writeIV(arg);
+            // we do a label offset of 1 so it doesn't clobber the header.
+            ByteList address = writeIV(arg, 1);
             ByteList out = new ByteArrayList(address.size() + 1);
             out.add((byte) 0);
             out.addAll(address);
@@ -150,16 +127,16 @@ public class BytecodeWriter {
 
     // region Writers for all the concrete things the argument types can be
 
-    private ByteList writeIVThatsNotAStackvalue(Token token) throws BytecodeWriteException {
+    private ByteList writeIVThatsNotAStackvalue(Token token, int labelOffset) throws BytecodeWriteException {
         if (token.alias != null && token.alias.type == Token.Type.LABEL_USAGE) {
             // this is a label and the original is the *instruction index*.
-            return writeLabelIV(token);
+            return writeLabelIV(token, labelOffset);
         } else if (token.type == Token.Type.DECIMAL || token.type == Token.Type.HEXADECIMAL || token.type == Token.Type.BINARY) {
             return writeLiteral(token);
         } else if (token.type == Token.Type.REGISTER) {
             return new ByteArrayList(Collections.singletonList(writeRegister(token)));
         } else {
-            throw new IllegalStateException(String.format("bad type %s", token.type));
+            throw new IllegalStateException(String.format("bad type when writing non-stackvalue IV %s to bytecode", token));
         }
     }
 
@@ -209,9 +186,8 @@ public class BytecodeWriter {
             // Shell out to BigInt
             BigInteger imLazy = Utils.parseBigInt(literalTok.value);
             if (imLazy.equals(BigInteger.ZERO)) {
-                // 0x0 -> [0], not [0, 0]
-                // 0x00 -> [0, 0], not [0, 0, 0]
-                leadingZeroBytes--;
+                // oop just return the header with zero bytes
+                return ByteLists.singleton((byte) 0b01000000);
             }
             byte[] bigintBytesRaw = imLazy.toByteArray();
             // Slice away leading zero bytes
@@ -253,8 +229,20 @@ public class BytecodeWriter {
             // decimal digit
             // just shell out to BigInteger, it'll be fine
             BigInteger imLazy = Utils.parseBigInt(literalTok.value);
+            if (imLazy.equals(BigInteger.ZERO)) {
+                // oop just return the header with zero bytes
+                return ByteLists.singleton((byte) 0b01000000);
+            }
             byte[] value = imLazy.toByteArray();
+            // Calculate size WITHOUT leading zeroes
             int size = value.length;
+            for (byte b : value) {
+                if (b != 0) {
+                    break;
+                } else {
+                    size--;
+                }
+            }
             if (size > 63) {
                 throw new BytecodeWriteException.LiteralTooLong(literalTok);
             }
@@ -277,14 +265,20 @@ public class BytecodeWriter {
         }
     }
 
-    private ByteList writeLabelIV(Token labelTok) {
+    private ByteList writeLabelIV(Token labelTok, int labelOffset) {
+        int instrIdx = Utils.parseInt(labelTok.value);
+        if (instrIdx == 0) {
+            // save some space and write a 0.
+            return ByteLists.singleton(0b01000000);
+        }
         // Haha sike we don't write jack shit
         // Save this byte index as requiring a label
-        this.labelIVsRequiringFills.put(this.wipProgram.size(), Utils.parseInt(labelTok.value));
-        return new ByteArrayList(Collections.singletonList((byte) 0));
+        this.labelIVsRequiringFills.put(this.wipProgram.size() + labelOffset, Utils.parseInt(labelTok.value));
+        // Add 1 so we can add the header
+        return new ByteArrayList(new byte[LABEL_USAGE_PLACEHOLDER_SIZE + 1]);
     }
 
-    private ByteList writeStackvalue(Token svTok, Token sizeTok) throws BytecodeWriteException {
+    private ByteList writeStackvalue(Token svTok, Token sizeTok, int labelOffset) throws BytecodeWriteException {
         // Token has the length; stackvaluePosition has the position.
         int size = Integer.parseInt(svTok.meat());
         if (size < 0 || size > 128) {
@@ -292,7 +286,7 @@ public class BytecodeWriter {
         }
         int header = 0b00100000 | size;
 
-        ByteList position = writeIVThatsNotAStackvalue(sizeTok);
+        ByteList position = writeIVThatsNotAStackvalue(sizeTok, labelOffset);
         ByteList out = new ByteArrayList(position.size() + 1);
         out.add((byte) header);
         out.addAll(position);

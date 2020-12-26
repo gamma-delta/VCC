@@ -86,7 +86,7 @@ public class ByteArrayAdditionTest {
         Utils.addMut(lhs, rhs);
         // looking for 01_f8_f8_f8_f8_f8_f8_f8_f7
         Assertions.assertEquals(
-                new ByteArrayList(new byte[]{01, (byte) 0xf8, (byte) 0xf8, (byte) 0xf8, (byte) 0xf8, (byte) 0xf8, (byte) 0xf8, (byte) 0xf8, (byte) 0xf7}), lhs);
+                new ByteArrayList(new byte[]{1, (byte) 0xf8, (byte) 0xf8, (byte) 0xf8, (byte) 0xf8, (byte) 0xf8, (byte) 0xf8, (byte) 0xf8, (byte) 0xf7}), lhs);
     }
 
     @Test

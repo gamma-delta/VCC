@@ -19,5 +19,6 @@ DISAN:
         SUB R2 R0
         JNZ R2 DISAN_LOOP
 
-PRINT 0xffff ; just a spacer
+PRINT 0xffff ; just for debug purposes cause i'm nice
+NOP
 JMP 0

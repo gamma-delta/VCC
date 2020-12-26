@@ -2,6 +2,8 @@ package me.gammadelta.common.program;
 
 import it.unimi.dsi.fastutil.bytes.ByteArrayList;
 import me.gammadelta.Utils;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 import java.util.ArrayList;
@@ -33,7 +35,7 @@ public class MotherboardRepr {
 
     /**
      * CPUs, sorted by distance to the motherboard. Ties are in their own sub-arrays.
-     *
+     * <p>
      * `[ [0], [1, 1, 1], [2, 2], [3], [4] ]`
      */
     private ArrayList<ArrayList<CPURepr>> cpus;
@@ -46,13 +48,20 @@ public class MotherboardRepr {
     public ArrayList<RegisterRepr> registers;
     private static final String REGISTERS_KEY = "registers";
 
+    /**
+     * List of Overclock positions, in no particular order.
+     */
+    public ArrayList<BlockPos> overclocks;
+
     // endregion End serialized values.
 
 
-    public MotherboardRepr(EnumMap<MemoryType, Integer> memoryCounts, ArrayList<ArrayList<CPURepr>> cpus, ArrayList<RegisterRepr> registers, Random rand) {
+    public MotherboardRepr(EnumMap<MemoryType, Integer> memoryCounts, ArrayList<ArrayList<CPURepr>> cpus,
+            ArrayList<RegisterRepr> registers, ArrayList<BlockPos> overclocks, Random rand) {
         this.memoryCounts = memoryCounts;
         this.cpus = cpus;
         this.registers = registers;
+        this.overclocks = overclocks;
 
         int memorySize = 0;
         for (Map.Entry<MemoryType, Integer> entry : this.memoryCounts.entrySet()) {
@@ -62,7 +71,8 @@ public class MotherboardRepr {
         }
         // Fill memory with randomness
         this.memory = new byte[memorySize];
-        rand.nextBytes(this.memory);
+        // TODO: re-enable this
+        // rand.nextBytes(this.memory);
     }
 
     /**
@@ -119,7 +129,7 @@ public class MotherboardRepr {
                 byteIdx += memType.storageAmount * blockIdx;
                 break;
             }
-            byteIdx += checkThis.storageAmount * totalBlockCount;
+            byteIdx += checkThis.storageAmount * this.memoryCounts.get(checkThis);
         }
         return byteIdx;
     }

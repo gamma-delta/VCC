@@ -5,10 +5,14 @@ import it.unimi.dsi.fastutil.bytes.ByteArrayList;
 import it.unimi.dsi.fastutil.bytes.ByteList;
 import it.unimi.dsi.fastutil.bytes.ByteLists;
 import it.unimi.dsi.fastutil.ints.IntList;
+import me.gammadelta.common.block.tile.TileDumbComputerComponent;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.Direction;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Random;
+import java.util.*;
 
 public final class Utils {
     /**
@@ -98,6 +102,8 @@ public final class Utils {
 
     public static String hexdump(Iterable<Byte> bytes) {
         StringBuilder bob = new StringBuilder();
+        StringBuilder thisLine = new StringBuilder();
+
         int lineIdx = 0;
         int idx = 0;
         for (Byte theByte : bytes) {
@@ -106,22 +112,40 @@ public final class Utils {
                 // start of line
                 String region = String.format("%08x  ", idx);
                 bob.append(region);
+                thisLine.append('|');
             }
             bob.append(String.format("%02x ", theByte));
+            if ((theByte & 0xff) >= 0x20 && (theByte & 0xff) < 0x7f) {
+                thisLine.append((char) theByte.byteValue());
+            } else {
+                thisLine.append('.');
+            }
+
             if (lineIdx == 7) {
                 // put spacer between 8 bytes
                 bob.append(' ');
             } else if (lineIdx == 15) {
                 // end of line!
-                bob.append('\n');
+                thisLine.append('|');
+                bob.append(String.format("  %s\n", thisLine.toString()));
+                thisLine = new StringBuilder();
             }
 
             idx++;
         }
         // Append the total length
         if (lineIdx != 15) {
-            // newline if we weren't perfectly on the money
-            bob.append('\n');
+            // Figure out how many characters we lack
+            int missingChars = 3 * (15 - lineIdx);
+            if (lineIdx < 7) {
+                // extra space for the ' ' expected between bytes 7 and 8
+                missingChars++;
+            }
+            for (int i = 0; i < missingChars; i++) {
+                bob.append(' ');
+            }
+            thisLine.append('|');
+            bob.append(String.format("  %s\n", thisLine.toString()));
         }
         bob.append(String.format("%1$08x  (%1$d bytes)", idx));
 
@@ -135,7 +159,11 @@ public final class Utils {
             bob.append(String.format("%02x ", b));
             count++;
         }
-        bob.append(String.format("(%d bytes)", count));
+        // i think 8 bytes is too many to count at a glance
+        if (count > 8) {
+            bob.append(String.format("(%d bytes)", count));
+        }
+
 
         return bob.toString();
     }
@@ -175,7 +203,7 @@ public final class Utils {
         long out = 0;
         for (byte b : bytes) {
             out <<= 8;
-            out |= b;
+            out |= 0xff & b;
         }
         return out;
     }
@@ -187,7 +215,7 @@ public final class Utils {
         long out = 0;
         for (byte b : bytes) {
             out <<= 8;
-            out |= b;
+            out |= 0xff & b;
         }
         return out;
     }
@@ -339,10 +367,48 @@ public final class Utils {
         }
     }
 
+    /**
+     * Perform lhs - rhs. Return the (underflow, sum)
+     */
+    public static Pair<ByteList, ByteList> sub(byte[] lhs, byte[] rhs) {
+        ByteList lhsList = new ByteArrayList(lhs);
+        ByteList rem = Utils.subMut(lhsList, new ByteArrayList(rhs));
+        return new Pair<>(rem, lhsList);
+    }
+
     private static boolean DEBUG_MODE = true;
     public static void debugf(String format, Object... params) {
         if (DEBUG_MODE) {
             System.out.printf(format, params);
         }
     }
+
+    /**
+     * Flood fill from a given component and return the dumb components found.
+     * Does not include anything that may be at the original blockpos.
+     */
+    // TODO: make an actual config handler.
+    private static final int MAXIMUM_COMPONENT_COUNT = 1024;
+    public static Set<TileDumbComputerComponent> findDumbComponents(BlockPos original, World world) {
+        Set<TileDumbComputerComponent> found = new HashSet<>();
+        Set<BlockPos> placesToLook = new HashSet<>();
+        placesToLook.add(original);
+
+        while (found.size() < MAXIMUM_COMPONENT_COUNT && !placesToLook.isEmpty()) {
+            Iterator<BlockPos> javaBad = placesToLook.iterator();
+            BlockPos questioning = javaBad.next();
+            javaBad.remove();
+
+            TileEntity maybeTE = world.getTileEntity(questioning);
+            if (maybeTE instanceof TileDumbComputerComponent) {
+                found.add((TileDumbComputerComponent) maybeTE);
+                for (Direction d : Direction.values()) {
+                    placesToLook.add(maybeTE.getPos().offset(d));
+                }
+            }
+        }
+
+        return found;
+    }
+
 }

@@ -1,0 +1,103 @@
+JMP MAIN
+
+;; ITOA(i64 i) -> void
+;; Return a reference to a zero-terminated string containing the string representation of `i`.
+;;
+;; REGISTERS:
+;; - R1: 8 bytes
+;; - R2: 8 bytes
+;; - SP: 2 bytes
+;;
+;; STACK SPACE: 0 bytes
+;;
+;; OTHER: Writes the string to 0x1000. *If you have any ROM this will NOT WORK.*
+;; Edit the source code and change `#def STRING_LOCATION 0x1000` to something more helpful.
+ITOA:
+    #def MINUS_SIGN 0x2D
+    ; vvv change this vvv
+    #def STRING_LOCATION 0x1000
+    ; this needs to be STRING_LOCATION - (size of everything else)
+    #def STRING_LOCATION_SP 0x0e00
+
+    ; Save the original SP here
+    WRITE SP ITOA_SAVE_SP
+    MOV STRING_LOCATION_SP SP ; we write our string there
+    JLZ R0 ITOA_WRITE_MINUS_SIGN
+    JMP ITOA_LOOP
+    ITOA_WRITE_MINUS_SIGN:
+    ; it's negative so write our minus sign
+    PUSH MINUS_SIGN
+    NEG R0
+    JMP ITOA_LOOP
+    
+    ITOA_SAVE_SP:
+    JMP 0x00 ; two bytes
+
+    ITOA_LOOP:
+        MOV 10 R1 ; We want to div/mod by 10
+        CALL DIV_MOD
+        ; We want our remainder to go into R1 and our quotient into R0
+        PUSH R0 ; save the index of the first thing
+        ADD R0 8 ; increment to the quotient
+        READ 8 R0 R0
+        POP R1 ; get back the index of the first thing
+        READ 8 R1 R1
+        ; Add 48 to get the ascii code
+        ADD R1 48
+        ; We only want to push one byte, but R1 is 8!
+        ; So shift R1 over by 7 bytes
+        ; 00 00 00 00 00 00 00 ME becomes
+        ; ME 00 00 00 00 00 00 00
+        ; this does clobber anything higher on the stack but we'll hope you're not using that
+        SHL R1 56
+        PRINT R1
+        PUSH R1
+        SUB SP 7
+        ; If our quotient is more than 0 we're still all good
+        JGZ R0 ITOA_LOOP
+    ; We're all done!
+    PUSH 0 ; null-terminate our string
+    ; And get our old SP back
+    READ 2 ITOA_SAVE_SP SP
+    ; and return
+    MOV STRING_LOCATION R0
+    RET
+
+;; DIV_MOD(i64 lhs, i64 rhs) -> (i64, i64)
+;; `(lhs % rhs, lhs / rhs)`
+;;
+;; REGISTERS:
+;; - R1: 8 bytes
+;; - R2: 8 bytes
+DIV_MOD:
+    MOV 0 R2
+    DM_LOOP:
+        SUB R0 R1
+        JLZ R0 DM_FINISH
+        INC R2
+        JMP DM_LOOP
+    DM_FINISH:
+        ; R0 is going to be one loop too small now so "undo" one loop
+        ADD R0 R1
+        ; Let's """allocate""" some memory right here!
+        ; We need 16 bytes, so we will write JMP + 14-byte literal
+        ; The 1 opcode byte, 1 byte header, and 14 bytes of literal = 16 bytes!
+
+        WRITE R0 DM_RESULT_ALLOCATION
+        ; We're all done with R0's value so let's use it as math
+        MOV DM_RESULT_ALLOCATION R0
+        ADD R0 8
+        WRITE R2 R0
+        ; and return!
+        MOV DM_RESULT_ALLOCATION R0
+        RET
+        DM_RESULT_ALLOCATION:
+        JMP 0x00_01_02_03_04_05_06_07_08_09_0a_0b_0c_0d
+
+MAIN:
+MOV 1984 R0. CALL ITOA. DEBUG R0 0x10.
+; MOV -389752 R0. CALL ITOA. DEBUG R0 0x10.
+; MOV -2 R0. CALL ITOA. DEBUG R0 0x10.
+
+; And halt
+END: JMP END

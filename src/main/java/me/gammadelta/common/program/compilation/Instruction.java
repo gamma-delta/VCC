@@ -26,7 +26,7 @@ public class Instruction {
         }
         for (int i = 0; i < args.length; i++) {
             Arg a = args[i];
-            if (a.type == Arg.Type.IV) {
+            if (a.type == Arg.Type.IV || a.type == Arg.Type.EXTERNAL) {
                 // use the second argument here to not clobber the stackvalue if it exists
                 a = new Arg(reifyToken(offsets, a.token), a.stackvaluePosition, a.type);
                 if (a.stackvaluePosition != null) {

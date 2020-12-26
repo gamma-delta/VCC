@@ -13,7 +13,7 @@ public enum Opcode {
     MOVK(Instruction.Arg.Type.IV, Instruction.Arg.Type.REGISTER),
     SWP(Instruction.Arg.Type.REGISTER, Instruction.Arg.Type.REGISTER),
     READ(Instruction.Arg.Type.IV, Instruction.Arg.Type.EXTERNAL, Instruction.Arg.Type.REGISTER),
-    WRITE(Instruction.Arg.Type.IV, Instruction.Arg.Type.IV, Instruction.Arg.Type.EXTERNAL),
+    WRITE(Instruction.Arg.Type.IV, Instruction.Arg.Type.EXTERNAL),
     COPY(Instruction.Arg.Type.IV, Instruction.Arg.Type.EXTERNAL, Instruction.Arg.Type.EXTERNAL),
     PUSH(Instruction.Arg.Type.IV),
     POP(Instruction.Arg.Type.REGISTER),
@@ -47,6 +47,7 @@ public enum Opcode {
     // Misc
     QUERY(Instruction.Arg.Type.IV, Instruction.Arg.Type.REGISTER),
     PRINT(Instruction.Arg.Type.IV),
+    DEBUG(Instruction.Arg.Type.IV, Instruction.Arg.Type.IV),
     EMERGENCY(),
 
     // and an invalid one
@@ -111,6 +112,7 @@ public enum Opcode {
 
         OPCODES_TO_BYTECODE.forcePut(Opcode.QUERY, (byte) 0xF0);
         OPCODES_TO_BYTECODE.forcePut(Opcode.PRINT, (byte) 0xF1);
+        OPCODES_TO_BYTECODE.forcePut(Opcode.DEBUG, (byte) 0xFE);
         OPCODES_TO_BYTECODE.forcePut(Opcode.EMERGENCY, (byte) 0xFF);
     }
 }

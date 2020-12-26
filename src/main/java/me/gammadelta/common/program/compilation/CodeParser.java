@@ -87,7 +87,11 @@ public class CodeParser {
 								argument.row, argument.col, op, args.length, i
 						)
 				);
-				break consumeTokens;
+				// Keep consuming tokens to the end of line if it's too few
+				if (i < args.length) {
+					while (it.next().type != Token.Type.NEWLINE) {}
+				}
+				continue;
 			}
 			instructions.add(new Instruction(instructions.size(), next, op, args));
 		}

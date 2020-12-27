@@ -50,7 +50,7 @@ public class CodePreprocessor {
 		}
 	}	
 	private void handleDirective(Token directive, List<Token> arguments) throws CodeCompileException {
-		if (directive.meat().toLowerCase().equals("def")) {
+		if (directive.meat().equalsIgnoreCase("def")) {
 			handleDef(directive, arguments);
 		} else {
 			throw new CodeCompileException("Unknown directive %s", directive);

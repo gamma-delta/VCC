@@ -109,10 +109,10 @@ public class CodeLexer {
 		}
 		if (
 				(Character.toUpperCase(body.charAt(0)) == 'R' && isDec(body, 1))
-				|| body.toUpperCase().equals("NIL")
-				|| body.toUpperCase().equals("IP")
-				|| body.toUpperCase().equals("SP")
-				|| body.toUpperCase().equals("FLAGS")
+				|| body.equalsIgnoreCase("NIL")
+				|| body.equalsIgnoreCase("IP")
+				|| body.equalsIgnoreCase("SP")
+				|| body.equalsIgnoreCase("FLAGS")
 		) {
 			return Token.Type.REGISTER;
 		}

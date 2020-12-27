@@ -17,7 +17,7 @@ public interface IVirtualMemory {
     }
 
     // Immutable lookup table; relatively expensive O(n) setup, but gets very fast O(log n) retrieval
-    public class LinearDispatcher implements IVirtualMemory {
+    class LinearDispatcher implements IVirtualMemory {
         private static final IVirtualMemory[] TEMPLATE = new IVirtualMemory[0];
 
         private final long[] offsets;

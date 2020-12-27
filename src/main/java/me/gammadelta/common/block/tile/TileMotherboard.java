@@ -2,7 +2,7 @@ package me.gammadelta.common.block.tile;
 
 import me.gammadelta.Utils;
 import me.gammadelta.VCCMod;
-import me.gammadelta.VCCRegistry;
+import me.gammadelta.common.block.VCCBlocks;
 import me.gammadelta.common.program.MotherboardRepr;
 import net.minecraft.block.BlockState;
 import net.minecraft.state.properties.BlockStateProperties;
@@ -20,7 +20,7 @@ public class TileMotherboard extends TileEntity implements ITickableTileEntity {
     private boolean wasPoweredLastTick = false;
 
     public TileMotherboard() {
-        super(VCCRegistry.Tiles.MOTHERBOARD.get());
+        super(VCCBlocks.MOTHERBOARD_TILE.get());
     }
 
     public void updateConnectedComponents() {

@@ -106,7 +106,7 @@ public class MotherboardRepr {
     // region Interacting with memory
 
     // java bad
-    private static byte[] NEW_BYTE_ARRAY = new byte[0];
+    private static final byte[] NEW_BYTE_ARRAY = new byte[0];
 
     /**
      * Access the region of memory associated with the type and that block index, and return it.

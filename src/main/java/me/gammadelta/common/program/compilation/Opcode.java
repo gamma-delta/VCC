@@ -55,7 +55,7 @@ public enum Opcode {
 
     public final Instruction.Arg.Type[] operands;
 
-    private Opcode(Instruction.Arg.Type... operands) {
+    Opcode(Instruction.Arg.Type... operands) {
         this.operands = operands;
     }
 

@@ -1,0 +1,50 @@
+{
+  "variants": {
+    "facing=down,lit=false": {
+      "model": "vcc:block/motherboard",
+      "x": 90
+    },
+    "facing=up,lit=false": {
+      "model": "vcc:block/motherboard",
+      "x": -90
+    },
+    "facing=north,lit=false": {
+      "model": "vcc:block/motherboard"
+    },
+    "facing=south,lit=false": {
+      "model": "vcc:block/motherboard",
+      "y": 180
+    },
+    "facing=west,lit=false": {
+      "model": "vcc:block/motherboard",
+      "y": 270
+    },
+    "facing=east,lit=false": {
+      "model": "vcc:block/motherboard",
+      "y": 90
+    },
+    "facing=down,lit=true": {
+      "model": "vcc:block/motherboard",
+      "x": 90
+    },
+    "facing=up,lit=true": {
+      "model": "vcc:block/motherboard",
+      "x": -90
+    },
+    "facing=north,lit=true": {
+      "model": "vcc:block/motherboard"
+    },
+    "facing=south,lit=true": {
+      "model": "vcc:block/motherboard",
+      "y": 180
+    },
+    "facing=west,lit=true": {
+      "model": "vcc:block/motherboard",
+      "y": 270
+    },
+    "facing=east,lit=true": {
+      "model": "vcc:block/motherboard",
+      "y": 90
+    }
+  }
+}

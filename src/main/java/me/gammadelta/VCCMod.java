@@ -3,6 +3,7 @@ package me.gammadelta;
 import net.minecraft.block.Block;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -13,6 +14,9 @@ import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import me.gammadelta.common.block.VCCBlocks;
+import me.gammadelta.common.item.VCCItems;
 
 
 @Mod(VCCMod.MOD_ID)
@@ -32,10 +36,10 @@ public class VCCMod {
         // Register the doClientStuff method for modloading
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::doClientStuff);
 
-        VCCRegistry.init();
-
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
+        VCCBlocks.register();
+        VCCItems.register();
     }
 
     private void setup(final FMLCommonSetupEvent event) {

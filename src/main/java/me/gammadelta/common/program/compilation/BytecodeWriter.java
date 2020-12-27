@@ -20,13 +20,13 @@ public class BytecodeWriter {
     private static final int LABEL_USAGE_PLACEHOLDER_SIZE = 3;
     private static final byte LABEL_USAGE_HEADER = (byte) 0b01000000 | (0xff & LABEL_USAGE_PLACEHOLDER_SIZE);
 
-    private List<Instruction> program;
-    private ByteList wipProgram = new ByteArrayList();
+    private final List<Instruction> program;
+    private final ByteList wipProgram = new ByteArrayList();
 
     /**
      * Maps instruction indexes to the byte indexes they start at.
      */
-    private IntList instructionStarts = new IntArrayList();
+    private final IntList instructionStarts = new IntArrayList();
 
     /**
      * Cache of byte indexes of label IVs we need to fill in.
@@ -34,7 +34,7 @@ public class BytecodeWriter {
      * and save (byte index of fill required => instruction index needed) here.
      * In the final pass we use `instructionStarts` to plug in the data.
      */
-    private Map<Integer, Integer> labelIVsRequiringFills = new HashMap<>();
+    private final Map<Integer, Integer> labelIVsRequiringFills = new HashMap<>();
 
     public BytecodeWriter(List<Instruction> program) {
         this.program = program;

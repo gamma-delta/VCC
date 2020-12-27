@@ -376,7 +376,7 @@ public final class Utils {
         return new Pair<>(rem, lhsList);
     }
 
-    private static boolean DEBUG_MODE = true;
+    private static final boolean DEBUG_MODE = true;
     public static void debugf(String format, Object... params) {
         if (DEBUG_MODE) {
             System.out.printf(format, params);

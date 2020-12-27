@@ -1,7 +1,8 @@
 package me.gammadelta.datagen;
 
-import me.gammadelta.VCCRegistry;
 import me.gammadelta.common.block.BlockMotherboard;
+import me.gammadelta.common.block.VCCBlocks;
+
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.data.DataGenerator;
@@ -25,9 +26,13 @@ public class BlockStates extends BlockStateProvider {
 
     @Override
     protected void registerStatesAndModels() {
-        simpleBlock(VCCRegistry.Blocks.CHASSIS.get());
-
+        singleTextureBlock(VCCBlocks.CHASSIS_BLOCK.get(), "chassis", "block/chassis");
         registerMotherboard();
+    }
+
+    public void singleTextureBlock(Block block, String modelName, String textureName) {
+        ModelFile model = models().cubeAll(modelName, modLoc(textureName));
+        simpleBlock(block, model);
     }
 
     private void registerMotherboard() {
@@ -36,7 +41,7 @@ public class BlockStates extends BlockStateProvider {
                 new ResourceLocation(MOD_ID, "block/motherboard_front_unlit"), side, side, side);
         BlockModelBuilder lit = models().cube(BlockMotherboard.NAME, side, side,
                 new ResourceLocation(MOD_ID, "block/motherboard_front_lit"), side, side, side);
-        orientedBlock(VCCRegistry.Blocks.MOTHERBOARD.get(), state -> {
+        orientedBlock(VCCBlocks.MOTHERBOARD_BLOCK.get(), state -> {
             if (state.get(BlockStateProperties.LIT)) {
                 return lit;
             } else {

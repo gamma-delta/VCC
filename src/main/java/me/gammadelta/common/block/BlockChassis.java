@@ -10,6 +10,10 @@ import javax.annotation.Nullable;
 public class BlockChassis extends BlockComponent {
     public static final String NAME = "chassis";
 
+    public BlockChassis() {
+        super();
+    }
+
     @Override
     public boolean hasTileEntity(BlockState state) {
         return true;

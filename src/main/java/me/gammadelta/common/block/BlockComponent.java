@@ -12,16 +12,14 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.ToolType;
 
 public abstract class BlockComponent extends VCCBlock {
-    public BlockComponent(Properties properties) {
-        super(properties);
-    }
+    public static Properties PROPERTIES = Properties.create(Material.IRON)
+            .sound(SoundType.METAL)
+            .harvestLevel(1)
+            .harvestTool(ToolType.PICKAXE)
+            .hardnessAndResistance(2.0f);
 
     public BlockComponent() {
-        super(Properties.create(Material.IRON)
-                .sound(SoundType.METAL)
-                .harvestLevel(1)
-                .harvestTool(ToolType.PICKAXE)
-                .hardnessAndResistance(2.0f));
+        super(PROPERTIES);
     }
 
     @Override
@@ -38,9 +36,11 @@ public abstract class BlockComponent extends VCCBlock {
 
     private void tellTheMotherboardToUpdateItsComponentsWowThisMethodNameIsSoLong(IWorld world, BlockPos pos) {
         TileDumbComputerComponent te = (TileDumbComputerComponent) world.getTileEntity(pos);
-        TileMotherboard motherboard = te.getMotherboard(world);
-        if (motherboard != null) {
-            motherboard.updateConnectedComponents();
+        if (te != null) {
+            TileMotherboard motherboard = te.getMotherboard(world);
+            if (motherboard != null) {
+                motherboard.updateConnectedComponents();
+            }
         }
     }
 }

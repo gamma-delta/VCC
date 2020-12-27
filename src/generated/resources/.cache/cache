@@ -1,6 +1,7 @@
 a296baa27ef0b9e7cb9fbe46095416264a4ebb75 assets/vcc/blockstates/chassis.json
-a8defdf1e8edfa7cd96098bbcf5fe144068306e0 assets/vcc/blockstates/motherboard.json
+4d30304dbaf813526339ff328e8e5b46511caf85 assets/vcc/blockstates/motherboard.json
 f381ec102995bfe7eeda5340655fa07692c74d7e assets/vcc/models/block/chassis.json
-f8a527fa4fad1baa3f50f08e7cb74e0f71df817b assets/vcc/models/block/motherboard.json
+f8a527fa4fad1baa3f50f08e7cb74e0f71df817b assets/vcc/models/block/motherboard_lit.json
+fb949a5b0a3c1274244c095c52f88eec6510ca40 assets/vcc/models/block/motherboard_unlit.json
 d070d7a1fbca6f167f38762ba64851528070791d assets/vcc/models/item/chassis.json
 0f072a25c6b12f12570454aeb3f6941d039e2f03 assets/vcc/models/item/motherboard.json

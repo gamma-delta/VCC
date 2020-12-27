@@ -6,8 +6,15 @@ import it.unimi.dsi.fastutil.bytes.ByteList;
 import it.unimi.dsi.fastutil.bytes.ByteLists;
 import it.unimi.dsi.fastutil.ints.IntList;
 import me.gammadelta.common.block.tile.TileDumbComputerComponent;
+import net.minecraft.enchantment.Enchantment;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.INBT;
+import net.minecraft.nbt.ListNBT;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
+import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
@@ -391,24 +398,59 @@ public final class Utils {
     private static final int MAXIMUM_COMPONENT_COUNT = 1024;
     public static Set<TileDumbComputerComponent> findDumbComponents(BlockPos original, World world) {
         Set<TileDumbComputerComponent> found = new HashSet<>();
-        Set<BlockPos> placesToLook = new HashSet<>();
+        Queue<BlockPos> placesToLook = new ArrayDeque<>();
+        Set<BlockPos> placesSearched = new HashSet<>();
+
         placesToLook.add(original);
+        for (Direction d : Direction.values()) {
+            placesToLook.add(original.offset(d));
+        }
 
         while (found.size() < MAXIMUM_COMPONENT_COUNT && !placesToLook.isEmpty()) {
-            Iterator<BlockPos> javaBad = placesToLook.iterator();
-            BlockPos questioning = javaBad.next();
-            javaBad.remove();
-
+            BlockPos questioning = placesToLook.remove();
             TileEntity maybeTE = world.getTileEntity(questioning);
             if (maybeTE instanceof TileDumbComputerComponent) {
                 found.add((TileDumbComputerComponent) maybeTE);
                 for (Direction d : Direction.values()) {
-                    placesToLook.add(maybeTE.getPos().offset(d));
+                    BlockPos nextPos = maybeTE.getPos().offset(d);
+                    if (!placesSearched.contains(nextPos)) {
+                        placesToLook.add(nextPos);
+                        placesSearched.add(nextPos);
+                    }
                 }
             }
         }
 
         return found;
+    }
+
+    /**
+     * Given a player and their hand (from an activation), get the debug activation level.
+     * This is the level of Bane of Arthropods they have, or 0 if they don't have any.
+     */
+    public static int funniDebugLevel(PlayerEntity player, Hand hand) {
+        // https://minecraft.gamepedia.com/Player.dat_format#Enchantments
+        ItemStack heldItem = player.getHeldItem(hand);
+        // ok, intellij says this can't be null, but what happens if you aren't holding anything?
+        // czech mate, libarls
+        if (heldItem == null) {
+            return 0;
+        }
+        ListNBT enchants = heldItem.getEnchantmentTagList();
+        for (INBT ienchTag : enchants) {
+            CompoundNBT enchTag = (CompoundNBT) ienchTag;
+            if (enchTag == null) {
+                continue;
+            }
+            String enchID = enchTag.getString("id");
+            if (enchID.equals("minecraft:bane_of_arthropods")) {
+                // this returns 0 if it can't find the level.
+                // oh what would I do for an actually good Option in Java...
+                return enchTag.getInt("lvl");
+            }
+        }
+        // there were enchantments but no BoAs
+        return 0;
     }
 
 }

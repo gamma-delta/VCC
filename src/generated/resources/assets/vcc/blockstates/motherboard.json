@@ -1,49 +1,49 @@
 {
   "variants": {
     "facing=down,lit=false": {
-      "model": "vcc:block/motherboard",
+      "model": "vcc:block/motherboard_unlit",
       "x": 90
     },
     "facing=up,lit=false": {
-      "model": "vcc:block/motherboard",
+      "model": "vcc:block/motherboard_unlit",
       "x": -90
     },
     "facing=north,lit=false": {
-      "model": "vcc:block/motherboard"
+      "model": "vcc:block/motherboard_unlit"
     },
     "facing=south,lit=false": {
-      "model": "vcc:block/motherboard",
+      "model": "vcc:block/motherboard_unlit",
       "y": 180
     },
     "facing=west,lit=false": {
-      "model": "vcc:block/motherboard",
+      "model": "vcc:block/motherboard_unlit",
       "y": 270
     },
     "facing=east,lit=false": {
-      "model": "vcc:block/motherboard",
+      "model": "vcc:block/motherboard_unlit",
       "y": 90
     },
     "facing=down,lit=true": {
-      "model": "vcc:block/motherboard",
+      "model": "vcc:block/motherboard_lit",
       "x": 90
     },
     "facing=up,lit=true": {
-      "model": "vcc:block/motherboard",
+      "model": "vcc:block/motherboard_lit",
       "x": -90
     },
     "facing=north,lit=true": {
-      "model": "vcc:block/motherboard"
+      "model": "vcc:block/motherboard_lit"
     },
     "facing=south,lit=true": {
-      "model": "vcc:block/motherboard",
+      "model": "vcc:block/motherboard_lit",
       "y": 180
     },
     "facing=west,lit=true": {
-      "model": "vcc:block/motherboard",
+      "model": "vcc:block/motherboard_lit",
       "y": 270
     },
     "facing=east,lit=true": {
-      "model": "vcc:block/motherboard",
+      "model": "vcc:block/motherboard_lit",
       "y": 90
     }
   }

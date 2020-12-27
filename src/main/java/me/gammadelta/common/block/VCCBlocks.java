@@ -14,12 +14,19 @@ import static me.gammadelta.VCCMod.MOD_ID;
 
 public class VCCBlocks {
 	private static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, MOD_ID);
+	private static final DeferredRegister<TileEntityType<?>> TILES = DeferredRegister.create(
+			ForgeRegistries.TILE_ENTITIES, MOD_ID);
+
+	// region Register blocks
+
 	public static final RegistryObject<Block> MOTHERBOARD_BLOCK = BLOCKS.register(BlockMotherboard.NAME,
 			BlockMotherboard::new);
 	public static final RegistryObject<Block> CHASSIS_BLOCK = BLOCKS.register(BlockChassis.NAME,
-			() -> new BlockChassis());
-	private static final DeferredRegister<TileEntityType<?>> TILES = DeferredRegister.create(
-			ForgeRegistries.TILE_ENTITIES, MOD_ID);
+			BlockChassis::new);
+
+	// endregion
+
+	// region Register tile entities
 
 	public static final RegistryObject<TileEntityType<TileMotherboard>> MOTHERBOARD_TILE = TILES.register(
 			BlockMotherboard.NAME,
@@ -27,6 +34,8 @@ public class VCCBlocks {
 	public static final RegistryObject<TileEntityType<TileChassis>> CHASSIS_TILE = TILES.register(
 			BlockChassis.NAME,
 			() -> TileEntityType.Builder.create(TileChassis::new, CHASSIS_BLOCK.get()).build(null));
+
+	// endregion
 
 	public static void register(){
 		BLOCKS.register(FMLJavaModLoadingContext.get().getModEventBus());

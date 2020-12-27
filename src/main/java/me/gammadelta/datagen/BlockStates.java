@@ -1,5 +1,6 @@
 package me.gammadelta.datagen;
 
+import me.gammadelta.common.block.BlockChassis;
 import me.gammadelta.common.block.BlockMotherboard;
 import me.gammadelta.common.block.VCCBlocks;
 
@@ -26,7 +27,7 @@ public class BlockStates extends BlockStateProvider {
 
     @Override
     protected void registerStatesAndModels() {
-        singleTextureBlock(VCCBlocks.CHASSIS_BLOCK.get(), "chassis", "block/chassis");
+        singleTextureBlock(VCCBlocks.CHASSIS_BLOCK.get(), BlockChassis.NAME, "block/chassis");
         registerMotherboard();
     }
 
@@ -37,9 +38,9 @@ public class BlockStates extends BlockStateProvider {
 
     private void registerMotherboard() {
         ResourceLocation side = new ResourceLocation(MOD_ID, "block/chassis");
-        BlockModelBuilder unlit = models().cube(BlockMotherboard.NAME, side, side,
+        BlockModelBuilder unlit = models().cube(BlockMotherboard.NAME + "_unlit", side, side,
                 new ResourceLocation(MOD_ID, "block/motherboard_front_unlit"), side, side, side);
-        BlockModelBuilder lit = models().cube(BlockMotherboard.NAME, side, side,
+        BlockModelBuilder lit = models().cube(BlockMotherboard.NAME + "_lit", side, side,
                 new ResourceLocation(MOD_ID, "block/motherboard_front_lit"), side, side, side);
         orientedBlock(VCCBlocks.MOTHERBOARD_BLOCK.get(), state -> {
             if (state.get(BlockStateProperties.LIT)) {

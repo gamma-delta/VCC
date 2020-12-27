@@ -43,7 +43,7 @@ public class MemoryRWTest {
         memoryCounts.put(MemoryType.ROM, 0);
         memoryCounts.put(MemoryType.RAM, 0);
         MotherboardRepr motherboard = new MotherboardRepr(memoryCounts, new ArrayList<>(), new ArrayList<>(),
-                new ArrayList<>(), rand);
+                new ArrayList<>());
 
         // Fill up the memory.
         for (int idx = 0; idx < motherboard.memory.length; idx++) {
@@ -103,7 +103,7 @@ public class MemoryRWTest {
         memoryCounts.put(MemoryType.EXRAM, 0);
         memoryCounts.put(MemoryType.ROM, 0);
         memoryCounts.put(MemoryType.RAM, 0);
-        MotherboardRepr motherboard = new MotherboardRepr(memoryCounts, new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), rand);
+        MotherboardRepr motherboard = new MotherboardRepr(memoryCounts, new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
 
         // Fill up the memory.
         for (int idx = 0; idx < motherboard.memory.length; idx++) {

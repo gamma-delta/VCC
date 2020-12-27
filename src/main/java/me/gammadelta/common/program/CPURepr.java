@@ -4,10 +4,13 @@ import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.bytes.ByteArrayList;
 import it.unimi.dsi.fastutil.bytes.ByteList;
 import it.unimi.dsi.fastutil.bytes.ByteLists;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import me.gammadelta.Utils;
 import me.gammadelta.common.program.compilation.Opcode;
+import net.minecraft.nbt.*;
 import net.minecraft.util.math.BlockPos;
+import net.minecraftforge.common.util.Constants;
 import org.apache.commons.lang3.NotImplementedException;
 
 import javax.annotation.Nullable;
@@ -32,14 +35,22 @@ public class CPURepr {
     static byte SQUISH_MASK = (byte) ~SQUISH_BIT;
 
     public byte FLAGS = 0;
+    private static String FLAGS_TAG = "flags";
     public byte[] IP;
+    private static String IP_TAG = "IP";
     public byte[] SP;
+    private static String SP_TAG = "SP";
+
     // These references really only exist to prevent them from being dropped.
     // Most things should be done through the IP and SP variables.
+    // In particular, the actual value is not stored inside the RegisterRepr,
+    // but inside IP and SP.
     @Nullable
     public RegisterRepr ipExtender;
+    private static String IP_EXTENDER_TAG = "IP_extender";
     @Nullable
     public RegisterRepr spExtender;
+    private static String SP_EXTENDER_TAG = "SP_extender";
 
     // Used to make working with the IP in the middle of a operation not difficult
     // It's set to the IP at the beginning of every step and written back.
@@ -49,6 +60,7 @@ public class CPURepr {
      * Where the CPU block that pretends to be this is
      */
     public BlockPos manifestation;
+    private static String MANIFESTATION_TAG = "manifestation";
 
     /**
      * Cached indexes of registers this CPU can see.
@@ -56,9 +68,7 @@ public class CPURepr {
      * Closest -> farthest. Equidistant ones are in subarrays.
      */
     public ArrayList<IntList> registers;
-    /**
-     * Cached total number of registers
-     */
+    private static String REGISTERS_TAG = "register_idxes";
     public int registerCount;
 
     /**
@@ -66,12 +76,14 @@ public class CPURepr {
      * The indexes refer to the array of datafaces in the motherboard.
      */
     public ArrayList<IntList> datafaces;
+    private static String DATAFACES_TAG = "dataface_idxes";
     public int datafaceCount;
 
     /**
      * Each array stores the indices that this CPU thinks the given memory is at.
      */
     public EnumMap<MemoryType, ArrayList<IntList>> memoryLocations;
+    private static String MEMORY_LOCATIONS_TAG = "memory_locations";
     public EnumMap<MemoryType, Integer> memoryCounts;
     public EnumMap<MemoryType, Long> memoryStarts;
 
@@ -83,21 +95,8 @@ public class CPURepr {
         this.spExtender = spExtender;
 
         this.registers = registers;
-        this.registerCount = this.registers.stream().mapToInt(IntList::size).sum();
         this.datafaces = datafaces;
-        this.datafaceCount = this.datafaces.stream().mapToInt(IntList::size).sum();
         this.memoryLocations = memoryLocations;
-
-        this.memoryCounts = new EnumMap<>(MemoryType.class);
-        this.memoryStarts = new EnumMap<>(MemoryType.class);
-        long currentMemIdx = 0;
-        for (MemoryType memType : MemoryType.values()) {
-            ArrayList<IntList> groups = this.memoryLocations.get(memType);
-            int memCount = groups.stream().mapToInt(IntList::size).sum();
-            this.memoryCounts.put(memType, memCount);
-            this.memoryStarts.put(memType, currentMemIdx);
-            currentMemIdx += memCount * memType.storageAmount;
-        }
 
         if (this.ipExtender != null) {
             this.IP = new byte[this.ipExtender.getByteCount() + 1];
@@ -109,6 +108,8 @@ public class CPURepr {
         } else {
             this.SP = new byte[1];
         }
+
+        initializeIdxes();
     }
 
     /**
@@ -117,6 +118,109 @@ public class CPURepr {
     public CPURepr(ArrayList<IntList> registers,
             EnumMap<MemoryType, ArrayList<IntList>> memoryLocations) {
         this(null, null, new BlockPos(-1, -1, -1), registers, new ArrayList<>(), memoryLocations);
+    }
+
+    /**
+     * Deserialize a CPURepr from NBT.
+     */
+    public CPURepr(CompoundNBT tag) {
+        this.manifestation = NBTUtil.readBlockPos(tag.getCompound(MANIFESTATION_TAG));
+        CompoundNBT ipTag = tag.getCompound(IP_EXTENDER_TAG);
+        if (!ipTag.isEmpty()) {
+            this.ipExtender = new RegisterRepr(ipTag);
+        }
+        CompoundNBT spTag = tag.getCompound(SP_EXTENDER_TAG);
+        if (!spTag.isEmpty()) {
+            this.spExtender = new RegisterRepr(spTag);
+        }
+
+        this.registers = new ArrayList<>();
+        ListNBT regis = tag.getList(REGISTERS_TAG, Constants.NBT.TAG_INT_ARRAY);
+        for (int c = 0; c < regis.size(); c++) {
+            int[] group = regis.getIntArray(c);
+            this.registers.add(new IntArrayList(group));
+        }
+        this.datafaces = new ArrayList<>();
+        ListNBT dfaces = tag.getList(DATAFACES_TAG, Constants.NBT.TAG_INT_ARRAY);
+        for (int c = 0; c < regis.size(); c++) {
+            int[] group = dfaces.getIntArray(c);
+            this.datafaces.add(new IntArrayList(group));
+        }
+
+        this.memoryLocations = new EnumMap<>(MemoryType.class);
+        CompoundNBT memLocs = tag.getCompound(MEMORY_LOCATIONS_TAG);
+        for (MemoryType expected : MemoryType.values()) {
+            ListNBT locationsTag = memLocs.getList(expected.name(), Constants.NBT.TAG_INT_ARRAY);
+            ArrayList<IntList> locations = new ArrayList<>(locationsTag.size());
+            for (int i = 0; i < locationsTag.size(); i++) {
+                int[] groupTag = locationsTag.getIntArray(i);
+                locations.add(new IntArrayList(groupTag));
+            }
+            this.memoryLocations.put(expected, locations);
+        }
+
+        this.IP = tag.getByteArray(IP_TAG);
+        this.SP = tag.getByteArray(SP_TAG);
+
+        this.initializeIdxes();
+    }
+
+    public CompoundNBT serialize() {
+        CompoundNBT tag = new CompoundNBT();
+
+        tag.put(MANIFESTATION_TAG, NBTUtil.writeBlockPos(this.manifestation));
+
+        if (this.ipExtender != null) {
+            tag.put(IP_EXTENDER_TAG, this.ipExtender.serialize());
+        }
+        if (this.spExtender != null) {
+            tag.put(SP_EXTENDER_TAG, this.spExtender.serialize());
+        }
+
+        ListNBT regisTag = new ListNBT();
+        for (IntList regiGroup : this.registers) {
+            regisTag.add(new IntArrayNBT(regiGroup.toIntArray()));
+        }
+        tag.put(REGISTERS_TAG, regisTag);
+        ListNBT dfacesTag = new ListNBT();
+        for (IntList dfaceGroup : this.datafaces) {
+            dfacesTag.add(new IntArrayNBT(dfaceGroup.toIntArray()));
+        }
+        tag.put(DATAFACES_TAG, dfacesTag);
+
+        CompoundNBT memLocs = new CompoundNBT();
+        this.memoryLocations.forEach((memType, locations) -> {
+            ListNBT locationsTag = new ListNBT();
+            for (IntList group : locations) {
+                locationsTag.add(new IntArrayNBT(group.toIntArray()));
+            }
+            memLocs.put(memType.name(), locationsTag);
+        });
+        tag.put(MEMORY_LOCATIONS_TAG, memLocs);
+
+        tag.putByteArray(IP_TAG, this.IP);
+        tag.putByteArray(SP_TAG, this.SP);
+
+        return tag;
+    }
+
+    /**
+     * Count the number of registers and datafaces, calculate where and how much memory there is.
+     */
+    private void initializeIdxes() {
+        this.registerCount = this.registers.stream().mapToInt(IntList::size).sum();
+        this.datafaceCount = this.datafaces.stream().mapToInt(IntList::size).sum();
+
+        this.memoryCounts = new EnumMap<>(MemoryType.class);
+        this.memoryStarts = new EnumMap<>(MemoryType.class);
+        long currentMemIdx = 0;
+        for (MemoryType memType : MemoryType.values()) {
+            ArrayList<IntList> groups = this.memoryLocations.get(memType);
+            int memCount = groups.stream().mapToInt(IntList::size).sum();
+            this.memoryCounts.put(memType, memCount);
+            this.memoryStarts.put(memType, currentMemIdx);
+            currentMemIdx += memCount * memType.storageAmount;
+        }
     }
 
     // Turn a raw memory index into a MemoryLocation
@@ -898,7 +1002,6 @@ public class CPURepr {
         }
 
     }
-
 
     // endregion
 }

@@ -69,7 +69,7 @@ public class ExecutionTest {
                 new RegisterRepr(new BlockPos[]{BlockPos.ZERO, BlockPos.ZERO}),
                 new RegisterRepr(new BlockPos[]{BlockPos.ZERO, BlockPos.ZERO}),
                 new RegisterRepr(new BlockPos[]{BlockPos.ZERO, BlockPos.ZERO})
-        )), new ArrayList<>(), rand);
+        )), new ArrayList<>());
 
         // Write the program to XRAM
         for (int i = 0; i < bytecode.size(); i++) {
@@ -140,7 +140,7 @@ public class ExecutionTest {
                 new RegisterRepr(eightBytes),
                 new RegisterRepr(eightBytes),
                 new RegisterRepr(eightBytes)
-        )), new ArrayList<>(), rand);
+        )), new ArrayList<>());
 
         // Write the program to XRAM
         for (int i = 0; i < bytecode.size(); i++) {

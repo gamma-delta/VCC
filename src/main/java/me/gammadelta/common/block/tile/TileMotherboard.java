@@ -1,10 +1,17 @@
 package me.gammadelta.common.block.tile;
 
+import me.gammadelta.Utils;
 import me.gammadelta.VCCMod;
+import me.gammadelta.VCCRegistry;
 import me.gammadelta.common.program.MotherboardRepr;
+import net.minecraft.block.BlockState;
+import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityType;
+import net.minecraftforge.common.util.Constants;
+
+import java.util.Arrays;
+import java.util.Set;
 
 public class TileMotherboard extends TileEntity implements ITickableTileEntity {
     // We don't need to serialize this because the client doesn't need to know about it.
@@ -12,10 +19,14 @@ public class TileMotherboard extends TileEntity implements ITickableTileEntity {
     // used for executing a frame on a high power signal
     private boolean wasPoweredLastTick = false;
 
-    // boy i would love to know what this constructor means or does
-    // as far as i know it's magic.
-    public TileMotherboard(TileEntityType<?> type) {
-        super(type);
+    public TileMotherboard() {
+        super(VCCRegistry.Tiles.MOTHERBOARD.get());
+    }
+
+    public void updateConnectedComponents() {
+        Set<TileDumbComputerComponent> found = Utils.findDumbComponents(pos, world);
+        // for now
+        VCCMod.LOGGER.info(Arrays.toString(found.toArray()));
     }
 
 
@@ -38,7 +49,14 @@ public class TileMotherboard extends TileEntity implements ITickableTileEntity {
         if (numberOfStepsToTake > 0) {
             VCCMod.LOGGER.info("Ticking {} times", numberOfStepsToTake);
         }
+
+        BlockState bs = world.getBlockState(pos);
+        if (bs.get(BlockStateProperties.LIT) == (numberOfStepsToTake == 0)) {
+            // we want it to be lit if we are taking any steps right now
+            // also sorry the boolean statement above is complicated ;-;
+            world.setBlockState(pos, bs.with(BlockStateProperties.LIT, numberOfStepsToTake != 0),
+                    // dunno what these do but mcjty has them
+                    Constants.BlockFlags.NOTIFY_NEIGHBORS + Constants.BlockFlags.BLOCK_UPDATE);
+        }
     }
-
-
 }

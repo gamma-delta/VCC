@@ -17,7 +17,7 @@ import org.apache.logging.log4j.Logger;
 
 @Mod(VCCMod.MOD_ID)
 public class VCCMod {
-    public static final String MOD_ID = "VCC";
+    public static final String MOD_ID = "vcc";
 
     // Directly reference a log4j logger.
     public static final Logger LOGGER = LogManager.getLogger();
@@ -31,6 +31,8 @@ public class VCCMod {
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::processIMC);
         // Register the doClientStuff method for modloading
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::doClientStuff);
+
+        VCCRegistry.init();
 
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);

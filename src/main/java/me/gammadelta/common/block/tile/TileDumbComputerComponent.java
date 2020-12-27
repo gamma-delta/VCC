@@ -6,6 +6,7 @@ import net.minecraft.nbt.NBTUtil;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
@@ -34,7 +35,7 @@ public abstract class TileDumbComputerComponent extends TileEntity {
     }
 
     @Nullable
-    private TileMotherboard getMotherboard(World world) {
+    public TileMotherboard getMotherboard(IWorld world) {
         if (this.motherboardLocation == null) {
             return null;
         }

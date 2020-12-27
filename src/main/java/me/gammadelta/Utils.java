@@ -385,7 +385,7 @@ public final class Utils {
 
     /**
      * Flood fill from a given component and return the dumb components found.
-     * Does not include anything that may be at the original blockpos.
+     * Includes the thing at the given blockpos (if it's a dumb component).
      */
     // TODO: make an actual config handler.
     private static final int MAXIMUM_COMPONENT_COUNT = 1024;

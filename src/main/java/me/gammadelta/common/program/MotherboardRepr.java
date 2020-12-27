@@ -2,6 +2,7 @@ package me.gammadelta.common.program;
 
 import it.unimi.dsi.fastutil.bytes.ByteArrayList;
 import me.gammadelta.Utils;
+import me.gammadelta.common.block.tile.TileDumbComputerComponent;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -71,8 +72,14 @@ public class MotherboardRepr {
         }
         // Fill memory with randomness
         this.memory = new byte[memorySize];
-        // TODO: re-enable this
-        // rand.nextBytes(this.memory);
+        rand.nextBytes(this.memory);
+    }
+
+    /**
+     * Return a new motherboard constructed from the found components.
+     */
+    public MotherboardRepr(BlockPos thisPos, Iterable<TileDumbComputerComponent> components) {
+
     }
 
     /**

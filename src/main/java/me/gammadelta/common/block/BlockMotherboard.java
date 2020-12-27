@@ -3,11 +3,12 @@ package me.gammadelta.common.block;
 import me.gammadelta.Utils;
 import me.gammadelta.VCCMod;
 import me.gammadelta.common.block.tile.TileMotherboard;
-import me.gammadelta.common.network.MotherboardOwnsWhatQuery;
+import me.gammadelta.common.network.MsgHighlightBlocks;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.state.StateContainer;
@@ -20,6 +21,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.network.PacketDistributor;
 
 import javax.annotation.Nullable;
 
@@ -63,10 +65,13 @@ public class BlockMotherboard extends VCCBlock {
             // not sure how this happened...
             return ActionResultType.FAIL;
         }
+        TileMotherboard mother = (TileMotherboard) te;
 
         int debugLevel = Utils.funniDebugLevel(player, handIn);
         if (debugLevel > 0) {
-            VCCMod.getNetwork().sendToServer(new MotherboardOwnsWhatQuery(pos));
+            VCCMod.getNetwork().send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player), new MsgHighlightBlocks(
+                    mother.getControlledBlocks(), mother.getUUID()
+            ));
             return ActionResultType.SUCCESS;
         }
 

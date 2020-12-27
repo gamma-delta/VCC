@@ -8,6 +8,7 @@ import me.gammadelta.common.program.CPURepr;
 import me.gammadelta.common.program.MemoryType;
 import me.gammadelta.common.program.MotherboardRepr;
 import me.gammadelta.common.program.Permissions;
+import net.minecraft.util.math.BlockPos;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -36,12 +37,13 @@ public class MemoryRWTest {
         // i don't initialize anything else so DON'T READ IT
         CPURepr cpu = new CPURepr(new ArrayList<>(), memLocations);
 
-        EnumMap<MemoryType, Integer> memoryCounts = new EnumMap<>(MemoryType.class);
+        EnumMap<MemoryType, ArrayList<BlockPos>> memoryCounts = new EnumMap<>(MemoryType.class);
         // we DO have to put everything in here
-        memoryCounts.put(MemoryType.XRAM, 5);
-        memoryCounts.put(MemoryType.EXRAM, 0);
-        memoryCounts.put(MemoryType.ROM, 0);
-        memoryCounts.put(MemoryType.RAM, 0);
+        memoryCounts.put(MemoryType.XRAM, new ArrayList<>(
+                Arrays.asList(BlockPos.ZERO, BlockPos.ZERO, BlockPos.ZERO, BlockPos.ZERO, BlockPos.ZERO)));
+        memoryCounts.put(MemoryType.EXRAM, new ArrayList<>());
+        memoryCounts.put(MemoryType.ROM, new ArrayList<>());
+        memoryCounts.put(MemoryType.RAM, new ArrayList<>());
         MotherboardRepr motherboard = new MotherboardRepr(memoryCounts, new ArrayList<>(), new ArrayList<>(),
                 new ArrayList<>());
 
@@ -97,13 +99,15 @@ public class MemoryRWTest {
         // i don't initialize anything else so DON'T READ IT
         CPURepr cpu = new CPURepr(new ArrayList<>(), memLocations);
 
-        EnumMap<MemoryType, Integer> memoryCounts = new EnumMap<>(MemoryType.class);
+        EnumMap<MemoryType, ArrayList<BlockPos>> memoryCounts = new EnumMap<>(MemoryType.class);
         // we DO have to put everything in here
-        memoryCounts.put(MemoryType.XRAM, 5);
-        memoryCounts.put(MemoryType.EXRAM, 0);
-        memoryCounts.put(MemoryType.ROM, 0);
-        memoryCounts.put(MemoryType.RAM, 0);
-        MotherboardRepr motherboard = new MotherboardRepr(memoryCounts, new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+        memoryCounts.put(MemoryType.XRAM, new ArrayList<>(
+                Arrays.asList(BlockPos.ZERO, BlockPos.ZERO, BlockPos.ZERO, BlockPos.ZERO, BlockPos.ZERO)));
+        memoryCounts.put(MemoryType.EXRAM, new ArrayList<>());
+        memoryCounts.put(MemoryType.ROM, new ArrayList<>());
+        memoryCounts.put(MemoryType.RAM, new ArrayList<>());
+        MotherboardRepr motherboard = new MotherboardRepr(memoryCounts, new ArrayList<>(), new ArrayList<>(),
+                new ArrayList<>());
 
         // Fill up the memory.
         for (int idx = 0; idx < motherboard.memory.length; idx++) {

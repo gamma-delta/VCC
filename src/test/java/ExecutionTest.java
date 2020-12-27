@@ -1,4 +1,3 @@
-import it.unimi.dsi.fastutil.bytes.ByteArrayList;
 import it.unimi.dsi.fastutil.bytes.ByteList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntLists;
@@ -57,12 +56,12 @@ public class ExecutionTest {
                 memLocations
         );
 
-        EnumMap<MemoryType, Integer> memoryCounts = new EnumMap<>(MemoryType.class);
+        EnumMap<MemoryType, ArrayList<BlockPos>> memoryCounts = new EnumMap<>(MemoryType.class);
         // we DO have to put everything in here
-        memoryCounts.put(MemoryType.XRAM, 1);
-        memoryCounts.put(MemoryType.EXRAM, 0);
-        memoryCounts.put(MemoryType.ROM, 0);
-        memoryCounts.put(MemoryType.RAM, 0);
+        memoryCounts.put(MemoryType.XRAM, new ArrayList<>(Collections.singletonList(BlockPos.ZERO)));
+        memoryCounts.put(MemoryType.EXRAM, new ArrayList<>());
+        memoryCounts.put(MemoryType.ROM, new ArrayList<>());
+        memoryCounts.put(MemoryType.RAM, new ArrayList<>());
         MotherboardRepr motherboard = new MotherboardRepr(memoryCounts, new ArrayList<>(
                 Collections.singletonList(new ArrayList<>(Collections.singletonList(cpu)))
         ), new ArrayList<>(Arrays.asList(
@@ -127,12 +126,12 @@ public class ExecutionTest {
                 memLocations
         );
 
-        EnumMap<MemoryType, Integer> memoryCounts = new EnumMap<>(MemoryType.class);
+        EnumMap<MemoryType, ArrayList<BlockPos>> memoryCounts = new EnumMap<>(MemoryType.class);
         // we DO have to put everything in here
-        memoryCounts.put(MemoryType.XRAM, 1);
-        memoryCounts.put(MemoryType.EXRAM, 0);
-        memoryCounts.put(MemoryType.ROM, 0);
-        memoryCounts.put(MemoryType.RAM, 1);
+        memoryCounts.put(MemoryType.XRAM, new ArrayList<>(Collections.singletonList(BlockPos.ZERO)));
+        memoryCounts.put(MemoryType.EXRAM, new ArrayList<>());
+        memoryCounts.put(MemoryType.ROM, new ArrayList<>());
+        memoryCounts.put(MemoryType.RAM, new ArrayList<>(Collections.singletonList(BlockPos.ZERO)));
         BlockPos[] eightBytes = new BlockPos[]{BlockPos.ZERO, BlockPos.ZERO, BlockPos.ZERO, BlockPos.ZERO, BlockPos.ZERO, BlockPos.ZERO, BlockPos.ZERO, BlockPos.ZERO};
         MotherboardRepr motherboard = new MotherboardRepr(memoryCounts, new ArrayList<>(
                 Collections.singletonList(new ArrayList<>(Collections.singletonList(cpu)))

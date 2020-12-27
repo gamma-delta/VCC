@@ -2,19 +2,15 @@ package me.gammadelta.common.program;
 
 import it.unimi.dsi.fastutil.bytes.ByteArrayList;
 import me.gammadelta.Utils;
-import me.gammadelta.VCCMod;
+import me.gammadelta.common.block.tile.TileChassis;
 import me.gammadelta.common.block.tile.TileDumbComputerComponent;
-import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.INBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.nbt.NBTUtil;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.Constants;
 
-import javax.annotation.Nullable;
-import java.io.File;
 import java.util.*;
 
 public class MotherboardRepr {
@@ -69,6 +65,9 @@ public class MotherboardRepr {
     public ArrayList<BlockPos> overclocks;
     private static final String OVERCLOCKS_KEY = "overclocks";
 
+    public ArrayList<BlockPos> chassises;
+    private static final String CHASSISES_KEY = "what_is_the_plural_of_chassis_someone_tell_me_please";
+
     // endregion End serialized values.
 
     /**
@@ -84,6 +83,7 @@ public class MotherboardRepr {
         this.cpus = cpus;
         this.registers = registers;
         this.overclocks = overclocks;
+        this.chassises = new ArrayList<>();
 
         this.uuid = UUID.randomUUID();
 
@@ -103,6 +103,15 @@ public class MotherboardRepr {
         this.cpus = new ArrayList<>();
         this.registers = new ArrayList<>();
         this.overclocks = new ArrayList<>();
+        this.chassises = new ArrayList<>();
+
+        for (Iterator<TileDumbComputerComponent> it = components; it.hasNext(); ) {
+            TileDumbComputerComponent component = it.next();
+
+            if (component instanceof TileChassis) {
+                this.chassises.add(component.getPos());
+            }
+        }
 
         this.uuid = UUID.randomUUID();
 
@@ -148,6 +157,11 @@ public class MotherboardRepr {
         this.overclocks = new ArrayList<>(overclocksTag.size());
         for (int c = 0; c < overclocksTag.size(); c++) {
             overclocks.add(NBTUtil.readBlockPos(overclocksTag.getCompound(c)));
+        }
+        ListNBT chassisTag = tag.getList(OVERCLOCKS_KEY, Constants.NBT.TAG_COMPOUND);
+        this.chassises = new ArrayList<>(chassisTag.size());
+        for (int c = 0; c < chassisTag.size(); c++) {
+            chassises.add(NBTUtil.readBlockPos(chassisTag.getCompound(c)));
         }
 
         try {
@@ -198,6 +212,11 @@ public class MotherboardRepr {
             overclocksTag.add(NBTUtil.writeBlockPos(oclock));
         }
         tag.put(OVERCLOCKS_KEY, overclocksTag);
+        ListNBT chassisTag = new ListNBT();
+        for (BlockPos chassisisisisisis : this.chassises) {
+            chassisTag.add(NBTUtil.writeBlockPos(chassisisisisisis));
+        }
+        tag.put(CHASSISES_KEY, chassisTag);
 
         tag.putUniqueId(UUID_TAG, this.uuid);
 
@@ -243,6 +262,7 @@ public class MotherboardRepr {
         this.memoryLocations.forEach((_memType, poses) -> this.ownedBlocks.addAll(poses));
 
         this.ownedBlocks.addAll(this.overclocks);
+        this.ownedBlocks.addAll(this.chassises);
     }
 
     /**

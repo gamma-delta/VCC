@@ -4,9 +4,8 @@ import io.netty.buffer.ByteBuf;
 import me.gammadelta.client.HighlightParticle;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.ColorHelper;
 import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.network.NetworkEvent;
 
 import java.io.Serializable;
@@ -28,11 +27,11 @@ import java.util.function.Supplier;
  * <p>
  * thanks guys
  */
-public class HighlightBlocksResponse implements Serializable {
+public class MsgHighlightBlocks implements Serializable {
     private List<BlockPos> positions;
     private int color;
 
-    public HighlightBlocksResponse(List<BlockPos> positions, int color) {
+    public MsgHighlightBlocks(List<BlockPos> positions, int color) {
         this.positions = positions;
         this.color = color;
     }
@@ -41,14 +40,14 @@ public class HighlightBlocksResponse implements Serializable {
      * Generate the color from a UUID. This is probably used by motherboards
      * so their blocks will be highlighted in different colors.
      */
-    public HighlightBlocksResponse(List<BlockPos> positions, UUID identifier) {
+    public MsgHighlightBlocks(List<BlockPos> positions, UUID identifier) {
         this.positions = positions;
         this.color = identifier.hashCode();
     }
 
     // [int positioncount] [BlockPos* poses] [int color]
 
-    public HighlightBlocksResponse(ByteBuf buf) {
+    public MsgHighlightBlocks(ByteBuf buf) {
         PacketBuffer packetBuffer = new PacketBuffer(buf);
 
         int bpCount = packetBuffer.readInt();
@@ -77,8 +76,7 @@ public class HighlightBlocksResponse implements Serializable {
 
 
     public void handle(Supplier<NetworkEvent.Context> context) {
-        System.out.println("Handling highlight response");
-        Minecraft.getInstance().deferTask(this::produceHighlight);
+        context.get().enqueueWork(this::produceHighlight);
         context.get().setPacketHandled(true);
     }
 
@@ -87,8 +85,11 @@ public class HighlightBlocksResponse implements Serializable {
      * This will *probably* spawn particles but I might make it fancier later, who knows.
      * Maybe I'll look into glowing outlines like the glowing effect?
      */
-    @OnlyIn(Dist.CLIENT)
     private void produceHighlight() {
+        float red = ColorHelper.PackedColor.getRed(this.color);
+        float green = ColorHelper.PackedColor.getGreen(this.color);
+        float blue = ColorHelper.PackedColor.getBlue(this.color);
+
         for (BlockPos pos : this.positions) {
             for (int c = 0; c < 3; c++) {
                 Minecraft.getInstance().particles.addEffect(
@@ -96,7 +97,7 @@ public class HighlightBlocksResponse implements Serializable {
                                 pos.getX() + 0.75 - Minecraft.getInstance().player.world.rand.nextDouble() / 2D,
                                 pos.getY() + 0.75 - Minecraft.getInstance().player.world.rand.nextDouble() / 2D,
                                 pos.getZ() + 0.75 - Minecraft.getInstance().player.world.rand.nextDouble() / 2D,
-                                this.color));
+                                red, green, blue));
             }
         }
     }

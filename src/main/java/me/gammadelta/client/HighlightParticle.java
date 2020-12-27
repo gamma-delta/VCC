@@ -3,23 +3,22 @@ package me.gammadelta.client;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import net.minecraft.client.particle.IParticleRenderType;
-import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.TexturedParticle;
 import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.ColorHelper.PackedColor;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
 
 // https://github.com/Buuz135/FindMe/blob/master/src/main/java/com/buuz135/findme/proxy/client/ParticlePosition.java
 // thanks Buuz!
 public class HighlightParticle extends TexturedParticle {
-    public HighlightParticle(ClientWorld world, double x, double y, double z, int color) {
-        super(world, x, y, z, 0, 0, 0);
+    public static final String NAME = "highlight";
 
-        this.particleRed = PackedColor.getRed(color);
-        this.particleGreen = PackedColor.getGreen(color);
-        this.particleBlue = PackedColor.getBlue(color);
+    public HighlightParticle(ClientWorld world, double x, double y, double z, float red, float green, float blue) {
+        super(world, x, y, z, (world.rand.nextDouble() - 0.5) / 5.0, (world.rand.nextDouble() - 0.5) / 5.0,
+                (world.rand.nextDouble() - 0.5) / 5.0);
+
+        this.particleRed = red;
+        this.particleGreen = green;
+        this.particleBlue = blue;
         this.particleScale *= 1.875F;
         this.maxAge = 20 * 5;
         this.canCollide = false;
@@ -30,8 +29,10 @@ public class HighlightParticle extends TexturedParticle {
         return IParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
     }
 
-    public float getScale(float p_217561_1_) {
-        return this.particleScale * MathHelper.clamp(((float) this.age + p_217561_1_) / (float) this.maxAge * 32.0F, 0.0F, 1.0F);
+    public float getScale(float partialTicks) {
+        // i want them to pop in quickly and then shrink out slowly.
+        float totalTime = (float) this.age + partialTicks;
+        return Math.max(-totalTime / 100f + 1, 0f);
     }
 
     @Override
@@ -67,6 +68,7 @@ public class HighlightParticle extends TexturedParticle {
         if (this.age++ >= this.maxAge) {
             this.setExpired();
         }
+        this.particleAlpha *= 0.99;
     }
 
     @Override

@@ -37,7 +37,7 @@ public class VCCBlocks {
 
 	// endregion
 
-	public static void register(){
+	public static void register() {
 		BLOCKS.register(FMLJavaModLoadingContext.get().getModEventBus());
 		TILES.register(FMLJavaModLoadingContext.get().getModEventBus());
 	}

@@ -1,13 +1,9 @@
 ; Based on an assignment a friend of mine had: erase all memory in the computer
 ; including XRAM.
 
-; Requires a 1-byte R0 and that's it!
-; currently completes in 149 steps
+JMP MAIN ; 5 bytes
 
-NOP. NOP. NOP. NOP.
-MOV 4 R0 ; the first 4 bytes are zero for you
-
-; And now, 128 NOPs. We technically don't need this many but 128 is safest.
+; 128 NOPs
 ; They are here in rows of 16.
 NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP.
 NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP.
@@ -18,13 +14,6 @@ NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP.
 NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP.
 NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP.
 
-; Copy the first R0 bytes of memory to index R0
-LOOP:
-    COPY R0 0 R0
-    SHL R0 1
-    JMP LOOP
-
-; On the first loop we overwrite the first 8 bytes, so they're all NOPs
-; We slide the NOP slide back down to the COPY code.
-; On the final iteration we will copy the first half of memory (all 0s)
-; to the second half, and make it all zero
+MAIN:
+    COPY 5 16 0 ; copy 5 bytes from index 16 to index 0 (to cover the JMP MAIN)
+    COPY 128 0 128 ; copy 128 bytes from index 0 to index 128

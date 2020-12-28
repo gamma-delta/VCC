@@ -3,7 +3,7 @@ import it.unimi.dsi.fastutil.bytes.ByteArrayList;
 import it.unimi.dsi.fastutil.bytes.ByteList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import me.gammadelta.Utils;
+import me.gammadelta.common.utils.Utils;
 import me.gammadelta.common.program.CPURepr;
 import me.gammadelta.common.program.MemoryType;
 import me.gammadelta.common.program.MotherboardRepr;

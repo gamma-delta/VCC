@@ -1,7 +1,6 @@
 package me.gammadelta.common.block.tile;
 
 import mcp.MethodsReturnNonnullByDefault;
-import me.gammadelta.Utils;
 import net.minecraft.block.BlockState;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.NBTUtil;
@@ -29,38 +28,18 @@ public abstract class TileDumbComputerComponent extends TileEntity {
     @Nullable
     public UUID motherboardUUID;
     private static final String KEY_MOTHERBOARD_UUID = "motherboard_uuid";
-    private boolean alreadyLookedForMother = false;
-    private static final String KEY_ALREADY_LOOKED = "already_looked_for_motherboard";
 
     public TileDumbComputerComponent(TileEntityType<?> iWishIKnewWhatThisConstructorDidSadFace) {
         super(iWishIKnewWhatThisConstructorDidSadFace);
     }
 
     @Override
-    public void onLoad() {
-        TileMotherboard mother = this.getMotherboard(world);
-        if (true) {
-            return;
+    public void remove() {
+        TileMotherboard motherboard = this.getMotherboard(world);
+        if (motherboard != null && motherboard.getUUID() == this.motherboardUUID) {
+            motherboard.updateConnectedComponents();
         }
-        if (mother != null) {
-            mother.updateConnectedComponents();
-        } else {
-            if (world == null) {
-                this.motherboardLocation = null;
-                this.motherboardUUID = null;
-                return; // ;(
-            }
-            // Go and find my mother
-            BlockPos motherPos = Utils.floodFillFor(this.pos,
-                    pos -> world.getTileEntity(pos) instanceof TileDumbComputerComponent,
-                    pos -> world.getTileEntity(pos) instanceof TileMotherboard);
-            if (motherPos != null) {
-                mother = (TileMotherboard) world.getTileEntity(motherPos);
-                this.motherboardLocation = motherPos;
-                this.motherboardUUID = mother.getUUID();
-                mother.updateConnectedComponents();
-            }
-        }
+        super.remove();
     }
 
     /**
@@ -114,7 +93,6 @@ public abstract class TileDumbComputerComponent extends TileEntity {
         } else {
             this.motherboardUUID = null;
         }
-        this.alreadyLookedForMother = tag.getBoolean(KEY_ALREADY_LOOKED);
     }
 
     @Override
@@ -127,7 +105,6 @@ public abstract class TileDumbComputerComponent extends TileEntity {
         if (this.motherboardUUID != null) {
             tag.putUniqueId(KEY_MOTHERBOARD_UUID, this.motherboardUUID);
         }
-        tag.putBoolean(KEY_ALREADY_LOOKED, this.alreadyLookedForMother);
         return super.write(tag);
     }
 }

@@ -1,4 +1,4 @@
-package me.gammadelta;
+package me.gammadelta.common.utils;
 
 import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.bytes.ByteArrayList;
@@ -6,7 +6,6 @@ import it.unimi.dsi.fastutil.bytes.ByteList;
 import it.unimi.dsi.fastutil.bytes.ByteLists;
 import it.unimi.dsi.fastutil.ints.IntList;
 import me.gammadelta.common.block.tile.TileDumbComputerComponent;
-import net.minecraft.enchantment.Enchantment;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
@@ -390,75 +389,6 @@ public final class Utils {
         if (DEBUG_MODE) {
             System.out.printf(format, params);
         }
-    }
-
-    /**
-     * Flood fill from a given component and return the dumb components found.
-     * Includes the thing at the given blockpos (if it's a dumb component).
-     */
-    // TODO: make an actual config handler.
-    private static final int MAXIMUM_COMPONENT_COUNT = 1024;
-    public static Set<TileDumbComputerComponent> findDumbComponents(BlockPos original, World world) {
-        Set<TileDumbComputerComponent> found = new HashSet<>();
-        Queue<BlockPos> placesToLook = new ArrayDeque<>();
-        Set<BlockPos> placesSearched = new HashSet<>();
-
-        placesToLook.add(original);
-        for (Direction d : Direction.values()) {
-            placesToLook.add(original.offset(d));
-        }
-
-        while (found.size() < MAXIMUM_COMPONENT_COUNT && !placesToLook.isEmpty()) {
-            BlockPos questioning = placesToLook.remove();
-            TileEntity maybeTE = world.getTileEntity(questioning);
-            if (maybeTE instanceof TileDumbComputerComponent) {
-                found.add((TileDumbComputerComponent) maybeTE);
-                for (Direction d : Direction.values()) {
-                    BlockPos nextPos = maybeTE.getPos().offset(d);
-                    if (!placesSearched.contains(nextPos)) {
-                        placesToLook.add(nextPos);
-                        placesSearched.add(nextPos);
-                    }
-                }
-            }
-        }
-
-        return found;
-    }
-
-    /**
-     * Flood fill from a given location. Pass two checkers: is this a valid block,
-     * and is this my target block.
-     *
-     * Returns the blockpos of the first one found.
-     */
-    @Nullable
-    public static BlockPos floodFillFor(BlockPos original, Predicate<BlockPos> isValidStep, Predicate<BlockPos> isTarget) {
-        Queue<BlockPos> placesToLook = new ArrayDeque<>();
-        Set<BlockPos> placesSearched = new HashSet<>();
-
-        placesToLook.add(original);
-        for (Direction d : Direction.values()) {
-            placesToLook.add(original.offset(d));
-        }
-
-        while (placesSearched.size() < MAXIMUM_COMPONENT_COUNT && !placesToLook.isEmpty()) {
-            BlockPos questioning = placesToLook.remove();
-            if (isTarget.test(questioning)) {
-                return questioning;
-            }
-            if (isValidStep.test(questioning)) {
-                for (Direction d : Direction.values()) {
-                    BlockPos nextPos = questioning.offset(d);
-                    if (!placesSearched.contains(nextPos)) {
-                        placesToLook.add(nextPos);
-                        placesSearched.add(nextPos);
-                    }
-                }
-            }
-        }
-
-        return null;
     }
 
     /**

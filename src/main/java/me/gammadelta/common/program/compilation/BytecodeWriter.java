@@ -3,11 +3,9 @@ package me.gammadelta.common.program.compilation;
 import it.unimi.dsi.fastutil.bytes.ByteArrayList;
 import it.unimi.dsi.fastutil.bytes.ByteList;
 import it.unimi.dsi.fastutil.bytes.ByteLists;
-import it.unimi.dsi.fastutil.ints.Int2IntAVLTreeMap;
-import it.unimi.dsi.fastutil.ints.Int2IntSortedMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import me.gammadelta.Utils;
+import me.gammadelta.common.utils.Utils;
 import me.gammadelta.common.program.compilation.Instruction.Arg;
 
 import java.math.BigInteger;
@@ -173,11 +171,15 @@ public class BytecodeWriter {
             int charsPerByte = literalTok.type == Token.Type.HEXADECIMAL ? 2 : 8;
 
             String strValue = literalTok.meat();
-            int leadingZeroes = 0;
+            // Start with some extra zeroes in case it's entirely zero
+            int leadingZeroes = charsPerByte;
             for (char c : strValue.toCharArray()) {
                 if (c == '0') {
                     leadingZeroes++;
                 } else {
+                    // oops it's not all zeroes
+                    // remove those zeroes we lent it.
+                    leadingZeroes -= charsPerByte;
                     break;
                 }
             }
@@ -185,10 +187,6 @@ public class BytecodeWriter {
 
             // Shell out to BigInt
             BigInteger imLazy = Utils.parseBigInt(literalTok.value);
-            if (imLazy.equals(BigInteger.ZERO)) {
-                // oop just return the header with zero bytes
-                return ByteLists.singleton((byte) 0b01000000);
-            }
             byte[] bigintBytesRaw = imLazy.toByteArray();
             // Slice away leading zero bytes
             int firstNonZeroByteIdx = 0;

@@ -53,13 +53,6 @@ public class HighlightParticleData implements IParticleData {
         this.scale = MathHelper.clamp(scale, 0.01F, 4.0F);
     }
 
-    public HighlightParticleData(int color) {
-        this.red = ColorHelper.PackedColor.getRed(color);
-        this.green = ColorHelper.PackedColor.getGreen(color);
-        this.blue = ColorHelper.PackedColor.getBlue(color);
-        this.scale = 1.0f;
-    }
-
     @Override
     public void write(PacketBuffer buffer) {
         buffer.writeFloat(this.red);

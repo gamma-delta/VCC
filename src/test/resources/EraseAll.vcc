@@ -1,0 +1,19 @@
+; Based on an assignment a friend of mine had: erase all memory in the computer
+; including XRAM.
+
+; This is a bodge because it requires a 31-byte long R0.
+
+; change this if you add extra stuff to your computer
+#def MAX_ADDRESS 0xfe
+#def REQUIRED_CODE_SIZE 31
+
+MOV MAX_ADDRESS R0
+LOOP:
+    WRITE 0x0 R0
+    DEC R0
+    MOV R0 R1
+    SUB R1 REQUIRED_CODE_SIZE
+    JNZ R1 LOOP
+; and overwrite the program by writing 30 zero bytes to R0.
+MOV 0 R0
+WRITE R0 0 

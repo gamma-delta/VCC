@@ -31,18 +31,63 @@ public class MsgHighlightBlocks implements Serializable {
     private List<BlockPos> positions;
     private int color;
 
-    public MsgHighlightBlocks(List<BlockPos> positions, int color) {
-        this.positions = positions;
-        this.color = color;
-    }
-
     /**
      * Generate the color from a UUID. This is probably used by motherboards
      * so their blocks will be highlighted in different colors.
+     * <p>
+     * The color will always be bright, because it makes a hue and lightness
+     * value, not RGB.
      */
     public MsgHighlightBlocks(List<BlockPos> positions, UUID identifier) {
         this.positions = positions;
-        this.color = identifier.hashCode();
+
+        int hash = identifier.hashCode();
+        int hInt = (hash & 0xFFFF) % 360;
+        // 80 - 100
+        int vInt = 100 - (hash & 0xFFFF00) % 20;
+        // 50 - 100
+        int sInt = 100 - (hash & 0xFFFF0000) % 50;
+
+        // https://www.codespeedy.com/hsv-to-rgb-in-cpp/
+        // they used terrible variable names
+        float H = hInt;
+        float s = sInt / 100f;
+        float v = vInt / 100f;
+        float C = s * v;
+        float X = C * (1f - Math.abs((hInt / 60f) % 2f) - 1f);
+        float m = v - C;
+        float r, g, b;
+        if (H >= 0 && H < 60) {
+            r = C;
+            g = X;
+            b = 0;
+        } else if (H >= 60 && H < 120) {
+            r = X;
+            g = C;
+            b = 0;
+        } else if (H >= 120 && H < 180) {
+            r = 0;
+            g = C;
+            b = X;
+        } else if (H >= 180 && H < 240) {
+            r = 0;
+            g = X;
+            b = C;
+        } else if (H >= 240 && H < 300) {
+            r = X;
+            g = 0;
+            b = C;
+        } else {
+            r = C;
+            g = 0;
+            b = X;
+        }
+
+        int R = (int) ((r + m) * 255);
+        int G = (int) ((g + m) * 255);
+        int B = (int) ((b + m) * 255);
+
+        this.color = ColorHelper.PackedColor.packColor(255, R, G, B);
     }
 
     // [int positioncount] [BlockPos* poses] [int color]

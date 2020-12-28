@@ -6,7 +6,7 @@ import it.unimi.dsi.fastutil.bytes.ByteList;
 import it.unimi.dsi.fastutil.bytes.ByteLists;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import me.gammadelta.Utils;
+import me.gammadelta.common.utils.Utils;
 import me.gammadelta.common.program.compilation.Opcode;
 import net.minecraft.nbt.*;
 import net.minecraft.util.math.BlockPos;
@@ -378,6 +378,9 @@ public class CPURepr {
                 case INC:
                     this.opcINC(mother, rand);
                     break;
+                case DEC:
+                    this.opcDEC(mother, rand);
+                    break;
                 case AND:
                     this.opcAND(mother, rand);
                     break;
@@ -625,6 +628,22 @@ public class CPURepr {
         }
         // always clear the underflow bit
         this.FLAGS &= UNDERFLOW_MASK;
+    }
+
+    private void opcDEC(MotherboardRepr mother, Random rand) throws Emergency {
+        long regiIdx = this.currentIP;
+        ByteList val = this.readRegister(this.currentIP, true, mother, rand);
+        ByteList remainder = Utils.subMut(val, ByteLists.singleton((byte) 1));
+        this.writeToRegister(regiIdx, false, val, mother, rand);
+        // Overflow flag?
+        if (remainder.size() > 0) {
+            // oof
+            this.FLAGS |= UNDERFLOW_BIT;
+        } else {
+            this.FLAGS &= UNDERFLOW_MASK;
+        }
+        // always clear the underflow bit
+        this.FLAGS &= OVERFLOW_MASK;
     }
 
     private void opcAND(MotherboardRepr mother, Random rand) throws Emergency {

@@ -1,0 +1,4 @@
+{
+    "misc.debugNBT": "VCC TE `%s' has the following NBT: %s",
+    "misc.debugNBT.clipboard": "NBT of VCC TE `%s' has been copied to your clipboard (%d chars)"
+}

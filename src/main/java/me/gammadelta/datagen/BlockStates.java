@@ -40,7 +40,9 @@ public class BlockStates extends BlockStateProvider {
         ResourceLocation side = new ResourceLocation(MOD_ID, "block/chassis");
         BlockModelBuilder unlit = models().cube(BlockMotherboard.NAME + "_unlit", side, side,
                 new ResourceLocation(MOD_ID, "block/motherboard_front_unlit"), side, side, side);
-        BlockModelBuilder lit = models().cube(BlockMotherboard.NAME + "_lit", side, side,
+        // by registering the default name here, we make its display in the inventory
+        // be the lit version
+        BlockModelBuilder lit = models().cube(BlockMotherboard.NAME, side, side,
                 new ResourceLocation(MOD_ID, "block/motherboard_front_lit"), side, side, side);
         orientedBlock(VCCBlocks.MOTHERBOARD_BLOCK.get(), state -> {
             if (state.get(BlockStateProperties.LIT)) {

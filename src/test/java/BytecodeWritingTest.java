@@ -1,15 +1,12 @@
-import me.gammadelta.Utils;
+import me.gammadelta.common.utils.Utils;
 import me.gammadelta.common.program.compilation.ASMCompiler;
 import me.gammadelta.common.program.compilation.BytecodeWriter;
 import me.gammadelta.common.program.compilation.Instruction;
-import me.gammadelta.common.program.compilation.Token;
 import org.junit.jupiter.api.Test;
 
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class BytecodeWritingTest {

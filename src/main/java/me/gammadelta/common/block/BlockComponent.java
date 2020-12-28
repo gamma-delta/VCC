@@ -2,14 +2,17 @@ package me.gammadelta.common.block;
 
 import me.gammadelta.common.block.tile.TileDumbComputerComponent;
 import me.gammadelta.common.block.tile.TileMotherboard;
+import me.gammadelta.common.utils.FloodUtils;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.Explosion;
-import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ToolType;
+
+import javax.annotation.Nullable;
 
 public abstract class BlockComponent extends VCCBlock {
     public static Properties PROPERTIES = Properties.create(Material.IRON)
@@ -23,23 +26,25 @@ public abstract class BlockComponent extends VCCBlock {
     }
 
     @Override
-    public void onPlayerDestroy(IWorld worldIn, BlockPos pos, BlockState state) {
-        super.onPlayerDestroy(worldIn, pos, state);
-        this.tellMotherboardToRemoveThis(worldIn, pos);
-    }
+    public void onBlockPlacedBy(World world, BlockPos pos, BlockState state, @Nullable LivingEntity placer,
+            ItemStack stack) {
+        super.onBlockPlacedBy(world, pos, state, placer, stack);
 
-    @Override
-    public void onExplosionDestroy(World worldIn, BlockPos pos, Explosion explosionIn) {
-        super.onExplosionDestroy(worldIn, pos, explosionIn);
-        this.tellMotherboardToRemoveThis(worldIn, pos);
-    }
-
-    private void tellMotherboardToRemoveThis(IWorld world, BlockPos pos) {
-        TileDumbComputerComponent me = (TileDumbComputerComponent) world.getTileEntity(pos);
-        if (me != null) {
-            TileMotherboard motherboard = me.getMotherboard(world);
-            if (motherboard != null && motherboard.getUUID() == me.motherboardUUID) {
-                motherboard.updateConnectedComponents();
+        TileDumbComputerComponent comp = (TileDumbComputerComponent) world.getTileEntity(pos);
+        if (comp == null) {
+            return;
+        }
+        TileMotherboard mother = comp.getMotherboard(world);
+        if (mother != null) {
+            mother.updateConnectedComponents();
+        } else {
+            // Go and find my mother
+            mother = FloodUtils.findMotherboard(comp);
+            if (mother != null) {
+                // no NPEs, we know it isn't null because we just checked!
+                comp.motherboardLocation = mother.getPos();
+                comp.motherboardUUID = mother.getUUID();
+                mother.updateConnectedComponents();
             }
         }
     }

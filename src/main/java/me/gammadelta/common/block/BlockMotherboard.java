@@ -1,6 +1,6 @@
 package me.gammadelta.common.block;
 
-import me.gammadelta.Utils;
+import me.gammadelta.common.utils.Utils;
 import me.gammadelta.VCCMod;
 import me.gammadelta.common.block.tile.TileMotherboard;
 import me.gammadelta.common.network.MsgHighlightBlocks;

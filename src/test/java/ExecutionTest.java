@@ -1,7 +1,8 @@
+import it.unimi.dsi.fastutil.bytes.ByteArrayList;
 import it.unimi.dsi.fastutil.bytes.ByteList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntLists;
-import me.gammadelta.Utils;
+import me.gammadelta.common.utils.Utils;
 import me.gammadelta.common.program.CPURepr;
 import me.gammadelta.common.program.MemoryType;
 import me.gammadelta.common.program.MotherboardRepr;
@@ -151,5 +152,81 @@ public class ExecutionTest {
         for (int i = 0; i < 1024; i++) {
             motherboard.executeStep(rand);
         }
+    }
+
+    @Test
+    public void testEraseAll() throws Exception {
+        URL path = ClassLoader.getSystemResource("EraseAll.vcc");
+        String program = String.join("\n", Files.readAllLines(Paths.get(path.toURI())));
+
+        List<Instruction> instructions = ASMCompiler.lexAndParse(program);
+        System.out.println(ASMCompiler.prettyPrintInstructions(instructions));
+
+        ByteList bytecode = new BytecodeWriter(instructions).writeProgramToBytecode();
+        System.out.println(Utils.hexdump(bytecode));
+
+
+        // === COMPUTER ===
+
+        Random rand = new Random();
+
+        EnumMap<MemoryType, ArrayList<IntList>> memLocations = new EnumMap<>(MemoryType.class);
+        // xrams: [0]
+        memLocations.put(MemoryType.XRAM, new ArrayList<>(Collections.singleton(IntLists.singleton(0))));
+        // fill in everything else to avoid npes
+        memLocations.put(MemoryType.EXRAM, new ArrayList<>());
+        memLocations.put(MemoryType.ROM, new ArrayList<>());
+        memLocations.put(MemoryType.RAM, new ArrayList<>());
+
+
+        // Registers: [0, 1]
+        ArrayList<IntList> registers = new ArrayList<>(Arrays.asList(
+                IntLists.singleton(0),
+                IntLists.singleton(1)
+        ));
+
+        // this cpurepr is strapped together with duct tape and hope...
+        CPURepr cpu = new CPURepr(
+                null,
+                null,
+                BlockPos.ZERO,
+                registers,
+                new ArrayList<>(),
+                memLocations
+        );
+
+        EnumMap<MemoryType, ArrayList<BlockPos>> memoryCounts = new EnumMap<>(MemoryType.class);
+        // we DO have to put everything in here
+        memoryCounts.put(MemoryType.XRAM, new ArrayList<>(Collections.singletonList(BlockPos.ZERO)));
+        memoryCounts.put(MemoryType.EXRAM, new ArrayList<>());
+        memoryCounts.put(MemoryType.ROM, new ArrayList<>());
+        memoryCounts.put(MemoryType.RAM, new ArrayList<>());
+
+        BlockPos[] ridiculousRegister = new BlockPos[31];
+        Arrays.fill(ridiculousRegister, BlockPos.ZERO);
+
+        MotherboardRepr motherboard = new MotherboardRepr(memoryCounts, new ArrayList<>(
+                Collections.singletonList(new ArrayList<>(Collections.singletonList(cpu)))
+        ), new ArrayList<>(Arrays.asList(
+                new RegisterRepr(ridiculousRegister),
+                new RegisterRepr(new BlockPos[]{BlockPos.ZERO})
+        )), new ArrayList<>());
+
+        // Overwrite all other memory with 0xFF to make sure that it actually works
+        Arrays.fill(motherboard.memory, (byte) 0xff);
+
+        // Write the program to XRAM
+        for (int i = 0; i < bytecode.size(); i++) {
+            byte code = bytecode.getByte(i);
+            motherboard.memory[i] = code;
+        }
+
+        // and execute!
+        for (int i = 0; i < 2048; i++) {
+            motherboard.executeStep(rand);
+        }
+
+        // make sure its all zero
+        System.out.println(Utils.hexdump(new ByteArrayList(motherboard.memory)));
     }
 }

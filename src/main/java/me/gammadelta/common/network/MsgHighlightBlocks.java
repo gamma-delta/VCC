@@ -2,6 +2,7 @@ package me.gammadelta.common.network;
 
 import io.netty.buffer.ByteBuf;
 import me.gammadelta.client.HighlightParticle;
+import me.gammadelta.client.HighlightParticleData;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.ColorHelper;
@@ -90,14 +91,14 @@ public class MsgHighlightBlocks implements Serializable {
         float green = ColorHelper.PackedColor.getGreen(this.color);
         float blue = ColorHelper.PackedColor.getBlue(this.color);
 
+        HighlightParticleData data = new HighlightParticleData(red, green, blue, 1);
         for (BlockPos pos : this.positions) {
             for (int c = 0; c < 3; c++) {
-                Minecraft.getInstance().particles.addEffect(
-                        new HighlightParticle(Minecraft.getInstance().player.worldClient,
+                Minecraft.getInstance().world.addParticle(data,
                                 pos.getX() + 0.75 - Minecraft.getInstance().player.world.rand.nextDouble() / 2D,
                                 pos.getY() + 0.75 - Minecraft.getInstance().player.world.rand.nextDouble() / 2D,
                                 pos.getZ() + 0.75 - Minecraft.getInstance().player.world.rand.nextDouble() / 2D,
-                                red, green, blue));
+                    0, 0, 0);
             }
         }
     }

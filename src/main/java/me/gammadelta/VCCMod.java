@@ -4,9 +4,14 @@ import me.gammadelta.client.VCCParticles;
 import me.gammadelta.common.block.VCCBlocks;
 import me.gammadelta.common.item.VCCItems;
 import me.gammadelta.common.network.MsgHighlightBlocks;
+import net.minecraft.particles.ParticleType;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.network.NetworkRegistry;
 import net.minecraftforge.fml.network.simple.SimpleChannel;
 import org.apache.logging.log4j.LogManager;
@@ -35,7 +40,10 @@ public class VCCMod {
         MinecraftForge.EVENT_BUS.register(this);
         VCCBlocks.register();
         VCCItems.register();
-        VCCParticles.register();
+
+        IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
+        modBus.addGenericListener(ParticleType.class, VCCParticles::register);
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> modBus.addListener(VCCParticles.FactoryHandler::registerFactories));
     }
 
     private void registerMessages() {

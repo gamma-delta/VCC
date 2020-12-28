@@ -30,7 +30,7 @@ public class HighlightParticleType extends ParticleType<HighlightParticleData> {
         @Override
         public Particle makeParticle(HighlightParticleData data, ClientWorld world, double x, double y, double z,
                 double xSpeed, double ySpeed, double zSpeed) {
-            return new HighlightParticle(world, x, y, z, data.getRed(), data.getGreen(), data.getBlue());
+            return new HighlightParticle(world, x, y, z, data.getRed(), data.getGreen(), data.getBlue(), sprite);
         }
     }
 }

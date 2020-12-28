@@ -2,6 +2,7 @@
 ; including XRAM.
 
 ; Requires a 1-byte R0 and that's it!
+; currently completes in 149 steps
 
 NOP. NOP. NOP. NOP.
 MOV 4 R0 ; the first 4 bytes are zero for you
@@ -18,9 +19,10 @@ NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP.
 NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP.
 
 ; Copy the first R0 bytes of memory to index R0
-COPY R0 0 R0
-SHL R0 1
-EMERGENCY ; hop back to index 0 for the emergency
+LOOP:
+    COPY R0 0 R0
+    SHL R0 1
+    JMP LOOP
 
 ; On the first loop we overwrite the first 8 bytes, so they're all NOPs
 ; We slide the NOP slide back down to the COPY code.

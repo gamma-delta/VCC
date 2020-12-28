@@ -171,7 +171,6 @@ public class MotherboardRepr {
             this.uuid = UUID.randomUUID();
         }
 
-
         this.fillOwnedBlocks();
     }
 

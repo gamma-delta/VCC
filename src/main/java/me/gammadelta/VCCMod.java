@@ -38,12 +38,14 @@ public class VCCMod {
 
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
+        MinecraftForge.EVENT_BUS.register(VCCParticles.class);
         VCCBlocks.register();
         VCCItems.register();
 
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         modBus.addGenericListener(ParticleType.class, VCCParticles::register);
-        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> modBus.addListener(VCCParticles.FactoryHandler::registerFactories));
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
+                () -> () -> modBus.addListener(VCCParticles.FactoryHandler::registerFactories));
     }
 
     private void registerMessages() {

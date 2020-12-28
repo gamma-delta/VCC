@@ -1,12 +1,10 @@
 package me.gammadelta.client;
 
-import me.gammadelta.VCCMod;
 import net.minecraft.client.Minecraft;
 import net.minecraft.particles.ParticleType;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.registry.Registry;
 import net.minecraftforge.client.event.ParticleFactoryRegisterEvent;
 import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import static me.gammadelta.VCCMod.MOD_ID;
 
@@ -19,7 +17,13 @@ public class VCCParticles {
 
     public static class FactoryHandler {
         public static void registerFactories(ParticleFactoryRegisterEvent evt) {
-            Minecraft.getInstance().particles.registerFactory(HIGHLIGHT_PARTICLE_TYPE, HighlightParticleType.Factory::new);
+            Minecraft.getInstance().particles.registerFactory(HIGHLIGHT_PARTICLE_TYPE,
+                    HighlightParticleType.Factory::new);
         }
+    }
+
+    @SubscribeEvent
+    public static void registerParticleFactories(ParticleFactoryRegisterEvent e) {
+        Minecraft.getInstance().particles.registerFactory(HIGHLIGHT_PARTICLE_TYPE, HighlightParticleType.Factory::new);
     }
 }

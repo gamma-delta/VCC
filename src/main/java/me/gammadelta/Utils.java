@@ -18,8 +18,10 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
+import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.util.*;
+import java.util.function.Predicate;
 
 public final class Utils {
     /**
@@ -422,6 +424,41 @@ public final class Utils {
         }
 
         return found;
+    }
+
+    /**
+     * Flood fill from a given location. Pass two checkers: is this a valid block,
+     * and is this my target block.
+     *
+     * Returns the blockpos of the first one found.
+     */
+    @Nullable
+    public static BlockPos floodFillFor(BlockPos original, Predicate<BlockPos> isValidStep, Predicate<BlockPos> isTarget) {
+        Queue<BlockPos> placesToLook = new ArrayDeque<>();
+        Set<BlockPos> placesSearched = new HashSet<>();
+
+        placesToLook.add(original);
+        for (Direction d : Direction.values()) {
+            placesToLook.add(original.offset(d));
+        }
+
+        while (placesSearched.size() < MAXIMUM_COMPONENT_COUNT && !placesToLook.isEmpty()) {
+            BlockPos questioning = placesToLook.remove();
+            if (isTarget.test(questioning)) {
+                return questioning;
+            }
+            if (isValidStep.test(questioning)) {
+                for (Direction d : Direction.values()) {
+                    BlockPos nextPos = questioning.offset(d);
+                    if (!placesSearched.contains(nextPos)) {
+                        placesToLook.add(nextPos);
+                        placesSearched.add(nextPos);
+                    }
+                }
+            }
+        }
+
+        return null;
     }
 
     /**

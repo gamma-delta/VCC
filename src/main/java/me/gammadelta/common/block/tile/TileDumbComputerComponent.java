@@ -1,7 +1,7 @@
 package me.gammadelta.common.block.tile;
 
 import mcp.MethodsReturnNonnullByDefault;
-import me.gammadelta.common.program.MotherboardRepr;
+import me.gammadelta.Utils;
 import net.minecraft.block.BlockState;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.NBTUtil;
@@ -17,21 +17,50 @@ import java.util.UUID;
 /**
  * Any part of a computer that is not the motherboard.
  * (or a drive).
- *
+ * <p>
  * This just stores the location of the motherboard.
  */
 public abstract class TileDumbComputerComponent extends TileEntity {
     // This will be null if it can't find its motherboard
     @Nullable
-    private BlockPos motherboardLocation;
+    public BlockPos motherboardLocation;
     private static final String MOTHERBOARD_LOC_KEY = "motherboard_location";
     // Used to track if you break and replace the motherboard
     @Nullable
-    private UUID motherboardUUID;
-    private static final String MOTHERBOARD_UUID = "motherboard_uuid";
+    public UUID motherboardUUID;
+    private static final String KEY_MOTHERBOARD_UUID = "motherboard_uuid";
+    private boolean alreadyLookedForMother = false;
+    private static final String KEY_ALREADY_LOOKED = "already_looked_for_motherboard";
 
     public TileDumbComputerComponent(TileEntityType<?> iWishIKnewWhatThisConstructorDidSadFace) {
         super(iWishIKnewWhatThisConstructorDidSadFace);
+    }
+
+    @Override
+    public void onLoad() {
+        TileMotherboard mother = this.getMotherboard(world);
+        if (true) {
+            return;
+        }
+        if (mother != null) {
+            mother.updateConnectedComponents();
+        } else {
+            if (world == null) {
+                this.motherboardLocation = null;
+                this.motherboardUUID = null;
+                return; // ;(
+            }
+            // Go and find my mother
+            BlockPos motherPos = Utils.floodFillFor(this.pos,
+                    pos -> world.getTileEntity(pos) instanceof TileDumbComputerComponent,
+                    pos -> world.getTileEntity(pos) instanceof TileMotherboard);
+            if (motherPos != null) {
+                mother = (TileMotherboard) world.getTileEntity(motherPos);
+                this.motherboardLocation = motherPos;
+                this.motherboardUUID = mother.getUUID();
+                mother.updateConnectedComponents();
+            }
+        }
     }
 
     /**
@@ -60,10 +89,10 @@ public abstract class TileDumbComputerComponent extends TileEntity {
         if (gotten instanceof TileMotherboard) {
             TileMotherboard mother = (TileMotherboard) gotten;
             if (mother.getUUID() != this.motherboardUUID) {
-                // this means someone broke and replaced the motherboard.
+                // this means someone broke and replaced the motherboard, or something
                 return null;
             }
-            return (TileMotherboard) gotten;
+            return mother;
         } else {
             return null;
         }
@@ -80,7 +109,12 @@ public abstract class TileDumbComputerComponent extends TileEntity {
         } else {
             this.motherboardLocation = null;
         }
-
+        if (tag.hasUniqueId(KEY_MOTHERBOARD_UUID)) {
+            this.motherboardUUID = tag.getUniqueId(KEY_MOTHERBOARD_UUID);
+        } else {
+            this.motherboardUUID = null;
+        }
+        this.alreadyLookedForMother = tag.getBoolean(KEY_ALREADY_LOOKED);
     }
 
     @Override
@@ -90,6 +124,10 @@ public abstract class TileDumbComputerComponent extends TileEntity {
         if (this.motherboardLocation != null) {
             tag.put(MOTHERBOARD_LOC_KEY, NBTUtil.writeBlockPos(this.motherboardLocation));
         }
+        if (this.motherboardUUID != null) {
+            tag.putUniqueId(KEY_MOTHERBOARD_UUID, this.motherboardUUID);
+        }
+        tag.putBoolean(KEY_ALREADY_LOOKED, this.alreadyLookedForMother);
         return super.write(tag);
     }
 }

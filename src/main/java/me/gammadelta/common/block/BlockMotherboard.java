@@ -57,21 +57,22 @@ public class BlockMotherboard extends VCCBlock {
     public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player,
             Hand handIn, BlockRayTraceResult hit) {
         if (worldIn.isRemote) {
-            return ActionResultType.SUCCESS;
+            return ActionResultType.PASS;
         }
 
         TileEntity te = worldIn.getTileEntity(pos);
         if (!(te instanceof TileMotherboard)) {
             // not sure how this happened...
-            return ActionResultType.FAIL;
+            return ActionResultType.PASS;
         }
         TileMotherboard mother = (TileMotherboard) te;
 
         int debugLevel = Utils.funniDebugLevel(player, handIn);
         if (debugLevel > 0) {
-            VCCMod.getNetwork().send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player), new MsgHighlightBlocks(
-                    mother.getControlledBlocks(), mother.getUUID()
-            ));
+            VCCMod.getNetwork()
+                    .send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player), new MsgHighlightBlocks(
+                            mother.getControlledBlocks(), mother.getUUID()
+                    ));
             return ActionResultType.SUCCESS;
         }
 

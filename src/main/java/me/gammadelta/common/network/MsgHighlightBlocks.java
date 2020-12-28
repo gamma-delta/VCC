@@ -1,7 +1,6 @@
 package me.gammadelta.common.network;
 
 import io.netty.buffer.ByteBuf;
-import me.gammadelta.client.HighlightParticle;
 import me.gammadelta.client.HighlightParticleData;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.PacketBuffer;
@@ -95,10 +94,10 @@ public class MsgHighlightBlocks implements Serializable {
         for (BlockPos pos : this.positions) {
             for (int c = 0; c < 3; c++) {
                 Minecraft.getInstance().world.addParticle(data,
-                                pos.getX() + 0.75 - Minecraft.getInstance().player.world.rand.nextDouble() / 2D,
-                                pos.getY() + 0.75 - Minecraft.getInstance().player.world.rand.nextDouble() / 2D,
-                                pos.getZ() + 0.75 - Minecraft.getInstance().player.world.rand.nextDouble() / 2D,
-                    0, 0, 0);
+                        pos.getX() + 0.75 - Minecraft.getInstance().player.world.rand.nextDouble() / 2D,
+                        pos.getY() + 0.75 - Minecraft.getInstance().player.world.rand.nextDouble() / 2D,
+                        pos.getZ() + 0.75 - Minecraft.getInstance().player.world.rand.nextDouble() / 2D,
+                        0, 0, 0);
             }
         }
     }

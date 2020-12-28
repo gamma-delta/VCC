@@ -1,0 +1,360 @@
+From 646e523117d0ca46e738baf99aa912c16c240a34 Mon Sep 17 00:00:00 2001
+From: Vincent Lee <vincent.lee@outlook.com>
+Date: Sun, 27 Dec 2020 19:34:45 -0600
+Subject: [PATCH] Fix particles (except color)
+
+---
+ src/main/java/me/gammadelta/VCCMod.java       | 10 ++-
+ .../gammadelta/client/HighlightParticle.java  | 68 ++++++++-----------
+ .../client/HighlightParticleData.java         | 30 ++++----
+ .../client/HighlightParticleType.java         |  2 +-
+ .../me/gammadelta/client/VCCParticles.java    | 22 +++---
+ .../common/network/MsgHighlightBlocks.java    |  7 +-
+ .../assets/vcc/particles/highlight.json       | 12 ++++
+ 7 files changed, 81 insertions(+), 70 deletions(-)
+ create mode 100644 src/main/resources/assets/vcc/particles/highlight.json
+
+diff --git a/src/main/java/me/gammadelta/VCCMod.java b/src/main/java/me/gammadelta/VCCMod.java
+index aed66eb..a7fad95 100644
+--- a/src/main/java/me/gammadelta/VCCMod.java
++++ b/src/main/java/me/gammadelta/VCCMod.java
+@@ -4,9 +4,14 @@ import me.gammadelta.client.VCCParticles;
+ import me.gammadelta.common.block.VCCBlocks;
+ import me.gammadelta.common.item.VCCItems;
+ import me.gammadelta.common.network.MsgHighlightBlocks;
++import net.minecraft.particles.ParticleType;
+ import net.minecraft.util.ResourceLocation;
++import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.common.MinecraftForge;
++import net.minecraftforge.eventbus.api.IEventBus;
++import net.minecraftforge.fml.DistExecutor;
+ import net.minecraftforge.fml.common.Mod;
++import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+ import net.minecraftforge.fml.network.NetworkRegistry;
+ import net.minecraftforge.fml.network.simple.SimpleChannel;
+ import org.apache.logging.log4j.LogManager;
+@@ -35,7 +40,10 @@ public class VCCMod {
+         MinecraftForge.EVENT_BUS.register(this);
+         VCCBlocks.register();
+         VCCItems.register();
+-        VCCParticles.register();
++
++        IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
++        modBus.addGenericListener(ParticleType.class, VCCParticles::register);
++        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> modBus.addListener(VCCParticles.FactoryHandler::registerFactories));
+     }
+ 
+     private void registerMessages() {
+diff --git a/src/main/java/me/gammadelta/client/HighlightParticle.java b/src/main/java/me/gammadelta/client/HighlightParticle.java
+index e13d1ea..4742ef0 100644
+--- a/src/main/java/me/gammadelta/client/HighlightParticle.java
++++ b/src/main/java/me/gammadelta/client/HighlightParticle.java
+@@ -2,33 +2,39 @@ package me.gammadelta.client;
+ 
+ import com.mojang.blaze3d.systems.RenderSystem;
+ import com.mojang.blaze3d.vertex.IVertexBuilder;
++import net.minecraft.client.particle.IAnimatedSprite;
+ import net.minecraft.client.particle.IParticleRenderType;
++import net.minecraft.client.particle.SpriteTexturedParticle;
+ import net.minecraft.client.particle.TexturedParticle;
+ import net.minecraft.client.renderer.ActiveRenderInfo;
++import net.minecraft.client.renderer.BufferBuilder;
++import net.minecraft.client.renderer.Tessellator;
++import net.minecraft.client.renderer.texture.TextureManager;
+ import net.minecraft.client.world.ClientWorld;
+ 
+-// https://github.com/Buuz135/FindMe/blob/master/src/main/java/com/buuz135/findme/proxy/client/ParticlePosition.java
+-// thanks Buuz!
+-public class HighlightParticle extends TexturedParticle {
++public class HighlightParticle extends SpriteTexturedParticle {
++    private final IAnimatedSprite spriteSet;
+     public static final String NAME = "highlight";
+ 
+-    public HighlightParticle(ClientWorld world, double x, double y, double z, float red, float green, float blue) {
++    public HighlightParticle(ClientWorld world, double x, double y, double z, float red, float green, float blue, IAnimatedSprite spriteSet) {
+         super(world, x, y, z, (world.rand.nextDouble() - 0.5) / 5.0, (world.rand.nextDouble() - 0.5) / 5.0,
+                 (world.rand.nextDouble() - 0.5) / 5.0);
+-
++        this.spriteSet = spriteSet;
+         this.particleRed = red;
+         this.particleGreen = green;
+         this.particleBlue = blue;
+         this.particleScale *= 1.875F;
+         this.maxAge = 20 * 5;
+         this.canCollide = false;
++        selectSpriteWithAge(spriteSet);
+     }
+ 
+     @Override
+     public IParticleRenderType getRenderType() {
+-        return IParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
++        return DEPTH_IGNORING;
+     }
+ 
++    @Override
+     public float getScale(float partialTicks) {
+         // i want them to pop in quickly and then shrink out slowly.
+         float totalTime = (float) this.age + partialTicks;
+@@ -36,43 +42,23 @@ public class HighlightParticle extends TexturedParticle {
+     }
+ 
+     @Override
+-    public void renderParticle(IVertexBuilder buffer, ActiveRenderInfo renderInfo, float partialTicks) {
+-        RenderSystem.disableDepthTest(); // this is what makes it render on top of everything?
+-        super.renderParticle(buffer, renderInfo, partialTicks);
+-    }
+-
+-    @Override
+-    protected float getMinU() {
+-        return 0;
+-    }
+-
+-    @Override
+-    protected float getMaxU() {
+-        return 0.1f;
+-    }
+-
+-    @Override
+-    protected float getMinV() {
+-        return 0;
+-    }
+-
+-    @Override
+-    protected float getMaxV() {
+-        return 0.1f;
+-    }
+-
+     public void tick() {
+-        this.prevPosX = this.posX;
+-        this.prevPosY = this.posY;
+-        this.prevPosZ = this.posZ;
+-        if (this.age++ >= this.maxAge) {
+-            this.setExpired();
+-        }
++        super.tick();
++        selectSpriteWithAge(spriteSet);
+         this.particleAlpha *= 0.99;
+     }
+ 
+-    @Override
+-    public void setAlphaF(float alpha) {
+-        super.setAlphaF(alpha);
+-    }
++    private final IParticleRenderType DEPTH_IGNORING = new IParticleRenderType() {
++        @Override
++        public void beginRender(BufferBuilder bufferBuilder, TextureManager textureManager) {
++            IParticleRenderType.PARTICLE_SHEET_TRANSLUCENT.beginRender(bufferBuilder, textureManager);
++            RenderSystem.disableDepthTest();
++        }
++
++        @Override
++        public void finishRender(Tessellator tesselator) {
++            IParticleRenderType.PARTICLE_SHEET_TRANSLUCENT.finishRender(tesselator);
++            RenderSystem.enableDepthTest();
++        }
++    };
+ }
+diff --git a/src/main/java/me/gammadelta/client/HighlightParticleData.java b/src/main/java/me/gammadelta/client/HighlightParticleData.java
+index bcb92f1..37a433c 100644
+--- a/src/main/java/me/gammadelta/client/HighlightParticleData.java
++++ b/src/main/java/me/gammadelta/client/HighlightParticleData.java
+@@ -10,20 +10,18 @@ import net.minecraft.particles.ParticleType;
+ import net.minecraft.util.ColorHelper;
+ import net.minecraft.util.math.MathHelper;
+ import net.minecraft.util.registry.Registry;
+-import net.minecraftforge.api.distmarker.Dist;
+-import net.minecraftforge.api.distmarker.OnlyIn;
+ 
+ import java.util.Locale;
+ 
+ public class HighlightParticleData implements IParticleData {
+-    public static final HighlightParticleData REDSTONE_DUST = new HighlightParticleData(1.0F, 0.0F, 0.0F, 1.0F);
+     public static final Codec<HighlightParticleData> CODEC = RecordCodecBuilder.create(
+             (p_239803_0_) -> p_239803_0_.group(Codec.FLOAT.fieldOf("r").forGetter((p_239807_0_) -> p_239807_0_.red),
+                     Codec.FLOAT.fieldOf("g").forGetter((p_239806_0_) -> p_239806_0_.green),
+                     Codec.FLOAT.fieldOf("b").forGetter((p_239805_0_) -> p_239805_0_.blue),
+-                    Codec.FLOAT.fieldOf("scale").forGetter((p_239804_0_) -> p_239804_0_.alpha))
++                    Codec.FLOAT.fieldOf("scale").forGetter((p_239804_0_) -> p_239804_0_.scale))
+                     .apply(p_239803_0_, HighlightParticleData::new));
+     public static final IParticleData.IDeserializer<HighlightParticleData> DESERIALIZER = new IParticleData.IDeserializer<HighlightParticleData>() {
++        @Override
+         public HighlightParticleData deserialize(ParticleType<HighlightParticleData> particleTypeIn,
+                 StringReader reader) throws CommandSyntaxException {
+             reader.expect(' ');
+@@ -37,6 +35,7 @@ public class HighlightParticleData implements IParticleData {
+             return new HighlightParticleData(f, f1, f2, f3);
+         }
+ 
++        @Override
+         public HighlightParticleData read(ParticleType<HighlightParticleData> particleTypeIn, PacketBuffer buffer) {
+             return new HighlightParticleData(buffer.readFloat(), buffer.readFloat(), buffer.readFloat(),
+                     buffer.readFloat());
+@@ -45,55 +44,54 @@ public class HighlightParticleData implements IParticleData {
+     private final float red;
+     private final float green;
+     private final float blue;
+-    private final float alpha;
++    private final float scale;
+ 
+-    public HighlightParticleData(float red, float green, float blue, float alpha) {
++    public HighlightParticleData(float red, float green, float blue, float scale) {
+         this.red = red;
+         this.green = green;
+         this.blue = blue;
+-        this.alpha = MathHelper.clamp(alpha, 0.01F, 4.0F);
++        this.scale = MathHelper.clamp(scale, 0.01F, 4.0F);
+     }
+ 
+     public HighlightParticleData(int color) {
+         this.red = ColorHelper.PackedColor.getRed(color);
+         this.green = ColorHelper.PackedColor.getGreen(color);
+         this.blue = ColorHelper.PackedColor.getBlue(color);
+-        this.alpha = 1.0f;
++        this.scale = 1.0f;
+     }
+ 
++    @Override
+     public void write(PacketBuffer buffer) {
+         buffer.writeFloat(this.red);
+         buffer.writeFloat(this.green);
+         buffer.writeFloat(this.blue);
+-        buffer.writeFloat(this.alpha);
++        buffer.writeFloat(this.scale);
+     }
+ 
++    @Override
+     public String getParameters() {
+         return String.format(Locale.ROOT, "%s %.2f %.2f %.2f %.2f", Registry.PARTICLE_TYPE.getKey(this.getType()),
+-                this.red, this.green, this.blue, this.alpha);
++                this.red, this.green, this.blue, this.scale);
+     }
+ 
++    @Override
+     public ParticleType<HighlightParticleData> getType() {
+         return VCCParticles.HIGHLIGHT_PARTICLE_TYPE;
+     }
+ 
+-    @OnlyIn(Dist.CLIENT)
+     public float getRed() {
+         return this.red;
+     }
+ 
+-    @OnlyIn(Dist.CLIENT)
+     public float getGreen() {
+         return this.green;
+     }
+ 
+-    @OnlyIn(Dist.CLIENT)
+     public float getBlue() {
+         return this.blue;
+     }
+ 
+-    @OnlyIn(Dist.CLIENT)
+-    public float getAlpha() {
+-        return this.alpha;
++    public float getScale() {
++        return this.scale;
+     }
+ }
+diff --git a/src/main/java/me/gammadelta/client/HighlightParticleType.java b/src/main/java/me/gammadelta/client/HighlightParticleType.java
+index 8e8e5de..ccc627e 100644
+--- a/src/main/java/me/gammadelta/client/HighlightParticleType.java
++++ b/src/main/java/me/gammadelta/client/HighlightParticleType.java
+@@ -30,7 +30,7 @@ public class HighlightParticleType extends ParticleType<HighlightParticleData> {
+         @Override
+         public Particle makeParticle(HighlightParticleData data, ClientWorld world, double x, double y, double z,
+                 double xSpeed, double ySpeed, double zSpeed) {
+-            return new HighlightParticle(world, x, y, z, data.getRed(), data.getGreen(), data.getBlue());
++            return new HighlightParticle(world, x, y, z, data.getRed(), data.getGreen(), data.getBlue(), sprite);
+         }
+     }
+ }
+diff --git a/src/main/java/me/gammadelta/client/VCCParticles.java b/src/main/java/me/gammadelta/client/VCCParticles.java
+index be68c5c..dcbf784 100644
+--- a/src/main/java/me/gammadelta/client/VCCParticles.java
++++ b/src/main/java/me/gammadelta/client/VCCParticles.java
+@@ -1,19 +1,25 @@
+ package me.gammadelta.client;
+ 
++import me.gammadelta.VCCMod;
++import net.minecraft.client.Minecraft;
+ import net.minecraft.particles.ParticleType;
+-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+-import net.minecraftforge.registries.DeferredRegister;
+-import net.minecraftforge.registries.ForgeRegistries;
++import net.minecraft.util.ResourceLocation;
++import net.minecraft.util.registry.Registry;
++import net.minecraftforge.client.event.ParticleFactoryRegisterEvent;
++import net.minecraftforge.event.RegistryEvent;
+ 
+ import static me.gammadelta.VCCMod.MOD_ID;
+ 
+ public class VCCParticles {
+-    private static final DeferredRegister<ParticleType<?>> PARTICLES = DeferredRegister.create(
+-            ForgeRegistries.PARTICLE_TYPES, MOD_ID);
+-
+     public static final ParticleType<HighlightParticleData> HIGHLIGHT_PARTICLE_TYPE = new HighlightParticleType();
+ 
+-    public static void register() {
+-        PARTICLES.register(FMLJavaModLoadingContext.get().getModEventBus());
++    public static void register(RegistryEvent.Register<ParticleType<?>> evt) {
++        evt.getRegistry().register(HIGHLIGHT_PARTICLE_TYPE.setRegistryName(MOD_ID, "highlight"));
++    }
++
++    public static class FactoryHandler {
++        public static void registerFactories(ParticleFactoryRegisterEvent evt) {
++            Minecraft.getInstance().particles.registerFactory(HIGHLIGHT_PARTICLE_TYPE, HighlightParticleType.Factory::new);
++        }
+     }
+ }
+diff --git a/src/main/java/me/gammadelta/common/network/MsgHighlightBlocks.java b/src/main/java/me/gammadelta/common/network/MsgHighlightBlocks.java
+index 27667ef..78e22c1 100644
+--- a/src/main/java/me/gammadelta/common/network/MsgHighlightBlocks.java
++++ b/src/main/java/me/gammadelta/common/network/MsgHighlightBlocks.java
+@@ -2,6 +2,7 @@ package me.gammadelta.common.network;
+ 
+ import io.netty.buffer.ByteBuf;
+ import me.gammadelta.client.HighlightParticle;
++import me.gammadelta.client.HighlightParticleData;
+ import net.minecraft.client.Minecraft;
+ import net.minecraft.network.PacketBuffer;
+ import net.minecraft.util.ColorHelper;
+@@ -90,14 +91,14 @@ public class MsgHighlightBlocks implements Serializable {
+         float green = ColorHelper.PackedColor.getGreen(this.color);
+         float blue = ColorHelper.PackedColor.getBlue(this.color);
+ 
++        HighlightParticleData data = new HighlightParticleData(red, green, blue, 1);
+         for (BlockPos pos : this.positions) {
+             for (int c = 0; c < 3; c++) {
+-                Minecraft.getInstance().particles.addEffect(
+-                        new HighlightParticle(Minecraft.getInstance().player.worldClient,
++                Minecraft.getInstance().world.addParticle(data,
+                                 pos.getX() + 0.75 - Minecraft.getInstance().player.world.rand.nextDouble() / 2D,
+                                 pos.getY() + 0.75 - Minecraft.getInstance().player.world.rand.nextDouble() / 2D,
+                                 pos.getZ() + 0.75 - Minecraft.getInstance().player.world.rand.nextDouble() / 2D,
+-                                red, green, blue));
++                    0, 0, 0);
+             }
+         }
+     }
+diff --git a/src/main/resources/assets/vcc/particles/highlight.json b/src/main/resources/assets/vcc/particles/highlight.json
+new file mode 100644
+index 0000000..e0996e0
+--- /dev/null
++++ b/src/main/resources/assets/vcc/particles/highlight.json
+@@ -0,0 +1,12 @@
++{
++  "textures": [
++    "minecraft:generic_7",
++    "minecraft:generic_6",
++    "minecraft:generic_5",
++    "minecraft:generic_4",
++    "minecraft:generic_3",
++    "minecraft:generic_2",
++    "minecraft:generic_1",
++    "minecraft:generic_0"
++  ]
++}
+-- 
+2.29.2
+

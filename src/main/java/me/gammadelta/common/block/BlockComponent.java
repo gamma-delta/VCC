@@ -25,20 +25,20 @@ public abstract class BlockComponent extends VCCBlock {
     @Override
     public void onPlayerDestroy(IWorld worldIn, BlockPos pos, BlockState state) {
         super.onPlayerDestroy(worldIn, pos, state);
-        this.tellTheMotherboardToUpdateItsComponentsWowThisMethodNameIsSoLong(worldIn, pos);
+        this.tellMotherboardToRemoveThis(worldIn, pos);
     }
 
     @Override
     public void onExplosionDestroy(World worldIn, BlockPos pos, Explosion explosionIn) {
         super.onExplosionDestroy(worldIn, pos, explosionIn);
-        this.tellTheMotherboardToUpdateItsComponentsWowThisMethodNameIsSoLong(worldIn, pos);
+        this.tellMotherboardToRemoveThis(worldIn, pos);
     }
 
-    private void tellTheMotherboardToUpdateItsComponentsWowThisMethodNameIsSoLong(IWorld world, BlockPos pos) {
-        TileDumbComputerComponent te = (TileDumbComputerComponent) world.getTileEntity(pos);
-        if (te != null) {
-            TileMotherboard motherboard = te.getMotherboard(world);
-            if (motherboard != null) {
+    private void tellMotherboardToRemoveThis(IWorld world, BlockPos pos) {
+        TileDumbComputerComponent me = (TileDumbComputerComponent) world.getTileEntity(pos);
+        if (me != null) {
+            TileMotherboard motherboard = me.getMotherboard(world);
+            if (motherboard != null && motherboard.getUUID() == me.motherboardUUID) {
                 motherboard.updateConnectedComponents();
             }
         }

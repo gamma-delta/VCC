@@ -5,17 +5,13 @@ import me.gammadelta.VCCMod;
 import me.gammadelta.common.block.VCCBlocks;
 import me.gammadelta.common.program.MotherboardRepr;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.NBTUtil;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ChatType;
-import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.common.util.Constants;
 
@@ -51,6 +47,7 @@ public class TileMotherboard extends TileEntity implements ITickableTileEntity {
     public void updateConnectedComponents() {
         Set<TileDumbComputerComponent> found = Utils.findDumbComponents(pos, world);
         // for now
+        System.out.println(Arrays.toString(found.toArray()));
         this.motherboard = new MotherboardRepr(pos, found.iterator());
     }
 

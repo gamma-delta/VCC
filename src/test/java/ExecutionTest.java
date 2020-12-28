@@ -179,10 +179,9 @@ public class ExecutionTest {
         memLocations.put(MemoryType.RAM, new ArrayList<>());
 
 
-        // Registers: [0, 1]
+        // Registers: [0]
         ArrayList<IntList> registers = new ArrayList<>(Arrays.asList(
-                IntLists.singleton(0),
-                IntLists.singleton(1)
+                IntLists.singleton(0)
         ));
 
         // this cpurepr is strapped together with duct tape and hope...
@@ -202,13 +201,10 @@ public class ExecutionTest {
         memoryCounts.put(MemoryType.ROM, new ArrayList<>());
         memoryCounts.put(MemoryType.RAM, new ArrayList<>());
 
-        BlockPos[] ridiculousRegister = new BlockPos[31];
-        Arrays.fill(ridiculousRegister, BlockPos.ZERO);
 
         MotherboardRepr motherboard = new MotherboardRepr(memoryCounts, new ArrayList<>(
                 Collections.singletonList(new ArrayList<>(Collections.singletonList(cpu)))
         ), new ArrayList<>(Arrays.asList(
-                new RegisterRepr(ridiculousRegister),
                 new RegisterRepr(new BlockPos[]{BlockPos.ZERO})
         )), new ArrayList<>());
 
@@ -222,11 +218,15 @@ public class ExecutionTest {
         }
 
         // and execute!
-        for (int i = 0; i < 2048; i++) {
+        byte[] target = new byte[256];
+        int stepsReqd = 0;
+        while (!Arrays.equals(motherboard.memory, target)) {
             motherboard.executeStep(rand);
+            stepsReqd++;
         }
 
         // make sure its all zero
         System.out.println(Utils.hexdump(new ByteArrayList(motherboard.memory)));
+        System.out.printf("Required %d steps\n", stepsReqd);
     }
 }

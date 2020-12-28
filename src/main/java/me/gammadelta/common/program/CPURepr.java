@@ -6,9 +6,12 @@ import it.unimi.dsi.fastutil.bytes.ByteList;
 import it.unimi.dsi.fastutil.bytes.ByteLists;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import me.gammadelta.common.utils.Utils;
 import me.gammadelta.common.program.compilation.Opcode;
-import net.minecraft.nbt.*;
+import me.gammadelta.common.utils.Utils;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.IntArrayNBT;
+import net.minecraft.nbt.ListNBT;
+import net.minecraft.nbt.NBTUtil;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.util.Constants;
 import org.apache.commons.lang3.NotImplementedException;
@@ -34,12 +37,15 @@ public class CPURepr {
     static byte SQUISH_BIT = 0b00001000;
     static byte SQUISH_MASK = (byte) ~SQUISH_BIT;
 
-    public byte FLAGS = 0;
-    private static String FLAGS_TAG = "flags";
+    // this must be an array because we need to pass it by reference
+    // or, yknow pass the reference by value
+    // in conclusion, Java bad
+    public byte[] FLAGS;
+    private static final String FLAGS_TAG = "flags";
     public byte[] IP;
-    private static String IP_TAG = "IP";
+    private static final String IP_TAG = "IP";
     public byte[] SP;
-    private static String SP_TAG = "SP";
+    private static final String SP_TAG = "SP";
 
     // These references really only exist to prevent them from being dropped.
     // Most things should be done through the IP and SP variables.
@@ -47,10 +53,10 @@ public class CPURepr {
     // but inside IP and SP.
     @Nullable
     public RegisterRepr ipExtender;
-    private static String IP_EXTENDER_TAG = "IP_extender";
+    private static final String IP_EXTENDER_TAG = "IP_extender";
     @Nullable
     public RegisterRepr spExtender;
-    private static String SP_EXTENDER_TAG = "SP_extender";
+    private static final String SP_EXTENDER_TAG = "SP_extender";
 
     // Used to make working with the IP in the middle of a operation not difficult
     // It's set to the IP at the beginning of every step and written back.
@@ -60,7 +66,7 @@ public class CPURepr {
      * Where the CPU block that pretends to be this is
      */
     public BlockPos manifestation;
-    private static String MANIFESTATION_TAG = "manifestation";
+    private static final String MANIFESTATION_TAG = "manifestation";
 
     /**
      * Cached indexes of registers this CPU can see.
@@ -68,7 +74,7 @@ public class CPURepr {
      * Closest -> farthest. Equidistant ones are in subarrays.
      */
     public ArrayList<IntList> registers;
-    private static String REGISTERS_TAG = "register_idxes";
+    private static final String REGISTERS_TAG = "register_idxes";
     public int registerCount;
 
     /**
@@ -76,14 +82,14 @@ public class CPURepr {
      * The indexes refer to the array of datafaces in the motherboard.
      */
     public ArrayList<IntList> datafaces;
-    private static String DATAFACES_TAG = "dataface_idxes";
+    private static final String DATAFACES_TAG = "dataface_idxes";
     public int datafaceCount;
 
     /**
      * Each array stores the indices that this CPU thinks the given memory is at.
      */
     public EnumMap<MemoryType, ArrayList<IntList>> memoryLocations;
-    private static String MEMORY_LOCATIONS_TAG = "memory_locations";
+    private static final String MEMORY_LOCATIONS_TAG = "memory_locations";
     public EnumMap<MemoryType, Integer> memoryCounts;
     public EnumMap<MemoryType, Long> memoryStarts;
 
@@ -108,6 +114,7 @@ public class CPURepr {
         } else {
             this.SP = new byte[1];
         }
+        this.FLAGS = new byte[1];
 
         initializeIdxes();
     }
@@ -161,6 +168,7 @@ public class CPURepr {
 
         this.IP = tag.getByteArray(IP_TAG);
         this.SP = tag.getByteArray(SP_TAG);
+        this.FLAGS = tag.getByteArray(FLAGS_TAG);
 
         this.initializeIdxes();
     }
@@ -200,6 +208,7 @@ public class CPURepr {
 
         tag.putByteArray(IP_TAG, this.IP);
         tag.putByteArray(SP_TAG, this.SP);
+        tag.putByteArray(FLAGS_TAG, this.FLAGS);
 
         return tag;
     }
@@ -230,7 +239,7 @@ public class CPURepr {
         MemoryType readFrom = null;
         for (MemoryType checkThis : MemoryType.values()) {
             long bytesReduced = bytesLeftover - this.memoryCounts.get(checkThis) * checkThis.storageAmount;
-            if (bytesReduced < 0) {
+            if (bytesReduced <= 0) {
                 // this means reading from the end of this section would bring it below 0
                 // so our answer is in there!
                 readFrom = checkThis;
@@ -356,6 +365,9 @@ public class CPURepr {
                 case WRITE:
                     this.opcWRITE(mother, rand);
                     break;
+                case COPY:
+                    this.opcCOPY(mother, rand);
+                    break;
                 case PUSH:
                     this.opcPUSH(mother, rand);
                     break;
@@ -459,6 +471,13 @@ public class CPURepr {
     private void opcWRITE(MotherboardRepr mother, Random rand) throws Emergency {
         ByteList toWrite = this.readIV(this.currentIP, true, mother, rand);
         this.writeToExternal(this.currentIP, true, toWrite, mother, rand);
+    }
+
+    private void opcCOPY(MotherboardRepr mother, Random rand) throws Emergency {
+        ByteList lenList = this.readIV(this.currentIP, true, mother, rand);
+        long len = Utils.toLong(lenList);
+        ByteList readBytes = this.readExternal(this.currentIP, true, (int) len, mother, rand);
+        this.writeToExternal(this.currentIP, true, readBytes, mother, rand);
     }
 
     private void opcPUSH(MotherboardRepr mother, Random rand) throws Emergency {
@@ -588,12 +607,12 @@ public class CPURepr {
         this.writeToRegister(srcIdx, false, lhs, mother, rand);
 
         if (overflow.size() > 0) {
-            this.FLAGS |= OVERFLOW_BIT;
+            this.FLAGS[0] |= OVERFLOW_BIT;
         } else {
-            this.FLAGS &= OVERFLOW_MASK;
+            this.FLAGS[0] &= OVERFLOW_MASK;
         }
         // no overflow for you
-        this.FLAGS &= UNDERFLOW_MASK;
+        this.FLAGS[0] &= UNDERFLOW_MASK;
     }
 
     private void opcSUB(MotherboardRepr mother, Random rand) throws Emergency {
@@ -606,12 +625,12 @@ public class CPURepr {
         // Underflow?
         // TODO: underflow doesn't work properly
         if (underflow.size() > 0) {
-            this.FLAGS |= UNDERFLOW_BIT;
+            this.FLAGS[0] |= UNDERFLOW_BIT;
         } else {
-            this.FLAGS &= UNDERFLOW_MASK;
+            this.FLAGS[0] &= UNDERFLOW_MASK;
         }
         // no overflow for you
-        this.FLAGS &= OVERFLOW_MASK;
+        this.FLAGS[0] &= OVERFLOW_MASK;
     }
 
     private void opcINC(MotherboardRepr mother, Random rand) throws Emergency {
@@ -622,12 +641,12 @@ public class CPURepr {
         // Overflow flag?
         if (remainder.size() > 0) {
             // oof
-            this.FLAGS |= OVERFLOW_BIT;
+            this.FLAGS[0] |= OVERFLOW_BIT;
         } else {
-            this.FLAGS &= OVERFLOW_MASK;
+            this.FLAGS[0] &= OVERFLOW_MASK;
         }
         // always clear the underflow bit
-        this.FLAGS &= UNDERFLOW_MASK;
+        this.FLAGS[0] &= UNDERFLOW_MASK;
     }
 
     private void opcDEC(MotherboardRepr mother, Random rand) throws Emergency {
@@ -638,12 +657,12 @@ public class CPURepr {
         // Overflow flag?
         if (remainder.size() > 0) {
             // oof
-            this.FLAGS |= UNDERFLOW_BIT;
+            this.FLAGS[0] |= UNDERFLOW_BIT;
         } else {
-            this.FLAGS &= UNDERFLOW_MASK;
+            this.FLAGS[0] &= UNDERFLOW_MASK;
         }
         // always clear the underflow bit
-        this.FLAGS &= OVERFLOW_MASK;
+        this.FLAGS[0] &= OVERFLOW_MASK;
     }
 
     private void opcAND(MotherboardRepr mother, Random rand) throws Emergency {
@@ -783,9 +802,10 @@ public class CPURepr {
             }
         } else {
             // this is a special register
+            // we can never return a ByteLists.singleton because those are immutable.
             if (bytecode == 0) {
                 // nil
-                return ByteLists.singleton((byte) 0);
+                return new ByteArrayList(new byte[]{(byte) 0});
             } else if (bytecode == 1) {
                 // IP
                 return new ByteArrayList(this.IP);
@@ -794,7 +814,7 @@ public class CPURepr {
                 return new ByteArrayList(this.SP);
             } else if (bytecode == 3) {
                 // FLAGS
-                return ByteLists.singleton(this.FLAGS);
+                return new ByteArrayList(this.FLAGS);
             } else {
                 // o no
                 throw new Emergency();
@@ -900,17 +920,17 @@ public class CPURepr {
             // Set move flags
             if (value.size() < register.value.length) {
                 // expand
-                this.FLAGS |= EXPAND_BIT;
+                this.FLAGS[0] |= EXPAND_BIT;
             } else {
                 // expandn't
-                this.FLAGS &= EXPAND_MASK;
+                this.FLAGS[0] &= EXPAND_MASK;
             }
             if (register.value.length < value.size()) {
                 // squish
-                this.FLAGS |= SQUISH_BIT;
+                this.FLAGS[0] |= SQUISH_BIT;
             } else {
                 // squishn't
-                this.FLAGS &= SQUISH_MASK;
+                this.FLAGS[0] &= SQUISH_MASK;
             }
         } else {
             // special register

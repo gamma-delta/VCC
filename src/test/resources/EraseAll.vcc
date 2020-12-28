@@ -1,19 +1,28 @@
 ; Based on an assignment a friend of mine had: erase all memory in the computer
 ; including XRAM.
 
-; This is a bodge because it requires a 31-byte long R0.
+; Requires a 1-byte R0 and that's it!
 
-; change this if you add extra stuff to your computer
-#def MAX_ADDRESS 0xfe
-#def REQUIRED_CODE_SIZE 31
+NOP. NOP. NOP. NOP.
+MOV 4 R0 ; the first 4 bytes are zero for you
 
-MOV MAX_ADDRESS R0
-LOOP:
-    WRITE 0x0 R0
-    DEC R0
-    MOV R0 R1
-    SUB R1 REQUIRED_CODE_SIZE
-    JNZ R1 LOOP
-; and overwrite the program by writing 30 zero bytes to R0.
-MOV 0 R0
-WRITE R0 0 
+; And now, 128 NOPs. We technically don't need this many but 128 is safest.
+; They are here in rows of 16.
+NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP.
+NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP.
+NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP.
+NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP.
+NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP.
+NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP.
+NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP.
+NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP. NOP.
+
+; Copy the first R0 bytes of memory to index R0
+COPY R0 0 R0
+SHL R0 1
+EMERGENCY ; hop back to index 0 for the emergency
+
+; On the first loop we overwrite the first 8 bytes, so they're all NOPs
+; We slide the NOP slide back down to the COPY code.
+; On the final iteration we will copy the first half of memory (all 0s)
+; to the second half, and make it all zero

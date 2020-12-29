@@ -1,6 +1,7 @@
 package me.gammadelta.common.item;
 
 import me.gammadelta.common.block.BlockChassis;
+import me.gammadelta.common.block.BlockRegister;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
@@ -30,6 +31,8 @@ public class VCCItems {
 			() -> new BlockItem(VCCBlocks.MOTHERBOARD_BLOCK.get(), new Item.Properties().group(VCC_ITEM_GROUP)));
 	public static final RegistryObject<Item> CHASSIS_ITEM = ITEMS.register(BlockChassis.NAME,
 			() -> new BlockItem(VCCBlocks.CHASSIS_BLOCK.get(), new Item.Properties().group(VCC_ITEM_GROUP)));
+	public static final RegistryObject<Item> REGISTER_ITEM = ITEMS.register(BlockRegister.NAME,
+			() -> new BlockItem(VCCBlocks.REGISTER_BLOCK.get(), new Item.Properties().group(VCC_ITEM_GROUP)));
 
 
 	public static void register(){

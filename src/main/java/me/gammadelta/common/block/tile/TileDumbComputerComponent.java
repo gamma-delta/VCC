@@ -4,10 +4,12 @@ import mcp.MethodsReturnNonnullByDefault;
 import net.minecraft.block.BlockState;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.NBTUtil;
+import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorld;
+import net.minecraftforge.common.util.Constants;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -22,11 +24,11 @@ import java.util.UUID;
 public abstract class TileDumbComputerComponent extends TileEntity {
     // This will be null if it can't find its motherboard
     @Nullable
-    public BlockPos motherboardLocation;
+    private BlockPos motherboardLocation;
     private static final String MOTHERBOARD_LOC_KEY = "motherboard_location";
     // Used to track if you break and replace the motherboard
     @Nullable
-    public UUID motherboardUUID;
+    private UUID motherboardUUID;
     private static final String KEY_MOTHERBOARD_UUID = "motherboard_uuid";
 
     public TileDumbComputerComponent(TileEntityType<?> iWishIKnewWhatThisConstructorDidSadFace) {
@@ -45,7 +47,6 @@ public abstract class TileDumbComputerComponent extends TileEntity {
     /**
      * Called by the motherboard when searching for components.
      */
-    @SuppressWarnings("unused")
     public void setMotherboard(@Nullable TileMotherboard motherboard) {
         if (motherboard != null) {
             this.motherboardLocation = motherboard.getPos();
@@ -53,6 +54,14 @@ public abstract class TileDumbComputerComponent extends TileEntity {
         } else {
             this.motherboardLocation = null;
             this.motherboardUUID = null;
+        }
+        try {
+            this.getBlockState().get(BlockStateProperties.LIT);
+            BlockState bs = world.getBlockState(pos);
+            world.setBlockState(pos, bs.with(BlockStateProperties.LIT, motherboard != null),
+                    Constants.BlockFlags.NOTIFY_NEIGHBORS + Constants.BlockFlags.BLOCK_UPDATE);
+        } catch (IllegalArgumentException ignored) {
+            // that block was not one that could be lit, too bad :pensive:
         }
     }
 

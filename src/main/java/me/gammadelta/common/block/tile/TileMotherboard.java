@@ -20,13 +20,13 @@ public class TileMotherboard extends TileEntity implements ITickableTileEntity {
     // region Serialized values
 
     private MotherboardRepr motherboard;
-    private static String MOTHERBOARD_TAG = "motherboard";
+    private static String MOTHERBOARD_KEY = "motherboard";
 
     // used for executing a frame on a high power signal
     private boolean wasPoweredLastTick = false;
-    private static String POWERED_TAG = "was_powered_last_tick";
-    private int ticksSinceLastStepped = 0;
-    private static String TICKS_SINCE_LAST_STEPPED = "ticks_since_last_stepped";
+    private static String POWERED_KEY = "was_powered_last_tick";
+    private int ticksSinceLastStepped = TICK_LIT_TIME + 1;
+    private static String TICKS_SINCE_LAST_STEPPED_KEY = "ticks_since_last_stepped";
 
     // endregion
 
@@ -48,7 +48,7 @@ public class TileMotherboard extends TileEntity implements ITickableTileEntity {
 
     public void updateConnectedComponents() {
         Set<TileDumbComputerComponent> found = FloodUtils.findUnclaimedComponents(this);
-        this.motherboard.updateComponents(pos, found.iterator());
+        this.motherboard.updateComponents(this, found.iterator());
     }
 
     @Override
@@ -66,16 +66,17 @@ public class TileMotherboard extends TileEntity implements ITickableTileEntity {
         }
         this.wasPoweredLastTick = powered;
 
+        boolean needsToBeLit = false;
         if (numberOfStepsToTake > 0) {
             VCCMod.LOGGER.info("Ticking {} times", numberOfStepsToTake);
             ticksSinceLastStepped = 0;
-        } else {
+        } else if (ticksSinceLastStepped <= TICK_LIT_TIME) {
             ticksSinceLastStepped++;
+            needsToBeLit = true;
         }
 
         BlockState bs = world.getBlockState(pos);
         boolean isLit = bs.get(BlockStateProperties.LIT);
-        boolean needsToBeLit = ticksSinceLastStepped <= TICK_LIT_TIME;
         if (isLit != needsToBeLit) {
             world.setBlockState(pos, bs.with(BlockStateProperties.LIT, needsToBeLit),
                     // dunno what these do but mcjty has them
@@ -85,16 +86,18 @@ public class TileMotherboard extends TileEntity implements ITickableTileEntity {
 
     @Override
     public void read(BlockState state, CompoundNBT nbt) {
-        this.wasPoweredLastTick = nbt.getBoolean(POWERED_TAG);
-        this.motherboard = new MotherboardRepr(nbt.getCompound(MOTHERBOARD_TAG));
+        this.wasPoweredLastTick = nbt.getBoolean(POWERED_KEY);
+        this.motherboard = new MotherboardRepr(nbt.getCompound(MOTHERBOARD_KEY));
+        this.ticksSinceLastStepped = nbt.getInt(TICKS_SINCE_LAST_STEPPED_KEY);
 
         super.read(state, nbt);
     }
 
     @Override
     public CompoundNBT write(CompoundNBT tag) {
-        tag.putBoolean(POWERED_TAG, this.wasPoweredLastTick);
-        tag.put(MOTHERBOARD_TAG, this.motherboard.serialize());
+        tag.putBoolean(POWERED_KEY, this.wasPoweredLastTick);
+        tag.put(MOTHERBOARD_KEY, this.motherboard.serialize());
+        tag.putInt(TICKS_SINCE_LAST_STEPPED_KEY, this.ticksSinceLastStepped);
 
         return super.write(tag);
     }

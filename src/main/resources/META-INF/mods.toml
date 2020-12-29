@@ -6,7 +6,7 @@ license="MIT License"
 [[mods]]
 modId="vcc"
 displayName="VCC"
-version="${file.jarVersion}"
+version="0.1.0"
 authors="GammaDelta"
 description = '''
 The lowest-level computer mod ever! (May not actually be lowest-level computer mod ever.)

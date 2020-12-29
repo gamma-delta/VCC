@@ -3,6 +3,8 @@ package me.gammadelta.common.program;
 import it.unimi.dsi.fastutil.bytes.ByteArrayList;
 import me.gammadelta.common.block.tile.TileChassis;
 import me.gammadelta.common.block.tile.TileDumbComputerComponent;
+import me.gammadelta.common.block.tile.TileMotherboard;
+import me.gammadelta.common.block.tile.TileRegister;
 import me.gammadelta.common.utils.Utils;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
@@ -114,7 +116,7 @@ public class MotherboardRepr {
     /**
      * Update my connected components given the new components
      */
-    public void updateComponents(BlockPos thisPos, Iterator<TileDumbComputerComponent> components) {
+    public void updateComponents(TileMotherboard owner, Iterator<TileDumbComputerComponent> components) {
         // TODO: rn this is just boilerplate to prevent instant NPEs
         this.memoryLocations = new EnumMap<>(MemoryType.class);
         for (MemoryType memType : MemoryType.values()) {
@@ -127,11 +129,13 @@ public class MotherboardRepr {
 
         for (Iterator<TileDumbComputerComponent> it = components; it.hasNext(); ) {
             TileDumbComputerComponent component = it.next();
-            component.motherboardLocation = thisPos;
-            component.motherboardUUID = this.uuid;
+            component.setMotherboard(owner);
 
             if (component instanceof TileChassis) {
                 this.chassises.add(component.getPos());
+            } else if (component instanceof TileRegister) {
+                // TODO: make registers combine into big registers
+                this.registers.add(new RegisterRepr(new BlockPos[]{component.getPos()}));
             }
         }
 

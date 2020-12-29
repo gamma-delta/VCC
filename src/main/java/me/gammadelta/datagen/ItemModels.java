@@ -22,6 +22,7 @@ public class ItemModels extends ItemModelProvider {
     protected void registerModels() {
         parentedBlock(VCCBlocks.CHASSIS_BLOCK.get(), "block/chassis");
         parentedBlock(VCCBlocks.MOTHERBOARD_BLOCK.get(), "block/motherboard");
+        parentedBlock(VCCBlocks.REGISTER_BLOCK.get(), "block/register");
     }
 
     public void parentedBlock(Block block, String model) {

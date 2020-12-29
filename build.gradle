@@ -18,16 +18,13 @@ repositories {
     maven { // JEI
         url "https://dvs1.progwml6.com/files/maven"
     }
-    maven { // TOP
+    maven { // TOP & CTM
         name 'tterrag maven'
-        url "http://maven.tterrag.com/"
-    }
-    maven { // CTM
-        url "https://www.cursemaven.com"
+        url "https://maven.tterrag.com/"
     }
 }
 
-version = '1.0'
+version = '0.1.0'
 group = 'me.gammadelta.vcc' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'vcc'
 
@@ -115,7 +112,8 @@ dependencies {
         transitive = false
     })
 
-    compile fg.deobf("curse.maven:ctm-267602:2642375")
+    compileOnly fg.deobf("team.chisel.ctm:CTM:MC1.16.1-1.1.2.6:api")
+    runtimeOnly fg.deobf("team.chisel.ctm:CTM:MC1.16.1-1.1.2.6")
 
 }
 

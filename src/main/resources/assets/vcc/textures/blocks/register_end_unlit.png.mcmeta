@@ -1,0 +1,9 @@
+{
+    "ctm": {
+        "ctm_version": 1,
+        "type": "CTM",
+        "textures": [
+            "vcc:blocks/register_end_unlit_ctm"
+        ]
+    }
+}

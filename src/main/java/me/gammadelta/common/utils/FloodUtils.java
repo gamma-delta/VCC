@@ -12,7 +12,6 @@ import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.Queue;
 import java.util.Set;
-import java.util.function.Predicate;
 
 public class FloodUtils {
     // TODO: make an actual config handler.
@@ -21,7 +20,7 @@ public class FloodUtils {
     /**
      * Give this a motherboard, and it will return the
      * positions of all directly connected, unclaimed components.
-     *
+     * <p>
      * Claimed components act as air or similar; it will not continue searching
      * upon finding one.
      */
@@ -43,7 +42,7 @@ public class FloodUtils {
             TileEntity maybeTE = world.getTileEntity(questioning);
             if (maybeTE instanceof TileDumbComputerComponent) {
                 TileDumbComputerComponent comp = (TileDumbComputerComponent) maybeTE;
-                if (comp.motherboardLocation != null) {
+                if (comp.getMotherboard(world) != null) {
                     // this one has been claimed
                     continue;
                 }
@@ -63,7 +62,7 @@ public class FloodUtils {
 
     /**
      * Flood fill from a newly placed component to find the motherboard.
-     * Will search through unclaimed components, but not claimed ones.
+     * Will search through unclaimed and claimed components.
      */
     @Nullable
     public static TileMotherboard findMotherboard(TileDumbComputerComponent component) {
@@ -84,10 +83,6 @@ public class FloodUtils {
             TileEntity maybeTE = world.getTileEntity(questioning);
             if (maybeTE instanceof TileDumbComputerComponent) {
                 TileDumbComputerComponent comp = (TileDumbComputerComponent) maybeTE;
-                if (comp.motherboardLocation != null) {
-                    // this one has been claimed
-                    continue;
-                }
                 found.add(comp);
                 for (Direction d : Direction.values()) {
                     BlockPos nextPos = maybeTE.getPos().offset(d);

@@ -42,8 +42,7 @@ public abstract class BlockComponent extends VCCBlock {
             mother = FloodUtils.findMotherboard(comp);
             if (mother != null) {
                 // no NPEs, we know it isn't null because we just checked!
-                comp.motherboardLocation = mother.getPos();
-                comp.motherboardUUID = mother.getUUID();
+                comp.setMotherboard(mother);
                 mother.updateConnectedComponents();
             }
         }

@@ -94,7 +94,7 @@ public class BlockMotherboard extends VCCBlock {
         if (p == null || !p.isSneaking()) {
             dir = dir.getOpposite();
         }
-        return getDefaultState().with(BlockStateProperties.FACING, dir);
+        return getDefaultState().with(BlockStateProperties.FACING, dir).with(BlockStateProperties.LIT, false);
     }
 
     @Override

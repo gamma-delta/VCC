@@ -2,6 +2,7 @@ package me.gammadelta.datagen;
 
 import me.gammadelta.common.block.BlockChassis;
 import me.gammadelta.common.block.BlockMotherboard;
+import me.gammadelta.common.block.BlockRegister;
 import me.gammadelta.common.block.VCCBlocks;
 
 import net.minecraft.block.Block;
@@ -27,8 +28,9 @@ public class BlockStates extends BlockStateProvider {
 
     @Override
     protected void registerStatesAndModels() {
-        singleTextureBlock(VCCBlocks.CHASSIS_BLOCK.get(), BlockChassis.NAME, "block/chassis");
+        singleTextureBlock(VCCBlocks.CHASSIS_BLOCK.get(), BlockChassis.NAME, "blocks/chassis");
         registerMotherboard();
+        registerRegister();
     }
 
     public void singleTextureBlock(Block block, String modelName, String textureName) {
@@ -37,14 +39,33 @@ public class BlockStates extends BlockStateProvider {
     }
 
     private void registerMotherboard() {
-        ResourceLocation side = new ResourceLocation(MOD_ID, "block/chassis");
+        ResourceLocation side = new ResourceLocation(MOD_ID, "blocks/chassis");
         BlockModelBuilder unlit = models().cube(BlockMotherboard.NAME + "_unlit", side, side,
-                new ResourceLocation(MOD_ID, "block/motherboard_front_unlit"), side, side, side);
+                new ResourceLocation(MOD_ID, "blocks/motherboard_front_unlit"), side, side, side);
         // by registering the default name here, we make its display in the inventory
         // be the lit version
         BlockModelBuilder lit = models().cube(BlockMotherboard.NAME, side, side,
-                new ResourceLocation(MOD_ID, "block/motherboard_front_lit"), side, side, side);
+                new ResourceLocation(MOD_ID, "blocks/motherboard_front_lit"), side, side, side);
         orientedBlock(VCCBlocks.MOTHERBOARD_BLOCK.get(), state -> {
+            if (state.get(BlockStateProperties.LIT)) {
+                return lit;
+            } else {
+                return unlit;
+            }
+        });
+    }
+
+    // this isn't confusing
+    private void registerRegister() {
+        ResourceLocation sideUnlit = new ResourceLocation(MOD_ID, "blocks/register_side_unlit");
+        ResourceLocation endUnlit = new ResourceLocation(MOD_ID, "blocks/register_end_unlit");
+        BlockModelBuilder unlit = models().cubeColumn(BlockRegister.NAME + "_unlit", sideUnlit, endUnlit);
+
+        ResourceLocation sideLit = new ResourceLocation(MOD_ID, "blocks/register_side_lit");
+        ResourceLocation endLit = new ResourceLocation(MOD_ID, "blocks/register_end_lit");
+        BlockModelBuilder lit = models().cubeColumn(BlockRegister.NAME, sideLit, endLit);
+
+        orientedVerticalBlock(VCCBlocks.REGISTER_BLOCK.get(), state -> {
             if (state.get(BlockStateProperties.LIT)) {
                 return lit;
             } else {
@@ -62,6 +83,18 @@ public class BlockStates extends BlockStateProvider {
                             .modelFile(modelFunc.apply(state))
                             .rotationX(dir.getAxis() == Direction.Axis.Y ?  dir.getAxisDirection().getOffset() * -90 : 0)
                             .rotationY(dir.getAxis() != Direction.Axis.Y ? ((dir.getHorizontalIndex() + 2) % 4) * 90 : 0)
+                            .build();
+                });
+    }
+
+    private void orientedVerticalBlock(Block block, Function<BlockState, ModelFile> modelFunc) {
+        getVariantBuilder(block)
+                .forAllStates(state -> {
+                    Direction.Axis axis = state.get(BlockStateProperties.AXIS);
+                    return ConfiguredModel.builder()
+                            .modelFile(modelFunc.apply(state))
+                            .rotationX(axis != Direction.Axis.Y ? 90 : 0)
+                            .rotationY(axis == Direction.Axis.X ? 90 : 0)
                             .build();
                 });
     }

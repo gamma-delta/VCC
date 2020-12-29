@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:block/cube_all",
   "textures": {
-    "all": "vcc:block/chassis"
+    "all": "vcc:blocks/chassis"
   }
 }

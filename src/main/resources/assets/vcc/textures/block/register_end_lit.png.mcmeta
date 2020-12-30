@@ -1,16 +1,16 @@
 {
     "animation": {
         "interpolate": true,
-        "width": 1,
-        "height": 3,
+        "width": 16,
+        "height": 16,
         "frametime": 8,
-        "frames": [0, 1, 2, 1, 2, 1]
+        "frames": [0, 1, 2, 3, 2, 3, 2, 1, 2, 3, 2, 3, 2, 1]
     },
     "ctm": {
         "ctm_version": 1,
         "type": "CTM",
         "textures": [
-            "vcc:blocks/register_side_lit_ctm"
+            "vcc:block/register_end_lit_ctm"
         ]
     }
 }

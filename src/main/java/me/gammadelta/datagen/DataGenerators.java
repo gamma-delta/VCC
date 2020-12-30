@@ -16,5 +16,8 @@ public class DataGenerators {
             gen.addProvider(new BlockStates(gen, efh));
             gen.addProvider(new ItemModels(gen, efh));
         }
+        if (ev.includeServer()) {
+            gen.addProvider(new Recipes(gen, efh));
+        }
     }
 }

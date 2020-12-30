@@ -3,7 +3,7 @@
         "ctm_version": 1,
         "type": "CTM",
         "textures": [
-            "vcc:blocks/register_side_unlit_ctm"
+            "vcc:block/register_side_unlit_ctm"
         ]
     }
 }

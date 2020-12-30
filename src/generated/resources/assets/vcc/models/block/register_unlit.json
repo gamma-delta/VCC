@@ -1,7 +1,7 @@
 {
   "parent": "minecraft:block/cube_column",
   "textures": {
-    "side": "vcc:blocks/register_side_unlit",
-    "end": "vcc:blocks/register_end_unlit"
+    "side": "vcc:block/register_side_unlit",
+    "end": "vcc:block/register_end_unlit"
   }
 }

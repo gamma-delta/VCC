@@ -1,4 +1,21 @@
 {
+    "block.vcc.motherboard": "Motherboard",
+    "block.vcc.chassis": "Chassis",
+    "block.vcc.register": "Register Block",
+
+    "item.vcc.punchcard": "Punch Card",
+    "item.vcc.filled_punchcard": "Punch Card with Data",
+    "item.vcc.clipboard": "Clipboard with Card-Puncher",
+    "item.vcc.clipboard.tooltip0": "Craft with a punch card to punch the data on your system clipboard onto the card.",
+    "item.vcc.clipboard.tooltip1": "Accepts lists of numbers in decimal, hex, or binary, separated by commas, semicolons, or whitespace.",
+    "item.vcc.clipboard.tooltip2": "Include a piece of string in the recipe to make it paste the raw text on your clipboard instead (as UTF-8).",
+    "item.vcc.clipboard.tooltip3": "If the data is too big for the punch card, it will only punch the first part and drop the rest. If the data is too small, it will fill the remainder with zeroes.",
+    "item.vcc.clipboard.tooltip4": "Does not consume the Clipboard with Card-Puncher.",
+
+    "tooltip.shiftForMore": "§7§oPress §b§oSHIFT§7§o for more info",
+    "tooltip.hexdump.hidden": "§b§o%d§7§o bytes stored\nPress §b§oSHIFT§7§o to show hexdump",
+    "tooltip.hexdump.shown": "Hexdump:\n%s\nUse a §7%s§f to copy this data.",
+
     "misc.debugNBT": "VCC TE `%s' has the following NBT: %s",
     "misc.debugNBT.clipboard": "NBT of VCC TE `%s' has been copied to your clipboard (%d chars)"
 }

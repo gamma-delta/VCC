@@ -1,11 +1,11 @@
 a296baa27ef0b9e7cb9fbe46095416264a4ebb75 assets/vcc/blockstates/chassis.json
 6cd4806cad0d40b8d6e0d677f00adf55c1d3de67 assets/vcc/blockstates/motherboard.json
 682c89918f264ce01dbd99cb9edb93c8d6d83c7c assets/vcc/blockstates/register.json
-d3717eee8a4327496115c0b9c2c4972cf9b7728d assets/vcc/models/block/chassis.json
-30c4310441edf7eb62e0539dddcce1d33a373862 assets/vcc/models/block/motherboard.json
-7e2d719d62f04ae5efe23b370746d215cd5fa26b assets/vcc/models/block/motherboard_unlit.json
-f50db629763673340a15c63d58a63588cd6cba85 assets/vcc/models/block/register.json
-a79a5ba3c865bcbf7dad7ce2c2b68a4f33acf18b assets/vcc/models/block/register_unlit.json
+f381ec102995bfe7eeda5340655fa07692c74d7e assets/vcc/models/block/chassis.json
+f8a527fa4fad1baa3f50f08e7cb74e0f71df817b assets/vcc/models/block/motherboard.json
+fb949a5b0a3c1274244c095c52f88eec6510ca40 assets/vcc/models/block/motherboard_unlit.json
+1da45d65cb37911cbf850c3cdee76f01564603b4 assets/vcc/models/block/register.json
+613e3a3275317b09069562b7e826714c2501bb3f assets/vcc/models/block/register_unlit.json
 d070d7a1fbca6f167f38762ba64851528070791d assets/vcc/models/item/chassis.json
 0f072a25c6b12f12570454aeb3f6941d039e2f03 assets/vcc/models/item/motherboard.json
 fe3d19075c6035129b815ffc41cd64799b54a23c assets/vcc/models/item/register.json

@@ -28,7 +28,7 @@ public class BlockStates extends BlockStateProvider {
 
     @Override
     protected void registerStatesAndModels() {
-        singleTextureBlock(VCCBlocks.CHASSIS_BLOCK.get(), BlockChassis.NAME, "blocks/chassis");
+        singleTextureBlock(VCCBlocks.CHASSIS_BLOCK.get(), BlockChassis.NAME, "block/chassis");
         registerMotherboard();
         registerRegister();
     }
@@ -39,13 +39,13 @@ public class BlockStates extends BlockStateProvider {
     }
 
     private void registerMotherboard() {
-        ResourceLocation side = new ResourceLocation(MOD_ID, "blocks/chassis");
+        ResourceLocation side = new ResourceLocation(MOD_ID, "block/chassis");
         BlockModelBuilder unlit = models().cube(BlockMotherboard.NAME + "_unlit", side, side,
-                new ResourceLocation(MOD_ID, "blocks/motherboard_front_unlit"), side, side, side);
+                new ResourceLocation(MOD_ID, "block/motherboard_front_unlit"), side, side, side);
         // by registering the default name here, we make its display in the inventory
         // be the lit version
         BlockModelBuilder lit = models().cube(BlockMotherboard.NAME, side, side,
-                new ResourceLocation(MOD_ID, "blocks/motherboard_front_lit"), side, side, side);
+                new ResourceLocation(MOD_ID, "block/motherboard_front_lit"), side, side, side);
         orientedBlock(VCCBlocks.MOTHERBOARD_BLOCK.get(), state -> {
             if (state.get(BlockStateProperties.LIT)) {
                 return lit;
@@ -57,12 +57,12 @@ public class BlockStates extends BlockStateProvider {
 
     // this isn't confusing
     private void registerRegister() {
-        ResourceLocation sideUnlit = new ResourceLocation(MOD_ID, "blocks/register_side_unlit");
-        ResourceLocation endUnlit = new ResourceLocation(MOD_ID, "blocks/register_end_unlit");
+        ResourceLocation sideUnlit = new ResourceLocation(MOD_ID, "block/register_side_unlit");
+        ResourceLocation endUnlit = new ResourceLocation(MOD_ID, "block/register_end_unlit");
         BlockModelBuilder unlit = models().cubeColumn(BlockRegister.NAME + "_unlit", sideUnlit, endUnlit);
 
-        ResourceLocation sideLit = new ResourceLocation(MOD_ID, "blocks/register_side_lit");
-        ResourceLocation endLit = new ResourceLocation(MOD_ID, "blocks/register_end_lit");
+        ResourceLocation sideLit = new ResourceLocation(MOD_ID, "block/register_side_lit");
+        ResourceLocation endLit = new ResourceLocation(MOD_ID, "block/register_end_lit");
         BlockModelBuilder lit = models().cubeColumn(BlockRegister.NAME, sideLit, endLit);
 
         orientedVerticalBlock(VCCBlocks.REGISTER_BLOCK.get(), state -> {

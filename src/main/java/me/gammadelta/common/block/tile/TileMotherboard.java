@@ -6,6 +6,7 @@ import me.gammadelta.common.program.MotherboardRepr;
 import me.gammadelta.common.utils.FloodUtils;
 import net.minecraft.block.BlockState;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SUpdateTileEntityPacket;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.tileentity.ITickableTileEntity;
@@ -51,6 +52,7 @@ public class TileMotherboard extends TileEntity implements ITickableTileEntity {
     public void updateConnectedComponents() {
         Set<TileDumbComputerComponent> found = FloodUtils.findUnclaimedComponents(this);
         this.motherboard.updateComponents(this, found.iterator());
+        this.markDirty();
     }
 
     @Override
@@ -84,12 +86,14 @@ public class TileMotherboard extends TileEntity implements ITickableTileEntity {
                     // dunno what these do but mcjty has them
                     Constants.BlockFlags.NOTIFY_NEIGHBORS + Constants.BlockFlags.BLOCK_UPDATE);
         }
+
+        this.markDirty();
     }
 
     @Override
     public void read(BlockState state, CompoundNBT nbt) {
         this.wasPoweredLastTick = nbt.getBoolean(POWERED_KEY);
-        this.motherboard = new MotherboardRepr(nbt.getCompound(MOTHERBOARD_KEY));
+        this.motherboard = new MotherboardRepr(nbt.getCompound(MOTHERBOARD_KEY), this);
         this.ticksSinceLastStepped = nbt.getInt(TICKS_SINCE_LAST_STEPPED_KEY);
 
         super.read(state, nbt);
@@ -109,6 +113,11 @@ public class TileMotherboard extends TileEntity implements ITickableTileEntity {
     @Override
     public SUpdateTileEntityPacket getUpdatePacket() {
         return new SUpdateTileEntityPacket(getPos(), -1, getUpdateTag());
+    }
+
+    @Override
+    public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket pkt) {
+        read(world.getBlockState(pkt.getPos()), pkt.getNbtCompound());
     }
 
     @Nonnull

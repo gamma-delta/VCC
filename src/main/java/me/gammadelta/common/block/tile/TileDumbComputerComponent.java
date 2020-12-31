@@ -65,6 +65,7 @@ public abstract class TileDumbComputerComponent extends TileEntity {
         } catch (IllegalArgumentException ignored) {
             // that block was not one that could be lit, too bad :pensive:
         }
+        this.markDirty();
     }
 
     @Nullable

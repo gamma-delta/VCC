@@ -21,7 +21,7 @@ public class FloodUtils {
      * Give this a motherboard, and it will return the
      * positions of all directly connected, unclaimed components.
      * <p>
-     * Claimed components act as air or similar; it will not continue searching
+     * Components owned by another motherboard act as air or similar; it will not continue searching
      * upon finding one.
      */
     public static Set<TileDumbComputerComponent> findUnclaimedComponents(TileMotherboard mother) {
@@ -42,8 +42,9 @@ public class FloodUtils {
             TileEntity maybeTE = world.getTileEntity(questioning);
             if (maybeTE instanceof TileDumbComputerComponent) {
                 TileDumbComputerComponent comp = (TileDumbComputerComponent) maybeTE;
-                if (comp.getMotherboard(world) != null) {
-                    // this one has been claimed
+                TileMotherboard otherMother = comp.getMotherboard(world);
+                if (otherMother != null && otherMother.getUUID().equals(comp.getMotherboard(world))) {
+                    // this one has been claimed by another
                     continue;
                 }
                 found.add(comp);

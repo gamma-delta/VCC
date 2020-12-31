@@ -90,7 +90,7 @@ public class MotherboardRepr {
         this.uuid = UUID.randomUUID();
 
         this.initializeMemory();
-        this.fillOwnedBlocks();
+        this.fillOwnedBlocksNoOwnership();
     }
 
     /**
@@ -110,7 +110,7 @@ public class MotherboardRepr {
         this.uuid = UUID.randomUUID();
 
         this.initializeMemory();
-        this.fillOwnedBlocks();
+        this.fillOwnedBlocksNoOwnership();
     }
 
     /**
@@ -118,6 +118,17 @@ public class MotherboardRepr {
      */
     public void updateComponents(TileMotherboard owner, Iterator<TileDumbComputerComponent> components) {
         // TODO: rn this is just boilerplate to prevent instant NPEs
+
+        // Disconnect all currently owned blocks.
+        // If we are still connected to them, we'll tell them so.
+        for (BlockPos ownedPos : this.ownedBlocks) {
+            TileDumbComputerComponent comp = (TileDumbComputerComponent) owner.getWorld().getTileEntity(ownedPos);
+            if (comp != null) {
+                comp.setMotherboard(null);
+            }
+        }
+
+
         this.memoryLocations = new EnumMap<>(MemoryType.class);
         for (MemoryType memType : MemoryType.values()) {
             this.memoryLocations.put(memType, new ArrayList<>());
@@ -141,13 +152,13 @@ public class MotherboardRepr {
 
 
         this.initializeMemory();
-        this.fillOwnedBlocks();
+        this.fillOwnedBlocks(owner);
     }
 
     /**
      * Deserialize a motherboard from NBT.
      */
-    public MotherboardRepr(CompoundNBT tag) {
+    public MotherboardRepr(CompoundNBT tag, TileMotherboard owner) {
         this.memory = tag.getByteArray(MEMORY_KEY);
 
         CompoundNBT memoryLocsTag = tag.getCompound(MEMORY_LOCATIONS_KEY);
@@ -196,7 +207,7 @@ public class MotherboardRepr {
             this.uuid = UUID.randomUUID();
         }
 
-        this.fillOwnedBlocks();
+        this.fillOwnedBlocks(owner);
     }
 
     public CompoundNBT serialize() {
@@ -261,9 +272,24 @@ public class MotherboardRepr {
     }
 
     /**
-     * Fill in all the owned blocks.
+     * Fill in all the owned blocks, and update their ownership.
      */
-    private void fillOwnedBlocks() {
+    private void fillOwnedBlocks(TileMotherboard owner) {
+        this.fillOwnedBlocksNoOwnership();
+
+        for (BlockPos ownedPos : this.ownedBlocks) {
+            TileDumbComputerComponent comp = (TileDumbComputerComponent) owner.getWorld().getTileEntity(ownedPos);
+            if (comp != null) {
+                comp.setMotherboard(owner);
+            }
+        }
+    }
+
+    /**
+     * Fill in the owned blocks but don't update their ownership.
+     * This should only be called for testing purposes (when there's no reason to make a whole world)
+     */
+    private void fillOwnedBlocksNoOwnership() {
         this.ownedBlocks = new ArrayList<>();
 
         for (ArrayList<CPURepr> cpuGroup : this.cpus) {

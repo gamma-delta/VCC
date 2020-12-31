@@ -29,9 +29,8 @@ public class PrintNBTWithDebuggerListener {
     public static void maybePrintNBT(PlayerInteractEvent.RightClickBlock e) {
         PlayerEntity player = e.getPlayer();
         World world = player.getEntityWorld();
-        if (!world.isRemote) {
-            // We can't do this on both sides, otherwise it will print twice
-            // so let's do it on the client only
+        if (world.isRemote) {
+            // nbt is only on the server so stop if we're on the client
             return;
         }
 

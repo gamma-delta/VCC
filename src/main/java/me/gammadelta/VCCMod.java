@@ -4,6 +4,7 @@ import me.gammadelta.client.VCCParticles;
 import me.gammadelta.common.block.VCCBlocks;
 import me.gammadelta.common.item.VCCItems;
 import me.gammadelta.common.network.MsgHighlightBlocks;
+import me.gammadelta.common.recipe.VCCRecipes;
 import net.minecraft.particles.ParticleType;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
@@ -41,6 +42,7 @@ public class VCCMod {
         MinecraftForge.EVENT_BUS.register(VCCParticles.class);
         VCCBlocks.register();
         VCCItems.register();
+        VCCRecipes.register();
 
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         modBus.addGenericListener(ParticleType.class, VCCParticles::register);

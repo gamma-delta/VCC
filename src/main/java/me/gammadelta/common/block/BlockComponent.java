@@ -3,6 +3,7 @@ package me.gammadelta.common.block;
 import me.gammadelta.common.block.tile.TileDumbComputerComponent;
 import me.gammadelta.common.block.tile.TileMotherboard;
 import me.gammadelta.common.utils.FloodUtils;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
@@ -14,7 +15,7 @@ import net.minecraftforge.common.ToolType;
 
 import javax.annotation.Nullable;
 
-public abstract class BlockComponent extends VCCBlock {
+public abstract class BlockComponent extends Block {
     public static Properties PROPERTIES = Properties.create(Material.IRON)
             .sound(SoundType.METAL)
             .harvestLevel(1)

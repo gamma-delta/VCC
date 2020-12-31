@@ -64,11 +64,4 @@ public class VCCItems {
     public static void register() {
         ITEMS.register(FMLJavaModLoadingContext.get().getModEventBus());
     }
-
-    @SubscribeEvent
-    public static void registerRecipes(RegistryEvent.Register<IRecipeSerializer<?>> e) {
-		IForgeRegistry<IRecipeSerializer<?>> r = e.getRegistry();
-
-		r.register(RecipePasteToPunchcard.SERIALIZER);
-	}
 }

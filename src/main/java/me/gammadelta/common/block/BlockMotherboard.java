@@ -25,7 +25,7 @@ import net.minecraftforge.fml.network.PacketDistributor;
 
 import javax.annotation.Nullable;
 
-public class BlockMotherboard extends VCCBlock {
+public class BlockMotherboard extends Block {
     public static final String NAME = "motherboard";
 
     public BlockMotherboard() {

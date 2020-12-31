@@ -2,7 +2,6 @@ package me.gammadelta.common.recipe.specialcrafting;
 
 import it.unimi.dsi.fastutil.bytes.ByteArrayList;
 import it.unimi.dsi.fastutil.bytes.ByteList;
-import me.gammadelta.common.item.IMemoryStorageItem;
 import me.gammadelta.common.item.VCCItems;
 import me.gammadelta.common.utils.Utils;
 import net.minecraft.client.Minecraft;
@@ -12,15 +11,18 @@ import net.minecraft.item.Items;
 import net.minecraft.item.crafting.IRecipeSerializer;
 import net.minecraft.item.crafting.SpecialRecipe;
 import net.minecraft.item.crafting.SpecialRecipeSerializer;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 
+import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.IntStream;
 
 public class RecipePasteToPunchcard extends SpecialRecipe {
-    public static final SpecialRecipeSerializer<RecipePasteToPunchcard> SERIALIZER = new SpecialRecipeSerializer<>(RecipePasteToPunchcard::new);
+    public static final SpecialRecipeSerializer<RecipePasteToPunchcard> SERIALIZER = new SpecialRecipeSerializer<>(
+            RecipePasteToPunchcard::new);
 
     public RecipePasteToPunchcard(ResourceLocation idIn) {
         super(idIn);
@@ -84,7 +86,7 @@ public class RecipePasteToPunchcard extends SpecialRecipe {
             // this shouldn't happen but still
             return ItemStack.EMPTY;
         } else {
-            out.getOrCreateTag().putByteArray(IMemoryStorageItem.MEMORY_KEY, data);
+            VCCItems.FILLED_PUNCHCARD.get().setMemory(out, data);
         }
 
         return out;
@@ -100,6 +102,21 @@ public class RecipePasteToPunchcard extends SpecialRecipe {
     @ParametersAreNonnullByDefault
     public IRecipeSerializer<?> getSerializer() {
         return SERIALIZER;
+    }
+
+    @Nonnull
+    @Override
+    public NonNullList<ItemStack> getRemainingItems(CraftingInventory inv) {
+        NonNullList<ItemStack> items = NonNullList.withSize(inv.getSizeInventory(), ItemStack.EMPTY);
+
+        for (int i = 0; i < items.size(); i++) {
+            ItemStack stack = inv.getStackInSlot(i);
+            if (stack.getItem() == VCCItems.CLIPBOARD.get()) {
+                items.set(i, stack);
+            }
+        }
+
+        return items;
     }
 
     /**

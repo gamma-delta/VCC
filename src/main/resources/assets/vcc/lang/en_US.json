@@ -13,8 +13,10 @@
     "item.vcc.clipboard.tooltip4": "Does not consume the Clipboard with Card-Puncher.",
 
     "tooltip.shiftForMore": "§7§oPress §b§oSHIFT§7§o for more info",
-    "tooltip.hexdump.hidden": "§b§o%d§7§o bytes stored\nPress §b§oSHIFT§7§o to show hexdump",
-    "tooltip.hexdump.shown": "Hexdump:\n%s\nUse a §7%s§f to copy this data.",
+    "tooltip.hexdump.hidden0": "§b§o%d§7§o bytes stored",
+    "tooltip.hexdump.hidden1": "Press §b§oSHIFT§7§o to show hexdump",
+    "tooltip.hexdump.shown0": "Hexdump:",
+    "tooltip.hexdump.shown1": "Use a §7%s§f to copy this data.",
 
     "misc.debugNBT": "VCC TE `%s' has the following NBT: %s",
     "misc.debugNBT.clipboard": "NBT of VCC TE `%s' has been copied to your clipboard (%d chars)"

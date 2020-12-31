@@ -46,4 +46,6 @@ public class BlockRegister extends BlockComponent {
     protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
         builder.add(BlockStateProperties.AXIS, BlockStateProperties.LIT);
     }
+
+    // endregion
 }

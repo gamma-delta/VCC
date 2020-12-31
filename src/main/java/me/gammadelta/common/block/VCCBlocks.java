@@ -2,6 +2,7 @@ package me.gammadelta.common.block;
 
 import me.gammadelta.common.block.tile.TileChassis;
 import me.gammadelta.common.block.tile.TileMotherboard;
+import me.gammadelta.common.block.tile.TilePuncher;
 import me.gammadelta.common.block.tile.TileRegister;
 import net.minecraft.block.Block;
 import net.minecraft.tileentity.TileEntityType;
@@ -26,6 +27,8 @@ public class VCCBlocks {
     // a register block, not register a block
     public static final RegistryObject<Block> REGISTER_BLOCK = BLOCKS.register(BlockRegister.NAME,
             BlockRegister::new);
+    public static final RegistryObject<Block> PUNCHER_BLOCK = BLOCKS.register(BlockPuncher.NAME,
+            BlockPuncher::new);
 
     // endregion
 
@@ -40,6 +43,9 @@ public class VCCBlocks {
     public static final RegistryObject<TileEntityType<TileRegister>> REGISTER_TILE = TILES.register(
             BlockRegister.NAME,
             () -> TileEntityType.Builder.create(TileRegister::new, REGISTER_BLOCK.get()).build(null));
+    public static final RegistryObject<TileEntityType<TilePuncher>> PUNCHER_TILE = TILES.register(
+            BlockPuncher.NAME,
+            () -> TileEntityType.Builder.create(TilePuncher::new, PUNCHER_BLOCK.get()).build(null));
 
     // endregion
 

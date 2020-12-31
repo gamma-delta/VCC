@@ -7,5 +7,9 @@ fb949a5b0a3c1274244c095c52f88eec6510ca40 assets/vcc/models/block/motherboard_unl
 1da45d65cb37911cbf850c3cdee76f01564603b4 assets/vcc/models/block/register.json
 613e3a3275317b09069562b7e826714c2501bb3f assets/vcc/models/block/register_unlit.json
 d070d7a1fbca6f167f38762ba64851528070791d assets/vcc/models/item/chassis.json
+3d42fcfbef8cb8eedf1d858bbb0a067eddf9f89d assets/vcc/models/item/clipboard.json
+9819c397ae9174101e138ebd9392ebab10cc5053 assets/vcc/models/item/filled_punchcard.json
 0f072a25c6b12f12570454aeb3f6941d039e2f03 assets/vcc/models/item/motherboard.json
+10fa523912bc7e55699061f6c13ec06541b88d87 assets/vcc/models/item/punchcard.json
 fe3d19075c6035129b815ffc41cd64799b54a23c assets/vcc/models/item/register.json
+c49d89f3dc96294e3b9d47c68c1527888b1634a2 data/vcc/recipes/dynamic/paste_to_punchcard.json

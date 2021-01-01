@@ -1,6 +1,6 @@
 package me.gammadelta.common.block.tile;
 
-import me.gammadelta.VCCMod;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import me.gammadelta.common.block.VCCBlocks;
 import me.gammadelta.common.program.MotherboardRepr;
 import me.gammadelta.common.utils.FloodUtils;
@@ -34,7 +34,7 @@ public class TileMotherboard extends TileEntity implements ITickableTileEntity {
     // endregion
 
     // how many ticks ago we need to be stepped in order to display lit
-    private static final int TICK_LIT_TIME = 10;
+    private static final int TICK_LIT_TIME = 5;
 
     public TileMotherboard() {
         super(VCCBlocks.MOTHERBOARD_TILE.get());
@@ -45,13 +45,19 @@ public class TileMotherboard extends TileEntity implements ITickableTileEntity {
         return this.motherboard.uuid;
     }
 
-    public List<BlockPos> getControlledBlocks() {
+    public Set<BlockPos> getControlledBlocks() {
         return this.motherboard.ownedBlocks;
     }
 
+    public MotherboardRepr getMotherboard() {
+        return motherboard;
+    }
+
     public void updateConnectedComponents() {
-        Set<TileDumbComputerComponent> found = FloodUtils.findUnclaimedComponents(this);
-        this.motherboard.updateComponents(this, found.iterator());
+        Object2IntOpenHashMap<BlockPos> found = FloodUtils.findUnclaimedComponents(this);
+        if (found != null) {
+            this.motherboard.updateComponents(this, found);
+        }
         this.markDirty();
     }
 
@@ -70,24 +76,29 @@ public class TileMotherboard extends TileEntity implements ITickableTileEntity {
         }
         this.wasPoweredLastTick = powered;
 
-        boolean needsToBeLit = false;
+        boolean displayLit = false;
         if (numberOfStepsToTake > 0) {
-            VCCMod.LOGGER.info("Ticking {} times", numberOfStepsToTake);
             ticksSinceLastStepped = 0;
+            displayLit = true;
         } else if (ticksSinceLastStepped <= TICK_LIT_TIME) {
+            // we're still in the cooldown for showing the litness
             ticksSinceLastStepped++;
-            needsToBeLit = true;
+            displayLit = true;
         }
 
         BlockState bs = world.getBlockState(pos);
         boolean isLit = bs.get(BlockStateProperties.LIT);
-        if (isLit != needsToBeLit) {
-            world.setBlockState(pos, bs.with(BlockStateProperties.LIT, needsToBeLit),
+        if (isLit != displayLit) {
+            world.setBlockState(pos, bs.with(BlockStateProperties.LIT, displayLit),
                     // dunno what these do but mcjty has them
                     Constants.BlockFlags.NOTIFY_NEIGHBORS + Constants.BlockFlags.BLOCK_UPDATE);
+            this.markDirty();
         }
 
-        this.markDirty();
+        if (numberOfStepsToTake > 0) {
+            // TODO: Execution!
+            this.markDirty();
+        }
     }
 
     @Override

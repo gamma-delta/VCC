@@ -1,7 +1,10 @@
 {
   "variants": {
-    "": {
+    "lit=false": {
       "model": "vcc:block/chassis"
+    },
+    "lit=true": {
+      "model": "vcc:block/chassis_lit"
     }
   }
 }

@@ -1,27 +1,27 @@
 {
   "variants": {
     "axis=x,lit=false": {
-      "model": "vcc:block/register_unlit",
+      "model": "vcc:block/register",
       "x": 90,
       "y": 90
     },
     "axis=y,lit=false": {
-      "model": "vcc:block/register_unlit"
+      "model": "vcc:block/register"
     },
     "axis=z,lit=false": {
-      "model": "vcc:block/register_unlit",
+      "model": "vcc:block/register",
       "x": 90
     },
     "axis=x,lit=true": {
-      "model": "vcc:block/register",
+      "model": "vcc:block/register_lit",
       "x": 90,
       "y": 90
     },
     "axis=y,lit=true": {
-      "model": "vcc:block/register"
+      "model": "vcc:block/register_lit"
     },
     "axis=z,lit=true": {
-      "model": "vcc:block/register",
+      "model": "vcc:block/register_lit",
       "x": 90
     }
   }

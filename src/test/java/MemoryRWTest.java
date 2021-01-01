@@ -3,7 +3,7 @@ import it.unimi.dsi.fastutil.bytes.ByteArrayList;
 import it.unimi.dsi.fastutil.bytes.ByteList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import me.gammadelta.common.utils.Utils;
+import me.gammadelta.common.utils.BinaryUtils;
 import me.gammadelta.common.program.CPURepr;
 import me.gammadelta.common.program.MemoryType;
 import me.gammadelta.common.program.MotherboardRepr;
@@ -137,6 +137,6 @@ public class MemoryRWTest {
             cpu.write(idx, new ByteArrayList(new byte[]{-1}), Permissions.RW, motherboard, rand);
         }
 
-        System.out.println(Utils.hexdump(Bytes.asList(motherboard.memory)));
+        System.out.println(BinaryUtils.hexdump(Bytes.asList(motherboard.memory)));
     }
 }

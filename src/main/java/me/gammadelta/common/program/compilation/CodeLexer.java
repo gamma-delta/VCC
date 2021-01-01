@@ -195,7 +195,7 @@ public class CodeLexer {
 		if (type == Token.Type.STACKVALUE) {
 			// ok we have to do some special processing
 			if (previousWasStackvalue) {
-				throw new CodeCompileException("Tried to put two stackvalues together at column %s", startCol);
+				throw new CodeCompileException.LexException.TwoStackvalues(row, col, this.stackvalueRemainder, tokenBody);
 			}
 			// this will not be null; we just checked if this is a stackvalue.
 			// shut up intellij

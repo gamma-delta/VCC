@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.bytes.ByteList;
 import it.unimi.dsi.fastutil.bytes.ByteLists;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import me.gammadelta.common.utils.BinaryUtils;
 import me.gammadelta.common.utils.Utils;
 import me.gammadelta.common.program.compilation.Instruction.Arg;
 
@@ -41,7 +42,7 @@ public class BytecodeWriter {
     /**
      * Write the program to bytecode.
      */
-    public ByteList writeProgramToBytecode() throws BytecodeWriteException {
+    public ByteList writeProgramToBytecode() throws CodeCompileException.BytecodeWriteException {
         for (Instruction line : this.program) {
             this.instructionStarts.add(wipProgram.size());
 
@@ -75,7 +76,7 @@ public class BytecodeWriter {
                 // Turn this into 4 bytes
                 byte[] idxBytes = new byte[LABEL_USAGE_PLACEHOLDER_SIZE];
                 // we only need to write an int, but java will extend it for us
-                Utils.writeLong(labelByteIdx, idxBytes);
+                BinaryUtils.writeLong(labelByteIdx, idxBytes);
                 // write the header
                 this.wipProgram.set(byteIdx++, LABEL_USAGE_HEADER);
                 // and write the label destination to the output
@@ -94,7 +95,7 @@ public class BytecodeWriter {
         return writeRegister(arg.token);
     }
 
-    private ByteList writeIV(Arg arg, int labelOffset) throws BytecodeWriteException {
+    private ByteList writeIV(Arg arg, int labelOffset) throws CodeCompileException.BytecodeWriteException {
         if (arg.token.type != Token.Type.STACKVALUE) {
             return writeIVThatsNotAStackvalue(arg.token, labelOffset);
         } else {
@@ -102,7 +103,7 @@ public class BytecodeWriter {
         }
     }
 
-    private ByteList writeLocation(Arg arg) throws BytecodeWriteException {
+    private ByteList writeLocation(Arg arg) throws CodeCompileException.BytecodeWriteException {
         if (arg.token.type == Token.Type.DATAFACE) {
             int index = Integer.parseInt(arg.token.meat());
             if (index > 127 || index < 0) {
@@ -125,7 +126,7 @@ public class BytecodeWriter {
 
     // region Writers for all the concrete things the argument types can be
 
-    private ByteList writeIVThatsNotAStackvalue(Token token, int labelOffset) throws BytecodeWriteException {
+    private ByteList writeIVThatsNotAStackvalue(Token token, int labelOffset) throws CodeCompileException.BytecodeWriteException {
         if (token.alias != null && token.alias.type == Token.Type.LABEL_USAGE) {
             // this is a label and the original is the *instruction index*.
             return writeLabelIV(token, labelOffset);
@@ -165,7 +166,7 @@ public class BytecodeWriter {
         }
     }
 
-    private static ByteList writeLiteral(Token literalTok) throws BytecodeWriteException {
+    private static ByteList writeLiteral(Token literalTok) throws CodeCompileException.BytecodeWriteException {
         if (literalTok.type == Token.Type.HEXADECIMAL || literalTok.type == Token.Type.BINARY) {
             // Don't worry about negatives here
             int charsPerByte = literalTok.type == Token.Type.HEXADECIMAL ? 2 : 8;
@@ -202,7 +203,7 @@ public class BytecodeWriter {
             // We may need to add leading zeroes!
             int totalValueSize = leadingZeroBytes + bigintBytes.size();
             if (totalValueSize > 63) {
-                throw new BytecodeWriteException.LiteralTooLong(literalTok);
+                throw new CodeCompileException.BytecodeWriteException.LiteralTooLong(literalTok);
             }
             ByteList out = new ByteArrayList(totalValueSize + 1); // add 1 for the size itself
             // Put our size in
@@ -242,7 +243,7 @@ public class BytecodeWriter {
                 }
             }
             if (size > 63) {
-                throw new BytecodeWriteException.LiteralTooLong(literalTok);
+                throw new CodeCompileException.BytecodeWriteException.LiteralTooLong(literalTok);
             }
             ByteList out = new ByteArrayList(size + 1); // have space for our length
             int futzedSize = size & 0b00111111 | 0b01000000;
@@ -276,11 +277,11 @@ public class BytecodeWriter {
         return new ByteArrayList(new byte[LABEL_USAGE_PLACEHOLDER_SIZE + 1]);
     }
 
-    private ByteList writeStackvalue(Token svTok, Token sizeTok, int labelOffset) throws BytecodeWriteException {
+    private ByteList writeStackvalue(Token svTok, Token sizeTok, int labelOffset) throws CodeCompileException.BytecodeWriteException {
         // Token has the length; stackvaluePosition has the position.
         int size = Integer.parseInt(svTok.meat());
         if (size < 0 || size > 128) {
-            throw new BytecodeWriteException.StackvalueSizeOutOfBounds(svTok);
+            throw new CodeCompileException.BytecodeWriteException.StackvalueSizeOutOfBounds(svTok);
         }
         int header = 0b00100000 | size;
 

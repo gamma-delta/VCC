@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "side": "vcc:block/puncher_side",
+    "bottom": "vcc:block/puncher_bottom",
+    "top": "vcc:block/puncher_top"
+  }
+}

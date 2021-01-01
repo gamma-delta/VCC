@@ -1,7 +1,7 @@
 import it.unimi.dsi.fastutil.bytes.ByteArrayList;
 import it.unimi.dsi.fastutil.bytes.ByteList;
 import it.unimi.dsi.fastutil.bytes.ByteLists;
-import me.gammadelta.common.utils.Utils;
+import me.gammadelta.common.utils.BinaryUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -12,7 +12,7 @@ public class ByteArrayAdditionTest {
     public void testNoCarry() {
         ByteList l1 = ByteArrayList.wrap(new byte[]{0x12, 0x34});
         ByteList l2 = ByteArrayList.wrap(new byte[]{0x56, 0x78});
-        ByteList _remainder = Utils.addMut(l1, l2);
+        ByteList _remainder = BinaryUtils.addMut(l1, l2);
 
         Assertions.assertEquals(ByteArrayList.wrap(new byte[]{0x68, (byte) 0xac}), l1);
     }
@@ -21,7 +21,7 @@ public class ByteArrayAdditionTest {
     public void testCarry() {
         ByteList l1 = ByteArrayList.wrap(new byte[]{(byte) 0xf0});
         ByteList l2 = ByteArrayList.wrap(new byte[]{(byte) 0x20});
-        ByteList remainder = Utils.addMut(l1, l2);
+        ByteList remainder = BinaryUtils.addMut(l1, l2);
 
         Assertions.assertEquals(ByteLists.singleton((byte) 0x10), l1);
         Assertions.assertEquals(ByteLists.singleton((byte) 0x01), remainder);
@@ -49,11 +49,11 @@ public class ByteArrayAdditionTest {
 
                 ByteList lhs1 = new ByteArrayList(arr1);
                 ByteList rhs1 = new ByteArrayList(arr2);
-                ByteList rem1 = Utils.addMut(lhs1, rhs1);
+                ByteList rem1 = BinaryUtils.addMut(lhs1, rhs1);
 
                 ByteList lhs2 = new ByteArrayList(arr2);
                 ByteList rhs2 = new ByteArrayList(arr1);
-                ByteList rem2 = Utils.addMut(lhs2, rhs2);
+                ByteList rem2 = BinaryUtils.addMut(lhs2, rhs2);
 
                 Assertions.assertEquals(lhs1, lhs2);
                 Assertions.assertEquals(rem1, rem2);
@@ -72,7 +72,7 @@ public class ByteArrayAdditionTest {
                 byte[] zeroArray = new byte[rand.nextInt(LENGTH)];
                 ByteList zeroList = new ByteArrayList(zeroArray);
 
-                Utils.addMut(test, zeroList);
+                BinaryUtils.addMut(test, zeroList);
                 Assertions.assertEquals(original, test);
             }
         }
@@ -83,7 +83,7 @@ public class ByteArrayAdditionTest {
         // 0xfffefdfcfbfaf9f8
         ByteList lhs = new ByteArrayList(new byte[]{0, -1, -2, -3, -4, -5, -6, -7, -8});
         ByteList rhs = new ByteArrayList(new byte[]{0, -8, -7, -6, -5, -4, -3, -2, -1});
-        Utils.addMut(lhs, rhs);
+        BinaryUtils.addMut(lhs, rhs);
         // looking for 01_f8_f8_f8_f8_f8_f8_f8_f7
         Assertions.assertEquals(
                 new ByteArrayList(new byte[]{1, (byte) 0xf8, (byte) 0xf8, (byte) 0xf8, (byte) 0xf8, (byte) 0xf8, (byte) 0xf8, (byte) 0xf8, (byte) 0xf7}), lhs);
@@ -94,7 +94,7 @@ public class ByteArrayAdditionTest {
         // 0x7f7f
         ByteList lhs = new ByteArrayList(new byte[]{-1, -1});
         ByteList rhs = new ByteArrayList(new byte[]{2});
-        ByteList remainder = Utils.addMut(lhs, rhs);
+        ByteList remainder = BinaryUtils.addMut(lhs, rhs);
         Assertions.assertEquals(ByteLists.singleton((byte) 1), remainder);
         Assertions.assertEquals(new ByteArrayList(new byte[]{0, 1}), lhs);
     }

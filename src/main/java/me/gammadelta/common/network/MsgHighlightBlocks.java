@@ -31,6 +31,11 @@ public class MsgHighlightBlocks implements Serializable {
     private List<BlockPos> positions;
     private int color;
 
+    public MsgHighlightBlocks(List<BlockPos> positions, int color) {
+        this.positions = positions;
+        this.color = color;
+    }
+
     /**
      * Generate the color from a UUID. This is probably used by motherboards
      * so their blocks will be highlighted in different colors.
@@ -131,9 +136,9 @@ public class MsgHighlightBlocks implements Serializable {
      * Maybe I'll look into glowing outlines like the glowing effect?
      */
     private void produceHighlight() {
-        float red = ColorHelper.PackedColor.getRed(this.color);
-        float green = ColorHelper.PackedColor.getGreen(this.color);
-        float blue = ColorHelper.PackedColor.getBlue(this.color);
+    float red = ColorHelper.PackedColor.getRed(this.color) / 255f;
+    float green = ColorHelper.PackedColor.getGreen(this.color) / 255f;
+    float blue = ColorHelper.PackedColor.getBlue(this.color) / 255f;
 
         HighlightParticleData data = new HighlightParticleData(red, green, blue, 1);
         for (BlockPos pos : this.positions) {

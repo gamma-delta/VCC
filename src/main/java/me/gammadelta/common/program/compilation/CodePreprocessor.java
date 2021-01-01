@@ -13,7 +13,7 @@ import java.util.ListIterator;
  */
 public class CodePreprocessor {
 	private final Map<String, Token> defLookup = new HashMap<>();
-	private final int maxExpandDepth = 32;
+	public static final int MAX_EXPAND_DEPTH = 32;
 
 	public void preprocessTokens(List<Token> tokens) throws CodeCompileException {
 		for (ListIterator<Token> it = tokens.listIterator(); it.hasNext();) {
@@ -35,13 +35,13 @@ public class CodePreprocessor {
 			// else, scan line for preprocessor macros
 			do {
 				if (next.type == Token.Type.PREPROCESSOR) {
-					throw new CodeCompileException("Found preprocessor token in middle of line: %s", next);
+					throw new CodeCompileException.PreprocessException.DirectiveInMiddleOfLine(next);
 				}
 				int expandDepth = 0;
 				Token original = next;
 				while (next.type == Token.Type.NAME && defLookup.containsKey(next.meat())) {
-					if (++expandDepth > maxExpandDepth) {
-						throw new CodeCompileException("Definition expansion recursion limit of %d exceeded while preprocessing token %s", expandDepth, original);
+					if (++expandDepth > MAX_EXPAND_DEPTH) {
+						throw new CodeCompileException.PreprocessException.DefinitionExpansionTooThicc(original);
 					}
 					next = next.rewrite(defLookup.get(next.meat()));
 					it.set(next);
@@ -53,21 +53,21 @@ public class CodePreprocessor {
 		if (directive.meat().equalsIgnoreCase("def")) {
 			handleDef(directive, arguments);
 		} else {
-			throw new CodeCompileException("Unknown directive %s", directive);
+			throw new CodeCompileException.PreprocessException.UnknownDirective(directive);
 		}
 	}
 	private void handleDef(Token directive, List<Token> arguments) throws CodeCompileException {
 		if (arguments.size() != 2) {
-			throw new CodeCompileException("Directive requires exactly two arguments (got %d): %s", arguments.size(), directive);
+			throw new CodeCompileException.PreprocessException.BadArity(directive, 2, arguments.size());
 		}
 
 		Token identifier = arguments.get(0);
 		if (identifier.type != Token.Type.NAME) {
-			throw new CodeCompileException("Expected type %s, got %s in argument to directive %s", Token.Type.NAME, identifier.type, directive);
+			throw new CodeCompileException.PreprocessException.BadArgType(directive, identifier, Token.Type.NAME, 0);
 		}
 		String key = identifier.meat();
 		if (defLookup.containsKey(key)) {
-			throw new CodeCompileException("Redefinition of %s in directive %s", key, directive);
+			throw new CodeCompileException.PreprocessException.Redefinition(identifier);
 		}
 		defLookup.put(key, arguments.get(1));
 	}

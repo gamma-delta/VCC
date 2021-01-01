@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "vcc:block/overclock"
+    },
+    "lit=true": {
+      "model": "vcc:block/overclock_lit"
+    }
+  }
+}

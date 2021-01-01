@@ -2,9 +2,13 @@
     "block.vcc.motherboard": "Motherboard",
     "block.vcc.chassis": "Chassis",
     "block.vcc.register": "Register Block",
+    "block.vcc.overclock": "Overclock",
+    "block.vcc.puncher": "Card Punching Table",
+
 
     "item.vcc.punchcard": "Punch Card",
     "item.vcc.filled_punchcard": "Punch Card with Data",
+
     "item.vcc.clipboard": "Clipboard with Card-Puncher",
     "item.vcc.clipboard.tooltip0": "Craft with a punch card to punch the data on your system clipboard onto the card.",
     "item.vcc.clipboard.tooltip1": "Accepts lists of numbers in decimal, hex, or binary, separated by commas, semicolons, or whitespace.",
@@ -12,11 +16,59 @@
     "item.vcc.clipboard.tooltip3": "If the data is too big for the punch card, it will only punch the first part and drop the rest. If the data is too small, it will fill the remainder with zeroes.",
     "item.vcc.clipboard.tooltip4": "Does not consume the Clipboard with Card-Puncher.",
 
+    "item.vcc.coupon.compilation": "Compilation Coupon",
+    "item.vcc.coupon.collectible": "Collectible Coupon",
+    "item.vcc.coupon.borked": "Broken coupon with no NBT somehow :(",
+
+    "item.vcc.coupon.compilation.rowTemplate": "> %s (%d:%d): %s",
+    "item.vcc.coupon.compilation.rowTemplate.book": "> %s (page %d: %d:%d): %s",
+
+    "__vcc_comment": "The error keys are pulled directly from the class name (via class.getSimpleName). Also note to always use %s because everything is stored as strings.",
+    "item.vcc.coupon.compilation.error.lex": "The following error(s) occurred in lexing:",
+    "error.lex.TwoStackvalues": "Tried to nest stackvalue (%s & %s)",
+
+    "item.vcc.coupon.compilation.error.preprocess": "The following error(s) occurred in preprocessing:",
+    "error.preprocess.DirectiveInMiddleOfLine": "Directive '%s' in middle of line",
+    "error.preprocess.DefinitionExpansionTooThicc": "Exceeded definition expansion recursion limit (%s) when preprocessing '%s'",
+    "error.preprocess.UnknownDirective": "Unknown directive '%s'",
+    "error.preprocess.BadArity": "Directive '%s' wants %s arguments but got %s",
+    "error.preprocess.BadArgType": "Directive '%s' wants token type %s for index %s but got %s",
+    "error.preprocess.Redefinition": "Directive redefines '%s'",
+
+    "item.vcc.coupon.compilation.error.parse": "The following error(s) occurred in parsing:",
+    "error.parse.ExpectedOpcode": "Expected an opcode but found '%s' of type %s",
+    "error.parse.UnknownOpcode": "Unknown opcode '%s'",
+    "error.parse.BadArity": "Opcode '%s' wants %s arguments but got %s",
+    "error.parse.BadArgMatchup": "Opcode '%s' wants arg type %s for index %s, but the given argument '%s' is token type %s which cannot match",
+    "error.parse.ReusedLabel": "Label '%s' was previously used (before instruction index #%s)",
+    "error.parse.UnknownLabel": "Label '%s' was never defined",
+    "error.parse.StackvalueWithNothingFollowing": "Stackvalue %s had nothing following it (this shouldn't be possible?)",
+
+    "item.vcc.coupon.compilation.error.bytecode": "The following error(s) occurred while writing bytecode:",
+    "error.bytecode.LiteralTooLong": "Literal %s was too large (maximum is 9,223,372,036,854,775,807 or 2^63 - 1)",
+    "error.bytecode.StackvalueSizeOutOfBounds": "Stackvalue %s's size was out of bounds (0-256 inclusive allowed)",
+
+    "error.unknown": "Oops, I forgot to make a message for the error type '%s'. Go file a bug report!",
+    "error.other": "Another error occurred while compiling that I didn't specially process! Check the logs for details. (This is a bug.)",
+
+    "item.vcc.coupon.collectible.tooltip": "§7#§b%d§7. Collect all %d!",
+    "item.vcc.coupon.collectible.0": "\"There is no reason anyone would want a computer in their home.\" --Ken Olson",
+    "item.vcc.coupon.collectible.1": "\"Some people, when confronted with a problem, think 'I know, I'll use regular expressions.' Now they have two problems.\" --Jamie Zawinski",
+    "item.vcc.coupon.collectible.2": "\"If you don't know what Linux is, it's a bit like ... punching yourself in the face. And when someone says 'Why are you punching yourself in the face?' you go 'Well, it's free.'\" --Matt Parker",
+    "item.vcc.coupon.collectible.3": "\"If you don't know what Forgecord is, it's a bit like ... punching yourself in the face. And when someone says 'Why are you punching yourself in the face?' you go 'Well, it's free.'\" --Me",
+    "item.vcc.coupon.collectible.4": "\"Since there's no ending quote mark, everything after this is part of my quote. --Randall Munroe",
+    "item.vcc.coupon.collectible.5": "\"Hang on, I never said that!\" --Direwolf20",
+    "item.vcc.coupon.collectible.6": "\"Is making up quotes about other people allowed?\" --Me",
+    "item.vcc.coupon.collectible.7": "\"make them piston-movable you coward\" --Alwinfy, in reference to component blocks",
+    "item.vcc.coupon.collectible.heck": "\"There are two hard things in computer science: cache invalidation, naming things, and off-by-one errors.\" --Phil Karlton",
+
+
     "tooltip.shiftForMore": "§7§oPress §b§oSHIFT§7§o for more info",
     "tooltip.hexdump.hidden0": "§b§o%d§7§o bytes stored",
     "tooltip.hexdump.hidden1": "Press §b§oSHIFT§7§o to show hexdump",
     "tooltip.hexdump.shown0": "Hexdump:",
     "tooltip.hexdump.shown1": "Use a §7%s§f to copy this data.",
+
 
     "misc.debugNBT": "VCC TE `%s' has the following NBT: %s",
     "misc.debugNBT.clipboard": "NBT of VCC TE `%s' has been copied to your clipboard (%d chars)"

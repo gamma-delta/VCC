@@ -1,29 +1,36 @@
 package me.gammadelta.common.block;
 
-import me.gammadelta.common.utils.Utils;
 import me.gammadelta.VCCMod;
 import me.gammadelta.common.block.tile.TileMotherboard;
 import me.gammadelta.common.network.MsgHighlightBlocks;
+import me.gammadelta.common.utils.Utils;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.state.StateContainer;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.IBlockReader;
+import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.network.PacketDistributor;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 
 public class BlockMotherboard extends Block {
     public static final String NAME = "motherboard";
@@ -71,8 +78,29 @@ public class BlockMotherboard extends Block {
         if (debugLevel > 0) {
             VCCMod.getNetwork()
                     .send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player), new MsgHighlightBlocks(
-                            mother.getControlledBlocks(), mother.getUUID()
+                            new ArrayList<>(mother.getControlledBlocks()), mother.getUUID()
                     ));
+            if (debugLevel >= 5) {
+                // ADVANCED info
+                CompoundNBT data = te.write(new CompoundNBT());
+                ITextComponent pretty;
+                if (handIn == Hand.MAIN_HAND) {
+                    pretty = data.toFormattedComponent(" ", 0);
+                } else {
+                    // use the offhand to get no indentation
+                    pretty = data.toFormattedComponent();
+                }
+                String name = te.getClass().getSimpleName();
+
+                if (player.isSneaking()) {
+                    Minecraft.getInstance().keyboardListener.setClipboardString(pretty.getString());
+                    player.sendMessage(
+                            new TranslationTextComponent("misc.debugNBT.clipboard", name, pretty.getString().length()),
+                            Util.DUMMY_UUID);
+                } else {
+                    player.sendMessage(new TranslationTextComponent("misc.debugNBT", name, pretty), Util.DUMMY_UUID);
+                }
+            }
             return ActionResultType.SUCCESS;
         }
 
@@ -82,6 +110,21 @@ public class BlockMotherboard extends Block {
     @Override
     public int getLightValue(BlockState state, IBlockReader world, BlockPos pos) {
         return state.get(BlockStateProperties.LIT) ? 13 : 0;
+    }
+
+    // On a block update, reflood for components.
+    @Override
+    public BlockState updatePostPlacement(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn,
+            BlockPos currentPos, BlockPos facingPos) {
+        TileMotherboard mother = (TileMotherboard) worldIn.getTileEntity(currentPos);
+        if (facingState.getBlock() instanceof BlockComponent || (mother != null && mother.getControlledBlocks()
+                .contains(facingPos))) {
+            // Only reflood if the update is a component or if the broken block is owned by the motherboard
+            if (mother != null) {
+                mother.updateConnectedComponents();
+            }
+        }
+        return stateIn;
     }
 
     // region Blockstate stuff

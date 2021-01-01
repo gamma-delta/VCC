@@ -2,7 +2,7 @@ import it.unimi.dsi.fastutil.bytes.ByteArrayList;
 import it.unimi.dsi.fastutil.bytes.ByteList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntLists;
-import me.gammadelta.common.utils.Utils;
+import me.gammadelta.common.utils.BinaryUtils;
 import me.gammadelta.common.program.CPURepr;
 import me.gammadelta.common.program.MemoryType;
 import me.gammadelta.common.program.MotherboardRepr;
@@ -30,7 +30,7 @@ public class ExecutionTest {
         System.out.println(ASMCompiler.prettyPrintInstructions(instructions));
 
         ByteList bytecode = new BytecodeWriter(instructions).writeProgramToBytecode();
-        System.out.println(Utils.hexdump(bytecode));
+        System.out.println(BinaryUtils.hexdump(bytecode));
 
         // === COMPUTER ===
 
@@ -94,7 +94,7 @@ public class ExecutionTest {
         System.out.println(ASMCompiler.prettyPrintInstructions(instructions));
 
         ByteList bytecode = new BytecodeWriter(instructions).writeProgramToBytecode();
-        System.out.println(Utils.hexdump(bytecode));
+        System.out.println(BinaryUtils.hexdump(bytecode));
 
         // === COMPUTER ===
 
@@ -163,7 +163,7 @@ public class ExecutionTest {
         System.out.println(ASMCompiler.prettyPrintInstructions(instructions));
 
         ByteList bytecode = new BytecodeWriter(instructions).writeProgramToBytecode();
-        System.out.println(Utils.hexdump(bytecode));
+        System.out.println(BinaryUtils.hexdump(bytecode));
 
 
         // === COMPUTER ===
@@ -226,7 +226,7 @@ public class ExecutionTest {
         }
 
         // make sure its all zero
-        System.out.println(Utils.hexdump(new ByteArrayList(motherboard.memory)));
+        System.out.println(BinaryUtils.hexdump(new ByteArrayList(motherboard.memory)));
         System.out.printf("Required %d steps\n", stepsReqd);
     }
 }

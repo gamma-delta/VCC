@@ -1,11 +1,14 @@
 package me.gammadelta.common.program;
 
+import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.bytes.ByteArrayList;
-import me.gammadelta.common.block.tile.TileChassis;
-import me.gammadelta.common.block.tile.TileDumbComputerComponent;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import me.gammadelta.common.block.VCCBlocks;
 import me.gammadelta.common.block.tile.TileMotherboard;
-import me.gammadelta.common.block.tile.TileRegister;
+import me.gammadelta.common.utils.FloodUtils;
 import me.gammadelta.common.utils.Utils;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.nbt.NBTUtil;
@@ -14,6 +17,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.util.Constants;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class MotherboardRepr {
 
@@ -76,7 +80,7 @@ public class MotherboardRepr {
      * Cached list of blocks this motherboard owns.
      * This isn't serialized because it's re-calculated.
      */
-    public ArrayList<BlockPos> ownedBlocks;
+    public Set<BlockPos> ownedBlocks;
 
 
     public MotherboardRepr(EnumMap<MemoryType, ArrayList<BlockPos>> memoryLocations, ArrayList<ArrayList<CPURepr>> cpus,
@@ -90,7 +94,7 @@ public class MotherboardRepr {
         this.uuid = UUID.randomUUID();
 
         this.initializeMemory();
-        this.fillOwnedBlocksNoOwnership();
+        this.fillOwnedBlocks();
     }
 
     /**
@@ -110,24 +114,16 @@ public class MotherboardRepr {
         this.uuid = UUID.randomUUID();
 
         this.initializeMemory();
-        this.fillOwnedBlocksNoOwnership();
+        this.fillOwnedBlocks();
     }
 
     /**
-     * Update my connected components given the new components
+     * Update my connected components given the new components.
      */
-    public void updateComponents(TileMotherboard owner, Iterator<TileDumbComputerComponent> components) {
-        // TODO: rn this is just boilerplate to prevent instant NPEs
+    public void updateComponents(TileMotherboard owner, Object2IntMap<BlockPos> components) {
+        // TODO: rn this is mostly boilerplate to prevent instant NPEs
 
-        // Disconnect all currently owned blocks.
-        // If we are still connected to them, we'll tell them so.
-        for (BlockPos ownedPos : this.ownedBlocks) {
-            TileDumbComputerComponent comp = (TileDumbComputerComponent) owner.getWorld().getTileEntity(ownedPos);
-            if (comp != null) {
-                comp.setMotherboard(null);
-            }
-        }
-
+        World world = owner.getWorld();
 
         this.memoryLocations = new EnumMap<>(MemoryType.class);
         for (MemoryType memType : MemoryType.values()) {
@@ -138,66 +134,121 @@ public class MotherboardRepr {
         this.overclocks = new ArrayList<>();
         this.chassises = new ArrayList<>();
 
-        for (Iterator<TileDumbComputerComponent> it = components; it.hasNext(); ) {
-            TileDumbComputerComponent component = it.next();
-            component.setMotherboard(owner);
+        this.ownedBlocks = new HashSet<>();
 
-            if (component instanceof TileChassis) {
-                this.chassises.add(component.getPos());
-            } else if (component instanceof TileRegister) {
-                // TODO: make registers combine into big registers
-                this.registers.add(new RegisterRepr(new BlockPos[]{component.getPos()}));
+
+        Set<BlockPos> registerBlocks = new HashSet<>();
+
+        components.forEach((pos, dist) -> {
+            BlockState state = owner.getWorld().getBlockState(pos);
+            Block component = state.getBlock();
+
+            this.ownedBlocks.add(pos);
+
+            if (component == VCCBlocks.CHASSIS_BLOCK.get()) {
+                this.chassises.add(pos);
+            } else if (component == VCCBlocks.REGISTER_BLOCK.get()) {
+                ArrayList<BlockPos> repr = FloodUtils.findRegisters(pos, state, world);
+                if (repr.size() != 0 && repr.stream().noneMatch(registerBlocks::contains)) {
+                    // this is entirely new registers!
+                    this.registers.add(new RegisterRepr(repr.toArray(new BlockPos[0])));
+                    registerBlocks.addAll(repr);
+                } // else we already found this register block
+            } else if (component == VCCBlocks.OVERCLOCK_BLOCK.get()) {
+                this.overclocks.add(pos);
+            }
+        });
+
+        /*
+        This block of code is because I forgot I don't actually need to sort registers by distance.
+        But it will be useful soon when I implement memory so here it stays.
+
+        // Sort registers by distance
+        if (foundRegisters.size() > 0) {
+            // oops i accidentally started coding in Rust
+            List<Pair<RegisterRepr, Integer>> registersByDistance = foundRegisters.stream()
+                    .map(register -> new Pair<>(
+                            register,
+                            Arrays.stream(register.manifestations).mapToInt(components::getInt).min().getAsInt())
+                    )
+                    .sorted(Comparator.comparing(Pair::getSecond))
+                    .collect(Collectors.toList());
+
+            ArrayList<RegisterRepr> currentBatch = new ArrayList<>();
+            int currentDistance = -1;
+            for (Pair<RegisterRepr, Integer> pair : registersByDistance) {
+                RegisterRepr repr = pair.getFirst();
+                int distance = pair.getSecond();
+                if (currentDistance == -1) {
+                    // this is the first iteration
+                    currentDistance = distance;
+                } else if (currentDistance != distance) {
+                    // we need to move onto the next slot
+                    this.registers.add(currentBatch);
+                }
+                currentBatch.add(repr);
             }
         }
-
+        */
 
         this.initializeMemory();
-        this.fillOwnedBlocks(owner);
     }
 
     /**
      * Deserialize a motherboard from NBT.
      */
     public MotherboardRepr(CompoundNBT tag, TileMotherboard owner) {
+        // These are in separate blocks so I don't accidentally overwrite the wrong tag.
+
         this.memory = tag.getByteArray(MEMORY_KEY);
 
-        CompoundNBT memoryLocsTag = tag.getCompound(MEMORY_LOCATIONS_KEY);
-        this.memoryLocations = new EnumMap<>(MemoryType.class);
-        for (MemoryType memType : MemoryType.values()) {
-            ArrayList<BlockPos> poses = new ArrayList<>();
-            ListNBT posesTag = memoryLocsTag.getList(memType.name(), Constants.NBT.TAG_COMPOUND);
-            for (int c = 0; c < posesTag.size(); c++) {
-                poses.add(NBTUtil.readBlockPos(posesTag.getCompound(c)));
+        {
+            CompoundNBT memoryLocsTag = tag.getCompound(MEMORY_LOCATIONS_KEY);
+            this.memoryLocations = new EnumMap<>(MemoryType.class);
+            for (MemoryType memType : MemoryType.values()) {
+                ArrayList<BlockPos> poses = new ArrayList<>();
+                ListNBT posesTag = memoryLocsTag.getList(memType.name(), Constants.NBT.TAG_COMPOUND);
+                for (int c = 0; c < posesTag.size(); c++) {
+                    poses.add(NBTUtil.readBlockPos(posesTag.getCompound(c)));
+                }
+                this.memoryLocations.put(memType, poses);
             }
-            this.memoryLocations.put(memType, poses);
         }
 
-        ListNBT cpusTag = tag.getList(CPUS_KEY, Constants.NBT.TAG_LIST);
-        this.cpus = new ArrayList<>(cpusTag.size());
-        for (int c = 0; c < cpusTag.size(); c++) {
-            ListNBT cpuGroupTag = cpusTag.getList(c);
-            ArrayList<CPURepr> cpuGroup = new ArrayList<>(cpuGroupTag.size());
-            for (int d = 0; d < cpuGroupTag.size(); d++) {
-                cpuGroup.add(new CPURepr(cpuGroupTag.getCompound(d)));
+        {
+            ListNBT cpusTag = tag.getList(CPUS_KEY, Constants.NBT.TAG_LIST);
+            this.cpus = new ArrayList<>(cpusTag.size());
+            for (int c = 0; c < cpusTag.size(); c++) {
+                ListNBT cpuGroupTag = cpusTag.getList(c);
+                ArrayList<CPURepr> cpuGroup = new ArrayList<>(cpuGroupTag.size());
+                for (int d = 0; d < cpuGroupTag.size(); d++) {
+                    cpuGroup.add(new CPURepr(cpuGroupTag.getCompound(d)));
+                }
+                this.cpus.add(cpuGroup);
             }
-            this.cpus.add(cpuGroup);
         }
 
-        ListNBT registersTag = tag.getList(REGISTERS_KEY, Constants.NBT.TAG_COMPOUND);
-        this.registers = new ArrayList<>(registersTag.size());
-        for (int c = 0; c < registersTag.size(); c++) {
-            this.registers.add(new RegisterRepr(registersTag.getCompound(c)));
+        {
+            ListNBT registersTag = tag.getList(REGISTERS_KEY, Constants.NBT.TAG_COMPOUND);
+            this.registers = new ArrayList<>(registersTag.size());
+            for (int c = 0; c < registersTag.size(); c++) {
+                this.registers.add(new RegisterRepr(registersTag.getCompound(c)));
+            }
         }
 
-        ListNBT overclocksTag = tag.getList(OVERCLOCKS_KEY, Constants.NBT.TAG_COMPOUND);
-        this.overclocks = new ArrayList<>(overclocksTag.size());
-        for (int c = 0; c < overclocksTag.size(); c++) {
-            overclocks.add(NBTUtil.readBlockPos(overclocksTag.getCompound(c)));
+        {
+            ListNBT overclocksTag = tag.getList(OVERCLOCKS_KEY, Constants.NBT.TAG_COMPOUND);
+            this.overclocks = new ArrayList<>(overclocksTag.size());
+            for (int c = 0; c < overclocksTag.size(); c++) {
+                overclocks.add(NBTUtil.readBlockPos(overclocksTag.getCompound(c)));
+            }
         }
-        ListNBT chassisTag = tag.getList(OVERCLOCKS_KEY, Constants.NBT.TAG_COMPOUND);
-        this.chassises = new ArrayList<>(chassisTag.size());
-        for (int c = 0; c < chassisTag.size(); c++) {
-            chassises.add(NBTUtil.readBlockPos(chassisTag.getCompound(c)));
+        {
+            ListNBT chassisTag = tag.getList(CHASSISES_KEY, Constants.NBT.TAG_COMPOUND);
+            this.chassises = new ArrayList<>(chassisTag.size());
+            for (int c = 0; c < chassisTag.size(); c++) {
+                chassises.add(NBTUtil.readBlockPos(chassisTag.getCompound(c)));
+            }
         }
 
         try {
@@ -207,7 +258,7 @@ public class MotherboardRepr {
             this.uuid = UUID.randomUUID();
         }
 
-        this.fillOwnedBlocks(owner);
+        this.fillOwnedBlocks();
     }
 
     public CompoundNBT serialize() {
@@ -215,43 +266,53 @@ public class MotherboardRepr {
 
         tag.putByteArray(MEMORY_KEY, this.memory);
 
-        CompoundNBT memLocsTag = new CompoundNBT();
-        for (MemoryType memType : MemoryType.values()) {
-            ArrayList<BlockPos> poses = this.memoryLocations.get(memType);
-            ListNBT posesTag = new ListNBT();
-            for (BlockPos pos : poses) {
-                posesTag.add(NBTUtil.writeBlockPos(pos));
+        {
+            CompoundNBT memLocsTag = new CompoundNBT();
+            for (MemoryType memType : MemoryType.values()) {
+                ArrayList<BlockPos> poses = this.memoryLocations.get(memType);
+                ListNBT posesTag = new ListNBT();
+                for (BlockPos pos : poses) {
+                    posesTag.add(NBTUtil.writeBlockPos(pos));
+                }
+                memLocsTag.put(memType.name(), posesTag);
             }
-            memLocsTag.put(memType.name(), posesTag);
+            tag.put(MEMORY_LOCATIONS_KEY, memLocsTag);
         }
-        tag.put(MEMORY_LOCATIONS_KEY, memLocsTag);
 
-        ListNBT cpusTag = new ListNBT();
-        for (ArrayList<CPURepr> cpuGroup : this.cpus) {
-            ListNBT cpuGroupTag = new ListNBT();
-            for (CPURepr cpu : cpuGroup) {
-                cpuGroupTag.add(cpu.serialize());
+        {
+            ListNBT cpusTag = new ListNBT();
+            for (ArrayList<CPURepr> cpuGroup : this.cpus) {
+                ListNBT cpuGroupTag = new ListNBT();
+                for (CPURepr cpu : cpuGroup) {
+                    cpuGroupTag.add(cpu.serialize());
+                }
+                cpusTag.add(cpuGroupTag);
             }
-            cpusTag.add(cpuGroupTag);
+            tag.put(CPUS_KEY, cpusTag);
         }
-        tag.put(CPUS_KEY, cpusTag);
 
-        ListNBT registersTag = new ListNBT();
-        for (RegisterRepr regiGigas : this.registers) {
-            registersTag.add(regiGigas.serialize());
+        {
+            ListNBT registersTag = new ListNBT();
+            for (RegisterRepr regiGigas : this.registers) {
+                registersTag.add(regiGigas.serialize());
+            }
+            tag.put(REGISTERS_KEY, registersTag);
         }
-        tag.put(REGISTERS_KEY, registersTag);
 
-        ListNBT overclocksTag = new ListNBT();
-        for (BlockPos oclock : this.overclocks) {
-            overclocksTag.add(NBTUtil.writeBlockPos(oclock));
+        {
+            ListNBT overclocksTag = new ListNBT();
+            for (BlockPos oclock : this.overclocks) {
+                overclocksTag.add(NBTUtil.writeBlockPos(oclock));
+            }
+            tag.put(OVERCLOCKS_KEY, overclocksTag);
         }
-        tag.put(OVERCLOCKS_KEY, overclocksTag);
-        ListNBT chassisTag = new ListNBT();
-        for (BlockPos chassisisisisisis : this.chassises) {
-            chassisTag.add(NBTUtil.writeBlockPos(chassisisisisisis));
+        {
+            ListNBT chassisTag = new ListNBT();
+            for (BlockPos chassisisisisisis : this.chassises) {
+                chassisTag.add(NBTUtil.writeBlockPos(chassisisisisisis));
+            }
+            tag.put(CHASSISES_KEY, chassisTag);
         }
-        tag.put(CHASSISES_KEY, chassisTag);
 
         tag.putUniqueId(UUID_TAG, this.uuid);
 
@@ -272,25 +333,10 @@ public class MotherboardRepr {
     }
 
     /**
-     * Fill in all the owned blocks, and update their ownership.
+     * Fill in the blocks this motherboard owns
      */
-    private void fillOwnedBlocks(TileMotherboard owner) {
-        this.fillOwnedBlocksNoOwnership();
-
-        for (BlockPos ownedPos : this.ownedBlocks) {
-            TileDumbComputerComponent comp = (TileDumbComputerComponent) owner.getWorld().getTileEntity(ownedPos);
-            if (comp != null) {
-                comp.setMotherboard(owner);
-            }
-        }
-    }
-
-    /**
-     * Fill in the owned blocks but don't update their ownership.
-     * This should only be called for testing purposes (when there's no reason to make a whole world)
-     */
-    private void fillOwnedBlocksNoOwnership() {
-        this.ownedBlocks = new ArrayList<>();
+    private void fillOwnedBlocks() {
+        this.ownedBlocks = new HashSet<>();
 
         for (ArrayList<CPURepr> cpuGroup : this.cpus) {
             for (CPURepr cpu : cpuGroup) {

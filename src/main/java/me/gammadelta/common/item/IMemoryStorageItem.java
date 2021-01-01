@@ -1,7 +1,7 @@
 package me.gammadelta.common.item;
 
 import it.unimi.dsi.fastutil.bytes.ByteArrayList;
-import me.gammadelta.common.utils.Utils;
+import me.gammadelta.common.utils.BinaryUtils;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
@@ -93,7 +93,7 @@ public interface IMemoryStorageItem {
                 // we don't know about this hexdump
                 // all this caching is to prevent running the hexdump every frame.
                 // hopefully it's worth it...
-                String dumpStr = Utils.hexdump(new ByteArrayList(this.getMemory(stack)));
+                String dumpStr = BinaryUtils.hexdump(new ByteArrayList(this.getMemory(stack)));
                 String[] lines = dumpStr.split("\\n");
                 for (String line : lines) {
                     hexdump.add(StringNBT.valueOf(line));

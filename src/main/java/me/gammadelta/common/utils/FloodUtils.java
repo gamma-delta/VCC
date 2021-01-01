@@ -1,34 +1,41 @@
 package me.gammadelta.common.utils;
 
-import me.gammadelta.common.block.tile.TileDumbComputerComponent;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import me.gammadelta.common.block.BlockComponent;
+import me.gammadelta.common.block.BlockMotherboard;
+import me.gammadelta.common.block.BlockRegister;
 import me.gammadelta.common.block.tile.TileMotherboard;
-import net.minecraft.tileentity.TileEntity;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
-import java.util.ArrayDeque;
-import java.util.HashSet;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
-public class FloodUtils {
+public final class FloodUtils {
     // TODO: make an actual config handler.
     private static final int MAXIMUM_RECUR_COUNT = 1024;
 
     /**
      * Give this a motherboard, and it will return the
-     * positions of all directly connected, unclaimed components.
+     * positions of all directly connected components, along with their taxicab distance from the
+     * motherboard.
      * <p>
-     * Components owned by another motherboard act as air or similar; it will not continue searching
-     * upon finding one.
+     * If it finds a connected motherboard, it will return null.
+     * Note this is different than returning an empty set!
      */
-    public static Set<TileDumbComputerComponent> findUnclaimedComponents(TileMotherboard mother) {
+    @Nullable
+    public static Object2IntOpenHashMap<BlockPos> findUnclaimedComponents(TileMotherboard mother) {
         BlockPos original = mother.getPos();
         World world = mother.getWorld();
 
-        Set<TileDumbComputerComponent> found = new HashSet<>();
+        Object2IntOpenHashMap<BlockPos> found = new Object2IntOpenHashMap<>();
+        found.put(mother.getPos(), 0); // the motherboard is 0 from itself
         Queue<BlockPos> placesToLook = new ArrayDeque<>();
         Set<BlockPos> placesSearched = new HashSet<>();
 
@@ -39,21 +46,22 @@ public class FloodUtils {
 
         while (placesSearched.size() < MAXIMUM_RECUR_COUNT && !placesToLook.isEmpty()) {
             BlockPos questioning = placesToLook.remove();
-            TileEntity maybeTE = world.getTileEntity(questioning);
-            if (maybeTE instanceof TileDumbComputerComponent) {
-                TileDumbComputerComponent comp = (TileDumbComputerComponent) maybeTE;
-                TileMotherboard otherMother = comp.getMotherboard(world);
-                if (otherMother != null && otherMother.getUUID().equals(comp.getMotherboard(world))) {
-                    // this one has been claimed by another
-                    continue;
-                }
-                found.add(comp);
+            Block maybeComponent = world.getBlockState(questioning).getBlock();
+            if (maybeComponent instanceof BlockComponent) {
+                Utils.findDistance(found, questioning);
                 for (Direction d : Direction.values()) {
-                    BlockPos nextPos = maybeTE.getPos().offset(d);
+                    BlockPos nextPos = questioning.offset(d);
                     if (!placesSearched.contains(nextPos)) {
                         placesToLook.add(nextPos);
                         placesSearched.add(nextPos);
                     }
+                }
+            } else if (maybeComponent instanceof BlockMotherboard) {
+                // uh-oh, is this not me?
+                TileMotherboard otherMother = (TileMotherboard) world.getTileEntity(questioning);
+                if (otherMother != null && otherMother.getUUID() != mother.getUUID()) {
+                    // too bad
+                    return null;
                 }
             }
         }
@@ -66,11 +74,7 @@ public class FloodUtils {
      * Will search through unclaimed and claimed components.
      */
     @Nullable
-    public static TileMotherboard findMotherboard(TileDumbComputerComponent component) {
-        BlockPos original = component.getPos();
-        World world = component.getWorld();
-
-        Set<TileDumbComputerComponent> found = new HashSet<>();
+    public static TileMotherboard findMotherboard(BlockPos original, IWorld world) {
         Queue<BlockPos> placesToLook = new ArrayDeque<>();
         Set<BlockPos> placesSearched = new HashSet<>();
 
@@ -81,23 +85,57 @@ public class FloodUtils {
 
         while (placesSearched.size() < MAXIMUM_RECUR_COUNT && !placesToLook.isEmpty()) {
             BlockPos questioning = placesToLook.remove();
-            TileEntity maybeTE = world.getTileEntity(questioning);
-            if (maybeTE instanceof TileDumbComputerComponent) {
-                TileDumbComputerComponent comp = (TileDumbComputerComponent) maybeTE;
-                found.add(comp);
+            Block maybeComp = world.getBlockState(questioning).getBlock();
+            if (maybeComp instanceof BlockComponent) {
                 for (Direction d : Direction.values()) {
-                    BlockPos nextPos = maybeTE.getPos().offset(d);
+                    BlockPos nextPos = questioning.offset(d);
                     if (!placesSearched.contains(nextPos)) {
                         placesToLook.add(nextPos);
                         placesSearched.add(nextPos);
                     }
                 }
-            } else if (maybeTE instanceof TileMotherboard) {
+            } else if (maybeComp instanceof BlockMotherboard) {
                 // we found it!
-                return (TileMotherboard) maybeTE;
+                return (TileMotherboard) world.getTileEntity(questioning);
             }
         }
 
         return null; // :pensive:
+    }
+
+    /**
+     * Flood fill out from a register block to find all the register blocks
+     * part of the logical register.
+     */
+    public static ArrayList<BlockPos> findRegisters(BlockPos original, BlockState state, IWorld world) {
+        ArrayList<BlockPos> found = new ArrayList<>();
+        Queue<BlockPos> placesToLook = new ArrayDeque<>();
+        Set<BlockPos> placesSearched = new HashSet<>();
+
+        Direction.Axis axis = state.get(BlockStateProperties.AXIS);
+        // We must only fill in the 4 directions that do not point along this axis.
+        List<Direction> validDirections = Arrays.stream(Direction.values()).filter(dir -> dir.getAxis() != axis).collect(
+                Collectors.toList());
+
+        placesToLook.add(original);
+
+        while (placesSearched.size() < MAXIMUM_RECUR_COUNT && !placesToLook.isEmpty()) {
+            BlockPos questioning = placesToLook.remove();
+            BlockState qState = world.getBlockState(questioning);
+            Block maybeComp = qState.getBlock();
+            // add it if it's a register and it has the same axial direction as me
+            if (maybeComp instanceof BlockRegister && qState.get(BlockStateProperties.AXIS) == axis) {
+                found.add(questioning);
+                for (Direction d : validDirections) {
+                    BlockPos nextPos = questioning.offset(d);
+                    if (!placesSearched.contains(nextPos)) {
+                        placesToLook.add(nextPos);
+                        placesSearched.add(nextPos);
+                    }
+                }
+            }
+        }
+
+        return found;
     }
 }

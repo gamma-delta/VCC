@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.bytes.ByteLists;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import me.gammadelta.common.program.compilation.Opcode;
+import me.gammadelta.common.utils.BinaryUtils;
 import me.gammadelta.common.utils.Utils;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.IntArrayNBT;
@@ -347,7 +348,7 @@ public class CPURepr {
     // region Dealing with interpreting bytecode
 
     public void executeStep(MotherboardRepr mother, Random rand) {
-        this.currentIP = Utils.toLong(this.IP);
+        this.currentIP = BinaryUtils.toLong(this.IP);
         try {
             Opcode opcode = this.readOpcode(mother, rand);
 
@@ -433,21 +434,21 @@ public class CPURepr {
             // Put currentIP back into the IP to make our lives easier
             // Discard the squish/stretch, we don't need it
             // TODO: write to move flags when incrementing the IP?
-            Utils.writeLong(this.currentIP, this.IP);
+            BinaryUtils.writeLong(this.currentIP, this.IP);
         } catch (Emergency e) {
             // oops. go to exram, go directly to exram
             if (this.memoryCounts.get(MemoryType.EXRAM) == 0) {
                 // actually go to the start
-                Utils.writeLong(0, this.IP);
+                BinaryUtils.writeLong(0, this.IP);
             } else {
                 // go to (a randomly selected) exram
                 int motherExramIdx = Utils.getUncertainNestedInt(this.memoryLocations.get(MemoryType.EXRAM), 0, rand);
                 try {
                     int exramByteIdx = mother.getRegionIndex(MemoryType.EXRAM, motherExramIdx);
-                    Utils.writeLong(exramByteIdx, this.IP);
+                    BinaryUtils.writeLong(exramByteIdx, this.IP);
                 } catch (Emergency e2) {
                     // just set it to zero, whatever
-                    Utils.writeLong(0, this.IP);
+                    BinaryUtils.writeLong(0, this.IP);
                 }
             }
         }
@@ -463,7 +464,7 @@ public class CPURepr {
 
     private void opcREAD(MotherboardRepr mother, Random rand) throws Emergency {
         ByteList lenList = this.readIV(this.currentIP, true, mother, rand);
-        long len = Utils.toLong(lenList);
+        long len = BinaryUtils.toLong(lenList);
         ByteList readBytes = this.readExternal(this.currentIP, true, (int) len, mother, rand);
         this.writeToRegister(this.currentIP, true, readBytes, mother, rand);
     }
@@ -475,7 +476,7 @@ public class CPURepr {
 
     private void opcCOPY(MotherboardRepr mother, Random rand) throws Emergency {
         ByteList lenList = this.readIV(this.currentIP, true, mother, rand);
-        long len = Utils.toLong(lenList);
+        long len = BinaryUtils.toLong(lenList);
         ByteList readBytes = this.readExternal(this.currentIP, true, (int) len, mother, rand);
         this.writeToExternal(this.currentIP, true, readBytes, mother, rand);
     }
@@ -485,8 +486,8 @@ public class CPURepr {
         this.writeToStackvalue(toPush, 0, mother, rand);
         // Add the size of the push to SP
         byte[] rhs = new byte[toPush.size() / 256 + 1];
-        Utils.writeLong(toPush.size(), rhs);
-        Pair<ByteList, ByteList> res = Utils.add(this.SP, rhs);
+        BinaryUtils.writeLong(toPush.size(), rhs);
+        Pair<ByteList, ByteList> res = BinaryUtils.add(this.SP, rhs);
         ByteList newSP = res.getSecond();
 
         for (int i = 0; i < this.SP.length; i++) {
@@ -524,8 +525,8 @@ public class CPURepr {
 
         // Subtract the size of the push from SP
         byte[] rhs = new byte[regiSize / 256 + 1];
-        Utils.writeLong(regiSize, rhs);
-        Pair<ByteList, ByteList> res = Utils.sub(this.SP, rhs);
+        BinaryUtils.writeLong(regiSize, rhs);
+        Pair<ByteList, ByteList> res = BinaryUtils.sub(this.SP, rhs);
         ByteList newSP = res.getSecond();
 
         for (int i = 0; i < this.SP.length; i++) {
@@ -551,13 +552,13 @@ public class CPURepr {
         // Use `currentIP` because it now points to the *next* instruction
         // This prevents RET-ing right back to the call
         // who would do something so stupid like that? not me...
-        Utils.writeLong(this.currentIP, toPushArray);
+        BinaryUtils.writeLong(this.currentIP, toPushArray);
         ByteList toPush = new ByteArrayList(toPushArray);
         this.writeToStackvalue(toPush, 0, mother, rand);
         // Add the size of the push to SP
         byte[] rhs = new byte[toPush.size() / 256 + 1];
-        Utils.writeLong(toPush.size(), rhs);
-        Pair<ByteList, ByteList> res = Utils.add(this.SP, rhs);
+        BinaryUtils.writeLong(toPush.size(), rhs);
+        Pair<ByteList, ByteList> res = BinaryUtils.add(this.SP, rhs);
         ByteList newSP = res.getSecond();
 
         for (int i = 0; i < this.SP.length; i++) {
@@ -571,7 +572,7 @@ public class CPURepr {
         }
 
         // Jump to the read location
-        this.currentIP = Utils.toLong(jumpLoc);
+        this.currentIP = BinaryUtils.toLong(jumpLoc);
     }
 
     private void opcRET(MotherboardRepr mother, Random rand) throws Emergency {
@@ -579,8 +580,8 @@ public class CPURepr {
 
         // Subtract the size of the push from SP
         byte[] rhs = new byte[regiSize / 256 + 1];
-        Utils.writeLong(regiSize, rhs);
-        Pair<ByteList, ByteList> res = Utils.sub(this.SP, rhs);
+        BinaryUtils.writeLong(regiSize, rhs);
+        Pair<ByteList, ByteList> res = BinaryUtils.sub(this.SP, rhs);
         ByteList newSP = res.getSecond();
 
         for (int i = 0; i < this.SP.length; i++) {
@@ -596,14 +597,14 @@ public class CPURepr {
         // And read off the value
         ByteList stackRead = this.readFromStack(0, regiSize, mother, rand);
         // and assign it
-        this.currentIP = Utils.toLong(stackRead);
+        this.currentIP = BinaryUtils.toLong(stackRead);
     }
 
     private void opcADD(MotherboardRepr mother, Random rand) throws Emergency {
         long srcIdx = this.currentIP;
         ByteList lhs = this.readRegister(this.currentIP, true, mother, rand);
         ByteList rhs = this.readIV(this.currentIP, true, mother, rand);
-        ByteList overflow = Utils.addMut(lhs, rhs);
+        ByteList overflow = BinaryUtils.addMut(lhs, rhs);
         this.writeToRegister(srcIdx, false, lhs, mother, rand);
 
         if (overflow.size() > 0) {
@@ -619,7 +620,7 @@ public class CPURepr {
         long srcIdx = this.currentIP;
         ByteList lhs = this.readRegister(this.currentIP, true, mother, rand);
         ByteList rhs = this.readIV(this.currentIP, true, mother, rand);
-        ByteList underflow = Utils.subMut(lhs, rhs);
+        ByteList underflow = BinaryUtils.subMut(lhs, rhs);
         this.writeToRegister(srcIdx, false, lhs, mother, rand);
 
         // Underflow?
@@ -636,7 +637,7 @@ public class CPURepr {
     private void opcINC(MotherboardRepr mother, Random rand) throws Emergency {
         long regiIdx = this.currentIP;
         ByteList val = this.readRegister(this.currentIP, true, mother, rand);
-        ByteList remainder = Utils.addMut(val, ByteLists.singleton((byte) 1));
+        ByteList remainder = BinaryUtils.addMut(val, ByteLists.singleton((byte) 1));
         this.writeToRegister(regiIdx, false, val, mother, rand);
         // Overflow flag?
         if (remainder.size() > 0) {
@@ -652,7 +653,7 @@ public class CPURepr {
     private void opcDEC(MotherboardRepr mother, Random rand) throws Emergency {
         long regiIdx = this.currentIP;
         ByteList val = this.readRegister(this.currentIP, true, mother, rand);
-        ByteList remainder = Utils.subMut(val, ByteLists.singleton((byte) 1));
+        ByteList remainder = BinaryUtils.subMut(val, ByteLists.singleton((byte) 1));
         this.writeToRegister(regiIdx, false, val, mother, rand);
         // Overflow flag?
         if (remainder.size() > 0) {
@@ -686,7 +687,7 @@ public class CPURepr {
         long regiIdx = this.currentIP;
         ByteList lhs = this.readRegister(this.currentIP, true, mother, rand);
         ByteList shlAmtList = this.readIV(this.currentIP, true, mother, rand);
-        long shlAmt = Utils.toLong(shlAmtList);
+        long shlAmt = BinaryUtils.toLong(shlAmtList);
         long byteShlAmt = shlAmt / 8;
 
         long overflow = 0;
@@ -706,16 +707,16 @@ public class CPURepr {
 
     private void opcJMP(MotherboardRepr mother, Random rand) throws Emergency {
         ByteList destination = this.readIV(this.currentIP, true, mother, rand);
-        this.currentIP = Utils.toLong(destination);
+        this.currentIP = BinaryUtils.toLong(destination);
     }
 
     private void opcJZ(MotherboardRepr mother, Random rand) throws Emergency {
         ByteList switcher = this.readIV(this.currentIP, true, mother, rand);
         ByteList destination = this.readIV(this.currentIP, true, mother, rand);
 
-        long switcherLong = Utils.toLong(switcher);
+        long switcherLong = BinaryUtils.toLong(switcher);
         if (switcherLong == 0) {
-            this.currentIP = Utils.toLong(destination);
+            this.currentIP = BinaryUtils.toLong(destination);
         }
     }
 
@@ -723,9 +724,9 @@ public class CPURepr {
         ByteList switcher = this.readIV(this.currentIP, true, mother, rand);
         ByteList destination = this.readIV(this.currentIP, true, mother, rand);
 
-        long switcherLong = Utils.toLong(switcher);
+        long switcherLong = BinaryUtils.toLong(switcher);
         if (switcherLong != 0) {
-            this.currentIP = Utils.toLong(destination);
+            this.currentIP = BinaryUtils.toLong(destination);
         }
     }
 
@@ -733,9 +734,9 @@ public class CPURepr {
         ByteList switcher = this.readIV(this.currentIP, true, mother, rand);
         ByteList destination = this.readIV(this.currentIP, true, mother, rand);
 
-        long switcherLong = Utils.toLong(switcher);
+        long switcherLong = BinaryUtils.toLong(switcher);
         if (switcherLong < 0) {
-            this.currentIP = Utils.toLong(destination);
+            this.currentIP = BinaryUtils.toLong(destination);
         }
     }
 
@@ -743,26 +744,26 @@ public class CPURepr {
         ByteList switcher = this.readIV(this.currentIP, true, mother, rand);
         ByteList destination = this.readIV(this.currentIP, true, mother, rand);
 
-        long switcherLong = Utils.toLong(switcher);
+        long switcherLong = BinaryUtils.toLong(switcher);
         if (switcherLong > 0) {
-            this.currentIP = Utils.toLong(destination);
+            this.currentIP = BinaryUtils.toLong(destination);
         }
     }
 
     private void opcPRINT(MotherboardRepr mother, Random rand) throws Emergency {
         // to print, to print, l'chaim
         ByteList toPrint = this.readIV(this.currentIP, true, mother, rand);
-        System.out.println(Utils.smolHexdump(toPrint));
+        System.out.println(BinaryUtils.smolHexdump(toPrint));
     }
 
     private void opcDEBUG(MotherboardRepr mother, Random rand) throws Emergency {
         // For now
         ByteList startIdxList = this.readIV(this.currentIP, true, mother, rand);
         ByteList lengthList = this.readIV(this.currentIP, true, mother, rand);
-        int startIdx = (int) Utils.toLong(startIdxList);
-        int length = (int) Utils.toLong(lengthList);
+        int startIdx = (int) BinaryUtils.toLong(startIdxList);
+        int length = (int) BinaryUtils.toLong(lengthList);
 
-        System.out.println(Utils.hexdump(new ByteArrayList(mother.memory, startIdx, length)));
+        System.out.println(BinaryUtils.hexdump(new ByteArrayList(mother.memory, startIdx, length)));
     }
 
     // endregion
@@ -837,7 +838,7 @@ public class CPURepr {
         } else {
             // Mem location
             ByteList memLocList = this.readIV(advanceIP ? this.currentIP : ip + 1, advanceIP, mother, rand);
-            long memLoc = Utils.toLong(memLocList);
+            long memLoc = BinaryUtils.toLong(memLocList);
             return this.read(memLoc, amount, Permissions.R, mother, rand);
         }
     }
@@ -879,7 +880,7 @@ public class CPURepr {
      * manually insert bytecode...)
      */
     private ByteList readFromStack(long offset, int length, MotherboardRepr mother, Random rand) throws Emergency {
-        long absoluteIdx = this.memoryStarts.get(MemoryType.RAM) + Utils.toLong(this.SP) + offset;
+        long absoluteIdx = this.memoryStarts.get(MemoryType.RAM) + BinaryUtils.toLong(this.SP) + offset;
         return this.read(absoluteIdx, length, Permissions.R, mother, rand);
     }
 
@@ -938,7 +939,7 @@ public class CPURepr {
                 // nil; discard the value by doing nothing
             } else if (registerCode == 1) {
                 // IP
-                this.currentIP = Utils.toLong(value);
+                this.currentIP = BinaryUtils.toLong(value);
             } else if (registerCode == 2) {
                 // SP
                 for (int i = 0; i < this.SP.length; i++) {
@@ -958,7 +959,7 @@ public class CPURepr {
      * Write to the given offset of the SP.
      */
     private void writeToStackvalue(ByteList value, long offset, MotherboardRepr mother, Random rand) throws Emergency {
-        long absoluteIdx = this.memoryStarts.get(MemoryType.RAM) + Utils.toLong(this.SP) + offset;
+        long absoluteIdx = this.memoryStarts.get(MemoryType.RAM) + BinaryUtils.toLong(this.SP) + offset;
 
         this.write(absoluteIdx, value, Permissions.R, mother, rand);
     }
@@ -978,7 +979,7 @@ public class CPURepr {
         } else {
             // it's a memory location
             ByteList memLocList = this.readIV(advanceIP ? this.currentIP : ip + 1, advanceIP, mother, rand);
-            long memLoc = Utils.toLong(memLocList);
+            long memLoc = BinaryUtils.toLong(memLocList);
             this.write(memLoc, value, new Permissions(false, true, false), mother, rand);
         }
     }

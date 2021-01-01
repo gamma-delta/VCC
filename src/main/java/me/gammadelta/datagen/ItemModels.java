@@ -25,9 +25,12 @@ public class ItemModels extends ItemModelProvider {
         simpleItem(VCCItems.PUNCHCARD.get());
         simpleItem(VCCItems.FILLED_PUNCHCARD.get());
 
-        parentedBlock(VCCBlocks.CHASSIS_BLOCK.get(), "block/chassis");
         parentedBlock(VCCBlocks.MOTHERBOARD_BLOCK.get(), "block/motherboard");
+        parentedBlock(VCCBlocks.CHASSIS_BLOCK.get(), "block/chassis");
         parentedBlock(VCCBlocks.REGISTER_BLOCK.get(), "block/register");
+        parentedBlock(VCCBlocks.OVERCLOCK_BLOCK.get(), "block/overclock");
+
+        parentedBlock(VCCBlocks.PUNCHER_BLOCK.get(), "block/overclock");
     }
 
     public void parentedBlock(Block block, String model) {

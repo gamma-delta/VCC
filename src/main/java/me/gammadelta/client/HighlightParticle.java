@@ -59,7 +59,7 @@ public class HighlightParticle extends SpriteTexturedParticle {
             this.setExpired();
         } else {
             this.move(this.motionX, this.motionY, this.motionZ);
-            this.particleAlpha *= 0.95;
+            this.particleAlpha *= 0.97;
             this.selectSpriteWithAge(this.spriteSet);
         }
     }

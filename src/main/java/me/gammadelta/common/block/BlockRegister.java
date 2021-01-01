@@ -1,50 +1,82 @@
 package me.gammadelta.common.block;
 
-import me.gammadelta.common.block.tile.TileRegister;
+import me.gammadelta.VCCMod;
+import me.gammadelta.common.block.tile.TileMotherboard;
+import me.gammadelta.common.network.MsgHighlightBlocks;
+import me.gammadelta.common.program.MotherboardRepr;
+import me.gammadelta.common.program.RegisterRepr;
+import me.gammadelta.common.utils.Colors;
+import me.gammadelta.common.utils.FloodUtils;
+import me.gammadelta.common.utils.Utils;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.state.StateContainer;
 import net.minecraft.state.properties.BlockStateProperties;
-import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
+import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockReader;
+import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.world.World;
+import net.minecraftforge.fml.network.PacketDistributor;
 
-import javax.annotation.Nullable;
+import java.util.Arrays;
 
 public class BlockRegister extends BlockComponent {
     public static final String NAME = "register";
 
     @Override
-    public boolean hasTileEntity(BlockState state) {
-        return true;
-    }
+    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player,
+            Hand handIn, BlockRayTraceResult hit) {
+        TileMotherboard tileMotherboard = FloodUtils.findMotherboard(pos, worldIn);
+        ActionResultType superAction = super.onBlockActivated(tileMotherboard, state, worldIn, pos, player, handIn,
+                hit);
 
-    @Nullable
-    @Override
-    public TileEntity createTileEntity(BlockState state, IBlockReader world) {
-        return new TileRegister();
-    }
+        int debugLevel = Utils.funniDebugLevel(player, handIn);
+        if (debugLevel > 0 && !worldIn.isRemote && tileMotherboard != null) {
+            // display this registers friends as the motherboard thinks of them.
+            // Note: we could totally just call the flood util,
+            // but it's important that we get what the motherboard thinks here
+            // for my debugging purposes.
+            MotherboardRepr motherboard = tileMotherboard.getMotherboard();
+            for (RegisterRepr otherRegi : motherboard.registers) {
+                for (BlockPos otherPos : otherRegi.manifestations) {
+                    if (otherPos.equals(pos)) {
+                        // make some smoke!
+                        VCCMod.getNetwork().send(
+                                PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player),
+                                new MsgHighlightBlocks(
+                                        Arrays.asList(otherRegi.manifestations), Colors.getRegisterRed()
+                                ));
+                        // This breaks only the inner loop.
+                        // We want to keep going in case two RegisterReprs
+                        // somehow own this block.
+                        break;
+                    }
+                }
+            }
+            return ActionResultType.SUCCESS;
+        }
 
-    @Override
-    public int getLightValue(BlockState state, IBlockReader world, BlockPos pos) {
-        return state.get(BlockStateProperties.LIT) ? 13 : 0;
+        return superAction;
     }
 
     // region Blockstate stuff
 
-    @Nullable
     @Override
     public BlockState getStateForPlacement(BlockItemUseContext context) {
         Direction dir = context.getNearestLookingDirection();
         Direction.Axis axis = dir.getAxis();
-        return getDefaultState().with(BlockStateProperties.AXIS, axis).with(BlockStateProperties.LIT, false);
+        return super.getStateForPlacement(context).with(BlockStateProperties.AXIS, axis);
     }
 
     @Override
     protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
-        builder.add(BlockStateProperties.AXIS, BlockStateProperties.LIT);
+        super.fillStateContainer(builder);
+        builder.add(BlockStateProperties.AXIS);
     }
 
     // endregion

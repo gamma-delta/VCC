@@ -17,7 +17,7 @@ public class ASMCompiler {
         return instrs;
     }
 
-    public static ByteList lexParseAndCompile(String input) throws CodeCompileException, BytecodeWriteException {
+    public static ByteList lexParseAndCompile(String input) throws CodeCompileException, CodeCompileException.BytecodeWriteException {
         List<Instruction> instructions = lexAndParse(input);
         return new BytecodeWriter(instructions).writeProgramToBytecode();
     }

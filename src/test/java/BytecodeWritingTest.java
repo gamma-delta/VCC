@@ -1,4 +1,4 @@
-import me.gammadelta.common.utils.Utils;
+import me.gammadelta.common.utils.BinaryUtils;
 import me.gammadelta.common.program.compilation.ASMCompiler;
 import me.gammadelta.common.program.compilation.BytecodeWriter;
 import me.gammadelta.common.program.compilation.Instruction;
@@ -35,6 +35,6 @@ public class BytecodeWritingTest {
         System.out.printf("=== Program ===\n%s\n\n"
                 + "=== Intermediate ===\n%s\n\n"
                 + "=== Bytecode ===\n%s\n",
-                program, ASMCompiler.prettyPrintInstructions(instructions), Utils.hexdump(bytecode));
+                program, ASMCompiler.prettyPrintInstructions(instructions), BinaryUtils.hexdump(bytecode));
     }
 }

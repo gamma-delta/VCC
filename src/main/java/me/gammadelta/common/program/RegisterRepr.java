@@ -6,25 +6,35 @@ import net.minecraft.nbt.NBTUtil;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.util.Constants;
 
-import java.util.ArrayList;
-
 /**
- * One virtual register, consisting of a bunch of RegisterBlocks.
+ * I am the very model of a modern major register
+ * My blocks each hold an 8-bit word and side-by-side work together
+ * Th'importance of my job to do is really something radical
+ * For iteration, processing, and all things mathematical...
+ * <p>
+ * I'm very good at 'rithmetic and working with an interface
+ * But if your CPUs are fast, there just might be a data race
+ * But still, for holding data, math, or anything numerical
+ * I am the very model of a modern major register!
  */
 public class RegisterRepr {
-    /** Locations of the original blocks */
+    /**
+     * Locations of the original blocks
+     */
     public BlockPos[] manifestations;
-    private static String MANIFESTATIONS_TAG = "manifestations";
+    private static final String MANIFESTATIONS_TAG = "manifestations";
 
-    /** Value stored in the cluster. */
+    /**
+     * Value stored in the cluster.
+     */
     public byte[] value;
-    private static String VALUE_TAG = "value";
+    private static final String VALUE_TAG = "value";
 
     public RegisterRepr(BlockPos[] manifestations) {
         this.manifestations = manifestations;
         // initialize value zeroed
         // TODO: if i end up making memory scramble on startup, that has to happen *in the startup*.
-        this.value = new byte[this.manifestations.length];
+        this.value = new byte[this.manifestations.length - 1];
     }
 
     /**

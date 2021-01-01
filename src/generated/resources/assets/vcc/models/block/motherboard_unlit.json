@@ -1,11 +1,11 @@
 {
   "parent": "minecraft:block/cube",
   "textures": {
-    "down": "vcc:block/chassis",
-    "up": "vcc:block/chassis",
+    "down": "vcc:block/chassis_unlit",
+    "up": "vcc:block/chassis_unlit",
     "north": "vcc:block/motherboard_front_unlit",
-    "south": "vcc:block/chassis",
-    "east": "vcc:block/chassis",
-    "west": "vcc:block/chassis"
+    "south": "vcc:block/chassis_unlit",
+    "east": "vcc:block/chassis_unlit",
+    "west": "vcc:block/chassis_unlit"
   }
 }

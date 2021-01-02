@@ -1,0 +1,16 @@
+{
+    "providers": [{
+        "type": "bitmap",
+        "file": "vcc:font/monospace.png",
+        "width": 4,
+        "height": 5,
+        "chars": [
+            " !\"#$%&'()*+,-./",
+            "0123456789:;<=>?",
+            "@ABCDEFGHIJKLMNO",
+            "PQRSTUVQXYZ[\\]^_",
+            "`abcdefghijklmno",
+            "pqrstuvwxyz{|}~\u0000"
+        ]
+    }]
+}

@@ -1,6 +1,5 @@
 package me.gammadelta.datagen;
 
-import me.gammadelta.common.recipe.specialcrafting.RecipePasteToPunchcard;
 import net.minecraft.data.CustomRecipeBuilder;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.IFinishedRecipe;
@@ -21,11 +20,11 @@ public class Recipes extends RecipeProvider {
 
     @Override
     protected void registerRecipes(Consumer<IFinishedRecipe> consumer) {
-        specialRecipe(consumer, RecipePasteToPunchcard.SERIALIZER);
     }
 
     private void specialRecipe(Consumer<IFinishedRecipe> consumer, SpecialRecipeSerializer<?> serializer) {
         ResourceLocation name = Registry.RECIPE_SERIALIZER.getKey(serializer);
-        CustomRecipeBuilder.customRecipe(serializer).build(consumer, new ResourceLocation(MOD_ID,"dynamic/" + name.getPath()).toString());
+        CustomRecipeBuilder.customRecipe(serializer)
+                .build(consumer, new ResourceLocation(MOD_ID, "dynamic/" + name.getPath()).toString());
     }
 }

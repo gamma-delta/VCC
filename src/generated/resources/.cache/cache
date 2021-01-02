@@ -18,6 +18,5 @@ d070d7a1fbca6f167f38762ba64851528070791d assets/vcc/models/item/chassis.json
 0f072a25c6b12f12570454aeb3f6941d039e2f03 assets/vcc/models/item/motherboard.json
 92be4c0b3490ba9c0b12e78aea9d73432150eaa7 assets/vcc/models/item/overclock.json
 10fa523912bc7e55699061f6c13ec06541b88d87 assets/vcc/models/item/punchcard.json
-92be4c0b3490ba9c0b12e78aea9d73432150eaa7 assets/vcc/models/item/puncher.json
+08e6c1400027df136efacf780b9575a1b1bbe2b4 assets/vcc/models/item/puncher.json
 fe3d19075c6035129b815ffc41cd64799b54a23c assets/vcc/models/item/register.json
-c49d89f3dc96294e3b9d47c68c1527888b1634a2 data/vcc/recipes/dynamic/paste_to_punchcard.json

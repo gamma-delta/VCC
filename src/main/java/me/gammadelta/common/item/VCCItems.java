@@ -32,7 +32,7 @@ public class VCCItems {
     public static final RegistryObject<Item> PUNCHCARD = dumbItem("punchcard");
     public static final RegistryObject<ItemFilledPunchCard> FILLED_PUNCHCARD = ITEMS.register(ItemFilledPunchCard.NAME,
             ItemFilledPunchCard::new);
-    public static final RegistryObject<Item> CLIPBOARD = ITEMS.register(ItemClipboard.NAME, ItemClipboard::new);
+    public static final RegistryObject<Item> CLIPBOARD = dumbUnstackableItem("clipboard");
     public static final RegistryObject<Item> COUPON = ITEMS.register(ItemCoupon.NAME, ItemCoupon::new);
 
     // endregion
@@ -54,6 +54,10 @@ public class VCCItems {
 
     private static RegistryObject<Item> dumbItem(String name) {
         return ITEMS.register(name, () -> new Item(new Item.Properties().group(VCC_ITEM_GROUP)));
+    }
+
+    private static RegistryObject<Item> dumbUnstackableItem(String name) {
+        return ITEMS.register(name, () -> new Item(new Item.Properties().group(VCC_ITEM_GROUP).maxStackSize(1)));
     }
 
 

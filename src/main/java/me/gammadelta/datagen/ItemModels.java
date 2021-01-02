@@ -30,7 +30,7 @@ public class ItemModels extends ItemModelProvider {
         parentedBlock(VCCBlocks.REGISTER_BLOCK.get(), "block/register");
         parentedBlock(VCCBlocks.OVERCLOCK_BLOCK.get(), "block/overclock");
 
-        parentedBlock(VCCBlocks.PUNCHER_BLOCK.get(), "block/overclock");
+        parentedBlock(VCCBlocks.PUNCHER_BLOCK.get(), "block/puncher");
     }
 
     public void parentedBlock(Block block, String model) {

@@ -83,30 +83,16 @@ public interface IMemoryStorageItem {
     @ParametersAreNonnullByDefault
     default void addHexdumpTooltip(ItemStack stack, @Nullable World worldIn, List<ITextComponent> tooltip,
             ITooltipFlag flagIn) {
-        if (!Screen.hasShiftDown()) {
-            tooltip.add(new TranslationTextComponent("tooltip.hexdump.hidden0", getMemorySize()));
-            tooltip.add(new TranslationTextComponent("tooltip.hexdump.hidden1"));
-            stack.getOrCreateTag().remove(CACHED_HEXDUMP_KEY);
-        } else {
-            ListNBT hexdump = stack.getOrCreateTag().getList(CACHED_HEXDUMP_KEY, Constants.NBT.TAG_STRING);
-            if (hexdump.isEmpty()) {
-                // we don't know about this hexdump
-                // all this caching is to prevent running the hexdump every frame.
-                // hopefully it's worth it...
-                String dumpStr = BinaryUtils.hexdump(new ByteArrayList(this.getMemory(stack)));
-                String[] lines = dumpStr.split("\\n");
-                for (String line : lines) {
-                    hexdump.add(StringNBT.valueOf(line));
-                }
+        byte[] memory = this.getMemory(stack);
+        int usedMemory = 0;
+        // Find the index of the *last* non-zero byte
+        for (; usedMemory >= 0; usedMemory--) {
+            byte data = memory[usedMemory];
+            if (data != 0) {
+                // here's our stop
+                break;
             }
-
-            tooltip.add(new TranslationTextComponent("tooltip.hexdump.shown0", hexdump));
-            for (int i = 0; i < hexdump.size(); i++) {
-                StringTextComponent line = new StringTextComponent(hexdump.getString(i));
-                line.setStyle(Style.EMPTY.setFontId(new ResourceLocation(MOD_ID, "monospace")));
-                tooltip.add(line);
-            }
-            tooltip.add(new TranslationTextComponent("tooltip.hexdump.shown1", I18n.format("item.vcc.clipboard")));
         }
+        tooltip.add(new TranslationTextComponent("tooltip.memoryStored", usedMemory, getMemorySize()));
     }
 }

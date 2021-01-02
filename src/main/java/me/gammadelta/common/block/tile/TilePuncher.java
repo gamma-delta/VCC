@@ -37,7 +37,7 @@ public class TilePuncher extends TileEntity {
     public int byteOffset = 0;
     private static final String BYTE_OFFSET_KEY = "byte_offset";
 
-    private LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> itemHandlerMaster);
+    public LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> itemHandlerMaster);
     private static final String INVENTORY_KEY = "inventory";
 
     // endregion

@@ -4,6 +4,9 @@ import me.gammadelta.common.block.VCCBlocks;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.container.Container;
+import net.minecraft.inventory.container.Slot;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.IWorldPosCallable;
 import net.minecraft.util.math.BlockPos;
@@ -14,6 +17,7 @@ import net.minecraftforge.items.SlotItemHandler;
 import net.minecraftforge.items.wrapper.InvWrapper;
 
 import javax.annotation.Nullable;
+import java.util.Objects;
 
 /**
  * Container for the punching table
@@ -23,6 +27,10 @@ public class ContainerPuncher extends Container {
     private TileEntity tile;
     private PlayerEntity playerEntity;
     private IItemHandler playerInventory;
+
+    private static final int PLAYER_INV_SIZE = 36;
+    private static final int MAX_PUNCHER_SLOT = 4;
+    private static final int PLAYER_INV_START = MAX_PUNCHER_SLOT + 1;
 
     public ContainerPuncher(int windowId, World world, BlockPos pos, PlayerInventory playerInventory,
             PlayerEntity player) {
@@ -47,6 +55,56 @@ public class ContainerPuncher extends Container {
             });
         }
         layoutPlayerInventorySlots(8, 174);
+    }
+
+    // Shift-click behavior
+    @Override
+    public ItemStack transferStackInSlot(PlayerEntity playerIn, int index) {
+        TilePuncher owner = Objects.requireNonNull((TilePuncher) this.tile);
+
+        ItemStack itemstack = ItemStack.EMPTY;
+        Slot slot = this.inventorySlots.get(index);
+        if (slot != null && slot.getHasStack()) {
+            ItemStack stack = slot.getStack();
+            itemstack = stack.copy();
+            if (index == 0) {
+                // Shift-clicking data in slot
+                if (!this.mergeItemStack(stack, PLAYER_INV_START, PLAYER_INV_START + PLAYER_INV_SIZE, true)) {
+                    return ItemStack.EMPTY;
+                }
+                slot.onSlotChange(stack, itemstack);
+            } else if (index >= PLAYER_INV_START) {
+                // We're in the player's inventory
+                if (owner.itemHandler.map(h -> h.isItemValid(0, stack)).orElse(false)) {
+                    // Try to shift-click data items in?
+                    if (!this.mergeItemStack(stack, 0, 1, false)) {
+                        return ItemStack.EMPTY;
+                    }
+                } else if (index < PLAYER_INV_START + 27) {
+                    // Shift clicking from main inv to hotbar
+                    if (!this.mergeItemStack(stack, PLAYER_INV_START, PLAYER_INV_START + PLAYER_INV_SIZE, false)) {
+                        return ItemStack.EMPTY;
+                    }
+                } else if (!this.mergeItemStack(stack, PLAYER_INV_START,  PLAYER_INV_START + 27, false)) {
+                    // tried to move from hotbar to main inventory but failed
+                    return ItemStack.EMPTY;
+                }
+            }
+
+            if (stack.isEmpty()) {
+                slot.putStack(ItemStack.EMPTY);
+            } else {
+                slot.onSlotChanged();
+            }
+
+            if (stack.getCount() == itemstack.getCount()) {
+                return ItemStack.EMPTY;
+            }
+
+            slot.onTake(playerIn, stack);
+        }
+
+        return itemstack;
     }
 
     @Nullable

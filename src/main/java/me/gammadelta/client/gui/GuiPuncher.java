@@ -117,9 +117,10 @@ public class GuiPuncher extends ContainerScreen<ContainerPuncher> {
                 // no item in there
                 // the grayed out texture is drawn 2 below the normal one
                 srcY += height * 2;
-            } else if (isHovered) {
+            } else if (isHovered()) {
                 // hilite texture is 1 below
-                srcY += height;
+                // TODO: why why why is it still being highlighted
+                //    srcY += height;
             }
             blitSized(matrixStack, this.x + GuiPuncher.this.guiLeft, this.y + GuiPuncher.this.guiTop, 0, srcY,
                     this.width, this.height);

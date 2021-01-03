@@ -6,7 +6,6 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.IWorldPosCallable;
 import net.minecraft.util.math.BlockPos;
@@ -51,7 +50,7 @@ public class ContainerPuncher extends Container {
                 // Cards in
                 addSlot(new SlotItemHandler(handler, 3, 8, 143));
                 // Cards out
-                addSlot(new SlotItemHandler(handler, 4, 256, 384));
+                addSlot(new SlotItemHandler(handler, 4, 203, 193));
             });
         }
         layoutPlayerInventorySlots(8, 174);
@@ -81,11 +80,11 @@ public class ContainerPuncher extends Container {
                         return ItemStack.EMPTY;
                     }
                 } else if (index < PLAYER_INV_START + 27) {
-                    // Shift clicking from main inv to hotbar
-                    if (!this.mergeItemStack(stack, PLAYER_INV_START, PLAYER_INV_START + PLAYER_INV_SIZE, false)) {
+                    // Shift clicking from main inv to hotbar?
+                    if (!this.mergeItemStack(stack, PLAYER_INV_START + 27, PLAYER_INV_START + PLAYER_INV_SIZE, false)) {
                         return ItemStack.EMPTY;
                     }
-                } else if (!this.mergeItemStack(stack, PLAYER_INV_START,  PLAYER_INV_START + 27, false)) {
+                } else if (!this.mergeItemStack(stack, PLAYER_INV_START, PLAYER_INV_START + 27, false)) {
                     // tried to move from hotbar to main inventory but failed
                     return ItemStack.EMPTY;
                 }

@@ -5,7 +5,6 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import me.gammadelta.common.block.tile.ContainerPuncher;
 import me.gammadelta.common.block.tile.TilePuncher;
 import me.gammadelta.common.item.VCCItems;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.gui.widget.button.AbstractButton;
@@ -31,7 +30,7 @@ public class GuiPuncher extends ContainerScreen<ContainerPuncher> {
         this.playerInventoryTitleX = 8;
         this.playerInventoryTitleY = 163;
         this.titleX = 7;
-        this.titleY = 5;
+        this.titleY = 4;
         this.xSize = 256;
         this.ySize = 256;
     }
@@ -46,13 +45,21 @@ public class GuiPuncher extends ContainerScreen<ContainerPuncher> {
     public void tick() {
         super.tick();
 
+
         // Which top button set should we use?
-        if (TilePuncher.itemGetStrings(this.container.getSlot(0).getStack()) == null) {
+        byte[] memory = this.container.getMemory();
+        ItemStack dataStack = this.container.getSlot(0).getStack();
+        if (TilePuncher.itemGetStrings(dataStack) == null) {
             // Use the single copy one
-            this.copyButton.active = true;
+            this.copyButton.visible = true;
+            // Disable if empty
+            this.copyButton.active = !dataStack.isEmpty();
+            // Do we have a message?
+            String key = (memory == null) ? "gui.vcc.puncher.copy" : "gui.vcc.puncher.copy.overwrite";
+            this.copyButton.setMessage(new TranslationTextComponent(key));
         } else {
             // Use the triple one
-            this.copyButton.active = false;
+            this.copyButton.visible = false;
         }
     }
 
@@ -79,10 +86,44 @@ public class GuiPuncher extends ContainerScreen<ContainerPuncher> {
         // Automatically draws the container name and player inventory string for us in the superclass, how nice
         super.drawGuiContainerForegroundLayer(neo, mouseX, mouseY);
 
+        // Move the mouse over, because the context here thinks that (0, 0) is the corner of the gui
+        mouseX -= (this.width - this.xSize) / 2;
+        mouseY -= (this.height - this.ySize) / 2;
+
         // Render data
         byte[] memory = this.container.getMemory();
         if (memory != null) {
-            // TODO: hexdump
+            for (int i = 0; i < memory.length; i++) {
+                int byteIdx = this.container.getByteOffset() + i;
+                if (byteIdx > memory.length - 1) {
+                    // out of bounds!
+                    break;
+                }
+                byte b = memory[byteIdx];
+
+                int gridX = i % 16;
+                int gridY = i / 16;
+
+                int hexX = 9 + gridX * 10 + 2 * (gridX / 8);
+                int hexY = 39 + gridY * 6 + 3 * (gridY / 8);
+                String hex = String.format("%02x", b);
+                renderSmolString(neo, hex, hexX, hexY);
+
+                int asciiX = 173 + 4 * gridX;
+                int asciiY = hexY;
+                String ascii = String.valueOf((char) b);
+                assert ascii.length() == 1;
+                renderSmolString(neo, ascii, asciiX, asciiY);
+            }
+            // Render size & viewing info
+            renderSmolString(neo, I18n.format("gui.vcc.puncher.bytesInfo.stored"), 172, 143);
+            renderSmolString(neo, String.format("0x%1$04x (%1$d)", memory.length), 176, 149);
+            renderSmolString(neo, I18n.format("gui.vcc.puncher.bytesInfo.viewing"), 172, 157);
+            int bytesShown = Math.min(256, this.container.getByteOffset() + memory.length);
+            int bytesEnd = this.container.getByteOffset() + bytesShown;
+            renderSmolString(neo, String.format("0x%04x-0x%04x", this.container.getByteOffset(), bytesEnd), 176, 163);
+            renderSmolString(neo, String.format("(%d-%d)", this.container.getByteOffset(), bytesEnd), 176, 169);
+
         } else {
             for (int i = 0; I18n.hasKey("gui.vcc.puncher.noData.line" + i); i++) {
                 renderSmolString(neo, I18n.format("gui.vcc.puncher.noData.line" + i), 9, 39 + 6 * i);
@@ -90,7 +131,7 @@ public class GuiPuncher extends ContainerScreen<ContainerPuncher> {
         }
 
         // Render a helpful tooltip for slots if there is no item there
-        if (hoveredSlot != null && !hoveredSlot.getHasStack() && hoveredSlot.inventory != this.playerInventory) {
+        if (hoveredSlot != null && !hoveredSlot.getHasStack() && hoveredSlot.inventory != playerInventory) {
             int slot = hoveredSlot.getSlotIndex();
             if (slot <= 4) {
                 renderTooltip(neo, new TranslationTextComponent("gui.vcc.puncher.slot" + slot), mouseX,
@@ -106,24 +147,8 @@ public class GuiPuncher extends ContainerScreen<ContainerPuncher> {
     @OnlyIn(Dist.CLIENT)
     private class CopyButton extends AbstractButton {
         public CopyButton() {
-            super(48, 12, 177, 20, new TranslationTextComponent("gui.vcc.puncher.copy"));
-        }
-
-        @Override
-        protected void renderBg(MatrixStack matrixStack, Minecraft minecraft, int mouseX, int mouseY) {
-            int srcY = 256;
-            ItemStack dataStack = GuiPuncher.this.container.getSlot(0).getStack();
-            if (dataStack.getItem() != VCCItems.FILLED_PUNCHCARD.get()) {
-                // no item in there
-                // the grayed out texture is drawn 2 below the normal one
-                srcY += height * 2;
-            } else if (isHovered()) {
-                // hilite texture is 1 below
-                // TODO: why why why is it still being highlighted
-                //    srcY += height;
-            }
-            blitSized(matrixStack, this.x + GuiPuncher.this.guiLeft, this.y + GuiPuncher.this.guiTop, 0, srcY,
-                    this.width, this.height);
+            super(GuiPuncher.this.guiLeft + 48, GuiPuncher.this.guiTop + 12, 177, 20,
+                    new TranslationTextComponent("gui.vcc.puncher.copy"));
         }
 
         @Override

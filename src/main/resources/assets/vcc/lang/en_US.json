@@ -11,6 +11,7 @@
     "gui.vcc.puncher.slot3": "Input Blank Cards",
     "gui.vcc.puncher.slot4": "Copied Cards Out",
     "gui.vcc.puncher.copy": "Copy Data to Table",
+    "gui.vcc.puncher.copy.overwrite": "Overwrite Data in Table",
     "gui.vcc.puncher.copy.noCopyable": "You need to have a copyable item in order to copy its data",
     "gui.vcc.puncher.copy.string": "String",
     "gui.vcc.puncher.copy.string.tooltip": "Copy data as string",

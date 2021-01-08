@@ -18,11 +18,14 @@ import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.network.PacketDistributor;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class BlockRegister extends BlockComponent {
@@ -36,21 +39,30 @@ public class BlockRegister extends BlockComponent {
                 hit);
 
         int debugLevel = Utils.funniDebugLevel(player, handIn);
-        if (debugLevel > 0 && !worldIn.isRemote && tileMotherboard != null) {
+        if (debugLevel >= 1 && !worldIn.isRemote && tileMotherboard != null) {
             // display this registers friends as the motherboard thinks of them.
             // Note: we could totally just call the flood util,
             // but it's important that we get what the motherboard thinks here
             // for my debugging purposes.
             MotherboardRepr motherboard = tileMotherboard.getMotherboard();
-            for (RegisterRepr otherRegi : motherboard.registers) {
+            ArrayList<RegisterRepr> registers = motherboard.registers;
+            for (int clusterIdx = 0; clusterIdx < registers.size(); clusterIdx++) {
+                RegisterRepr otherRegi = registers.get(clusterIdx);
                 for (BlockPos otherPos : otherRegi.manifestations) {
                     if (otherPos.equals(pos)) {
-                        // make some smoke!
+                        // We found our cluster!
                         VCCMod.getNetwork().send(
                                 PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player),
                                 new MsgHighlightBlocks(
-                                        Arrays.asList(otherRegi.manifestations), Colors.getRegisterRed()
+                                        Arrays.asList(otherRegi.manifestations), Colors.REGISTER_RED
                                 ));
+                        if (debugLevel >= 2) {
+                            // Also print out which index this is
+                            player.sendMessage(
+                                    new TranslationTextComponent("misc.debugNBT.registerIndex", clusterIdx,
+                                            registers.size()),
+                                    Util.DUMMY_UUID);
+                        }
                         // This breaks only the inner loop.
                         // We want to keep going in case two RegisterReprs
                         // somehow own this block.

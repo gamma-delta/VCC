@@ -2,7 +2,10 @@ package me.gammadelta.common.program;
 
 import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.bytes.ByteArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import me.gammadelta.common.block.BlockCPU;
 import me.gammadelta.common.block.VCCBlocks;
 import me.gammadelta.common.block.tile.TileMotherboard;
 import me.gammadelta.common.utils.FloodUtils;
@@ -55,7 +58,7 @@ public class MotherboardRepr {
      * <p>
      * `[ [0], [1, 1, 1], [2, 2], [3], [4] ]`
      */
-    private ArrayList<ArrayList<CPURepr>> cpus;
+    public ArrayList<ArrayList<CPURepr>> cpus;
     private static final String CPUS_KEY = "cpus";
 
     /**
@@ -121,7 +124,9 @@ public class MotherboardRepr {
      * Update my connected components given the new components.
      */
     public void updateComponents(TileMotherboard owner, Object2IntMap<BlockPos> components) {
-        // TODO: rn this is mostly boilerplate to prevent instant NPEs
+        // TODO: still need to implement:
+        // - memory locations
+        // - datafaces
 
         World world = owner.getWorld();
 
@@ -136,8 +141,16 @@ public class MotherboardRepr {
 
         this.ownedBlocks = new HashSet<>();
 
-
-        Set<BlockPos> registerBlocks = new HashSet<>();
+        // Set of all register blocks we want to exclude from our search.
+        // Either they're in a CPU's extender, or we've already included their cluster.
+        Set<BlockPos> excludedRegisterBlocks = new HashSet<>();
+        // Register clusters we've found.
+        // Includes ones in and not in CPUs (we don't know till the end)
+        List<List<BlockPos>> registerClusters = new ArrayList<>();
+        // CPU skeletons we've found.
+        // Only contains the extenders and the position of the CPU itself.
+        // Side note: imagine society if Java had actual tuples
+        List<Pair<BlockPos, Pair<List<BlockPos>, List<BlockPos>>>> cpuSkeletons = new ArrayList<>();
 
         components.forEach((pos, dist) -> {
             BlockState state = owner.getWorld().getBlockState(pos);
@@ -147,49 +160,112 @@ public class MotherboardRepr {
 
             if (component == VCCBlocks.CHASSIS_BLOCK.get()) {
                 this.chassises.add(pos);
+            } else if (component == VCCBlocks.CPU_BLOCK.get()) {
+                // nice
+                Pair<List<BlockPos>, List<BlockPos>> extenders = BlockCPU.findExtenders(pos, state, world);
+                if (extenders != null) {
+                    // We found a CPU!
+                    // Make sure we whitelist the extenders
+                    if (extenders.getFirst() != null) {
+                        excludedRegisterBlocks.addAll(extenders.getFirst());
+                    }
+                    if (extenders.getSecond() != null) {
+                        excludedRegisterBlocks.addAll(extenders.getSecond());
+                    }
+                    cpuSkeletons.add(new Pair<>(pos, extenders));
+                }
+                // else, this shouldn't happen because the CPU can't even be placed
+                // hopefully
             } else if (component == VCCBlocks.REGISTER_BLOCK.get()) {
+                // Add the registers to this LATER.
+                // This is so we don't accidentally double-include a register
+                // both as a CPU's extender and a normal one.
                 ArrayList<BlockPos> repr = FloodUtils.findRegisters(pos, state, world);
-                if (repr.size() != 0 && repr.stream().noneMatch(registerBlocks::contains)) {
-                    // this is entirely new registers!
-                    this.registers.add(new RegisterRepr(repr.toArray(new BlockPos[0])));
-                    registerBlocks.addAll(repr);
-                } // else we already found this register block
+                registerClusters.add(repr);
+
             } else if (component == VCCBlocks.OVERCLOCK_BLOCK.get()) {
                 this.overclocks.add(pos);
             }
         });
 
-        /*
-        This block of code is because I forgot I don't actually need to sort registers by distance.
-        But it will be useful soon when I implement memory so here it stays.
-
-        // Sort registers by distance
-        if (foundRegisters.size() > 0) {
-            // oops i accidentally started coding in Rust
-            List<Pair<RegisterRepr, Integer>> registersByDistance = foundRegisters.stream()
-                    .map(register -> new Pair<>(
-                            register,
-                            Arrays.stream(register.manifestations).mapToInt(components::getInt).min().getAsInt())
-                    )
-                    .sorted(Comparator.comparing(Pair::getSecond))
-                    .collect(Collectors.toList());
-
-            ArrayList<RegisterRepr> currentBatch = new ArrayList<>();
-            int currentDistance = -1;
-            for (Pair<RegisterRepr, Integer> pair : registersByDistance) {
-                RegisterRepr repr = pair.getFirst();
-                int distance = pair.getSecond();
-                if (currentDistance == -1) {
-                    // this is the first iteration
-                    currentDistance = distance;
-                } else if (currentDistance != distance) {
-                    // we need to move onto the next slot
-                    this.registers.add(currentBatch);
+        // Assign registers
+        // Map register block positions to the index of the register they point to
+        Map<BlockPos, Integer> registerPosIdxes = new HashMap<>();
+        for (List<BlockPos> regiRepr : registerClusters) {
+            if (regiRepr.size() != 0 && regiRepr.stream().noneMatch(excludedRegisterBlocks::contains)) {
+                // this is entirely new registers!
+                for (BlockPos pos : regiRepr) {
+                    // because we're about to append, the current size is the index.
+                    registerPosIdxes.put(pos, this.registers.size());
                 }
-                currentBatch.add(repr);
-            }
+                this.registers.add(new RegisterRepr(regiRepr.toArray(new BlockPos[0])));
+                excludedRegisterBlocks.addAll(regiRepr);
+            } // else we already found this register block or it's in a CPU extender.
         }
-        */
+
+        // Get the proper data into the CPUReprs.
+        // TODO: memory locations
+        // TODO: this always puts every register in every group.
+        // I'm also not sorting by distance from CPU.
+        List<CPURepr> unsortedCPUs = new ArrayList<>();
+        for (Pair<BlockPos, Pair<List<BlockPos>, List<BlockPos>>> skelly : cpuSkeletons) {
+            BlockPos cpuPos = skelly.getFirst();
+
+            // Add registers by distance to this CPU
+            ArrayList<Pair<BlockPos, Integer>> regiDistances = FloodUtils.findCPURegistersAndDistances(cpuPos,
+                    components.keySet(), world);
+            // Assemble the list of indices
+            ArrayList<IntList> cpuRegis = new ArrayList<>(regiDistances.size());
+            IntList currentBatch = new IntArrayList();
+            int currentDistance = -1;
+            for (Pair<BlockPos, Integer> pair : regiDistances) {
+                BlockPos regiPos = pair.getFirst();
+                int regiDistance = pair.getSecond();
+                if (currentDistance == -1) {
+                    // first batch
+                    currentDistance = regiDistance;
+                } else if (currentDistance != regiDistance) {
+                    currentDistance = regiDistance;
+                    cpuRegis.add(currentBatch);
+                    currentBatch = new IntArrayList();
+                }
+                Integer regiIdx = registerPosIdxes.get(regiPos);
+                if (regiIdx == null) {
+                    // It was an extender register, so we ignore it
+                    continue;
+                }
+                currentBatch.add(regiIdx.intValue());
+            }
+            if (!currentBatch.isEmpty()) {
+                cpuRegis.add(currentBatch);
+            }
+
+            List<BlockPos> ipExtender = skelly.getSecond().getFirst();
+            List<BlockPos> spExtender = skelly.getSecond().getSecond();
+            RegisterRepr ipRepr = ipExtender != null ? new RegisterRepr(ipExtender.toArray(new BlockPos[0])) : null;
+            RegisterRepr spRepr = spExtender != null ? new RegisterRepr(spExtender.toArray(new BlockPos[0])) : null;
+
+            EnumMap<MemoryType, ArrayList<IntList>> dontInstantlyNPE = new EnumMap<>(MemoryType.class);
+            dontInstantlyNPE.put(MemoryType.XRAM, new ArrayList<>());
+            dontInstantlyNPE.put(MemoryType.EXRAM, new ArrayList<>());
+            dontInstantlyNPE.put(MemoryType.ROM, new ArrayList<>());
+            dontInstantlyNPE.put(MemoryType.RAM, new ArrayList<>());
+
+            unsortedCPUs.add(new CPURepr(ipRepr, spRepr, cpuPos, cpuRegis,
+                    // TODO do memory & datafaces
+                    new ArrayList<>(), dontInstantlyNPE));
+
+        }
+
+        // Sort CPUs by distance to motherboard
+        List<Pair<CPURepr, Integer>> cpuReprs = unsortedCPUs.stream()
+                .map(cpu -> new Pair<>(
+                        cpu,
+                        components.getInt(cpu.manifestation)
+                ))
+                .sorted(Comparator.comparing(Pair::getSecond))
+                .collect(Collectors.toList());
+        this.cpus.addAll(Utils.batchByDistance(cpuReprs));
 
         this.initializeMemory();
     }

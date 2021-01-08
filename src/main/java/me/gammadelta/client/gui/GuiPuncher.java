@@ -16,6 +16,9 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.items.SlotItemHandler;
+
+import java.util.List;
 
 import static me.gammadelta.VCCMod.MOD_ID;
 
@@ -24,6 +27,7 @@ public class GuiPuncher extends ContainerScreen<ContainerPuncher> {
     private ResourceLocation TEXT_TEXTURE = new ResourceLocation(MOD_ID, "textures/font/monospace.png");
 
     private Widget copyButton;
+    private Widget copyStringButton;
 
     public GuiPuncher(ContainerPuncher container, PlayerInventory inv, ITextComponent name) {
         super(container, inv, name);
@@ -38,20 +42,22 @@ public class GuiPuncher extends ContainerScreen<ContainerPuncher> {
     @Override
     protected void init() {
         super.init();
+
         this.copyButton = this.addButton(new CopyButton());
+        this.copyStringButton = this.addButton(new SmolDataInputButton(SmolDataInputButtonType.STRING));
     }
 
     @Override
     public void tick() {
         super.tick();
-
-
         // Which top button set should we use?
         byte[] memory = this.container.getMemory();
         ItemStack dataStack = this.container.getSlot(0).getStack();
-        if (TilePuncher.itemGetStrings(dataStack) == null) {
+        if (TilePuncher.getStringDataFromItem(dataStack) == null) {
             // Use the single copy one
             this.copyButton.visible = true;
+            this.copyStringButton.visible = false;
+
             // Disable if empty
             this.copyButton.active = !dataStack.isEmpty();
             // Do we have a message?
@@ -60,24 +66,38 @@ public class GuiPuncher extends ContainerScreen<ContainerPuncher> {
         } else {
             // Use the triple one
             this.copyButton.visible = false;
+            this.copyStringButton.visible = true;
+
+            // Disable if empty
+            boolean visible = !dataStack.isEmpty();
+            this.copyStringButton.visible = visible;
         }
     }
 
     @Override
-    protected void drawGuiContainerBackgroundLayer(MatrixStack matrixStack, float partialTicks, int mouseX,
+    protected void drawGuiContainerBackgroundLayer(MatrixStack neo, float partialTicks, int mouseX,
             int mouseY) {
-        this.renderBackground(matrixStack);
+        this.renderBackground(neo);
         RenderSystem.clearColor(1f, 1f, 1f, 1f);
+        // Draw gui base
         this.minecraft.getTextureManager().bindTexture(GUI_TEXTURE);
         int relX = (this.width - this.xSize) / 2;
         int relY = (this.height - this.ySize) / 2;
-        blitSized(matrixStack, relX, relY, 0, 0, this.xSize, this.ySize);
+        blitSized(neo, relX, relY, 0, 0, this.xSize, this.ySize);
+
+        // Draw the coverer over the shadow that shows you what items can go places
+        if (this.container.getSlot(1).getHasStack()) {
+            blitSized(neo, relX + 29, relY + 13, 9, 256, 18, 18);
+        }
+        if (this.container.getSlot(3).getHasStack()) {
+            blitSized(neo, relX + 7, relY + 142, 9, 256, 18, 18);
+        }
     }
 
     @Override
     public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
         super.render(matrixStack, mouseX, mouseY, partialTicks);
-        // Make the mouse show up (I think?)
+        // Make the mouse icon show up (I think?)
         this.renderHoveredTooltip(matrixStack, mouseX, mouseY);
     }
 
@@ -93,7 +113,7 @@ public class GuiPuncher extends ContainerScreen<ContainerPuncher> {
         // Render data
         byte[] memory = this.container.getMemory();
         if (memory != null) {
-            for (int i = 0; i < memory.length; i++) {
+            for (int i = 0; i < Math.min(memory.length, 256); i++) {
                 int byteIdx = this.container.getByteOffset() + i;
                 if (byteIdx > memory.length - 1) {
                     // out of bounds!
@@ -131,15 +151,18 @@ public class GuiPuncher extends ContainerScreen<ContainerPuncher> {
         }
 
         // Render a helpful tooltip for slots if there is no item there
-        if (hoveredSlot != null && !hoveredSlot.getHasStack() && hoveredSlot.inventory != playerInventory) {
+        if (hoveredSlot != null && !hoveredSlot.getHasStack() && hoveredSlot instanceof SlotItemHandler) {
+            // the instanceof check is because in the container,
+            // all the player slots are Slots and all the gui slots are SlotItemHandlers.
+            // This is a little hacky but it works and is very simple.
             int slot = hoveredSlot.getSlotIndex();
             if (slot <= 4) {
                 renderTooltip(neo, new TranslationTextComponent("gui.vcc.puncher.slot" + slot), mouseX,
                         mouseY);
             }
         }
-
     }
+
 
     /**
      * Large button at the top, when not split in 3
@@ -178,6 +201,59 @@ public class GuiPuncher extends ContainerScreen<ContainerPuncher> {
         }
     }
 
+    /**
+     * The 3 small buttons at the top
+     */
+    @OnlyIn(Dist.CLIENT)
+    private class SmolDataInputButton extends AbstractButton {
+        SmolDataInputButtonType type;
+
+        public SmolDataInputButton(SmolDataInputButtonType type) {
+            super(GuiPuncher.this.guiLeft + type.x, GuiPuncher.this.guiTop + type.y, 58, 20,
+                    new TranslationTextComponent(type.getButtonNameKey()));
+            this.type = type;
+        }
+
+        @Override
+        public void onPress() {
+            ItemStack dataStack = GuiPuncher.this.container.getSlot(0).getStack();
+            List<String> stringData = TilePuncher.getStringDataFromItem(dataStack);
+            if (stringData == null) {
+                // :HOW:
+                return;
+            }
+            String combinedData = String.join("\n", stringData);
+            if (this.type == SmolDataInputButtonType.STRING) {
+                // nice!
+                byte[] newMemory = combinedData.getBytes();
+                GuiPuncher.this.container.setMemory(newMemory);
+            }
+        }
+    }
+
+    private enum SmolDataInputButtonType {
+        STRING(48, 12), LITERALS(107, 12), COMPILE(166, 12);
+        int x, y;
+
+        SmolDataInputButtonType(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        public String getButtonNameKey() {
+            switch (this) {
+                case STRING:
+                    return "gui.vcc.puncher.copy.string";
+                case LITERALS:
+                    return "gui.vcc.puncher.copy.literals";
+                case COMPILE:
+                    return "gui.vcc.puncher.compile";
+                default:
+                    return "i hate java";
+            }
+        }
+    }
+
     private boolean isIndexInViewport(int index, int byteCount, int offset) {
         // The index must be more than the first byte index shown.
         // We allow for all but one row of blank space, too.
@@ -210,6 +286,6 @@ public class GuiPuncher extends ContainerScreen<ContainerPuncher> {
      * texture (256x384)
      */
     private void blitSized(MatrixStack neo, int x, int y, int uOffset, int vOffset, int uWidth, int vHeight) {
-        blit(neo, x, y, uOffset, vOffset, uWidth, vHeight, 256, 384);
+        blit(neo, x, y, uOffset, vOffset, uWidth, vHeight, 256, 298);
     }
 }

@@ -1,7 +1,9 @@
 package me.gammadelta.common.utils;
 
+import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.AbstractObject2IntMap;
+import me.gammadelta.common.program.CPURepr;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
@@ -12,10 +14,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.OptionalInt;
-import java.util.Random;
+import java.util.*;
 
 public final class Utils {
     /**
@@ -201,6 +200,32 @@ public final class Utils {
                 return smallestNeighbor + 1;
             }
         }
+    }
+
+    /**
+     * Sort a list of (T, Distance) pairs into batches.
+     */
+    public static<T> ArrayList<ArrayList<T>> batchByDistance(List<Pair<T, Integer>> original) {
+        ArrayList<ArrayList<T>> out = new ArrayList<>();
+        ArrayList<T> currentBatch = new ArrayList<>();
+        int currentDistance = -1;
+        for (Pair<T, Integer> pair : original) {
+            T val = pair.getFirst();
+            int distance = pair.getSecond();
+            if (currentDistance == -1) {
+                // this is the first iteration
+                currentDistance = distance;
+            } else if (currentDistance != distance) {
+                // we need to move onto the next slot
+                out.add(currentBatch);
+                currentBatch = new ArrayList<>();
+            }
+            currentBatch.add(val);
+        }
+        if (!currentBatch.isEmpty()) {
+            out.add(currentBatch);
+        }
+        return out;
     }
 
 }

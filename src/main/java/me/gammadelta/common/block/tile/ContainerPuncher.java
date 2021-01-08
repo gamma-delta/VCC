@@ -1,8 +1,12 @@
 package me.gammadelta.common.block.tile;
 
+import me.gammadelta.VCCMod;
 import me.gammadelta.common.block.VCCBlocks;
+import me.gammadelta.common.network.MsgRequestMemoryInGui;
+import me.gammadelta.common.network.MsgSyncMemoryInGui;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
@@ -11,9 +15,7 @@ import net.minecraft.util.IWorldPosCallable;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.items.CapabilityItemHandler;
-import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.SlotItemHandler;
-import net.minecraftforge.items.wrapper.InvWrapper;
 
 import javax.annotation.Nullable;
 import java.util.Objects;
@@ -25,11 +27,13 @@ public class ContainerPuncher extends Container {
     // The TE owning this container
     private TileEntity tile;
     private PlayerEntity playerEntity;
-    private IItemHandler playerInventory;
+    private PlayerInventory playerInventory;
 
     private static final int PLAYER_INV_SIZE = 36;
     private static final int MAX_PUNCHER_SLOT = 4;
     private static final int PLAYER_INV_START = MAX_PUNCHER_SLOT + 1;
+
+    private static final int MAX_MEMORY_SIZE = 16384;
 
     public ContainerPuncher(int windowId, World world, BlockPos pos, PlayerInventory playerInventory,
             PlayerEntity player) {
@@ -37,7 +41,7 @@ public class ContainerPuncher extends Container {
 
         this.tile = world.getTileEntity(pos);
         this.playerEntity = player;
-        this.playerInventory = new InvWrapper(playerInventory);
+        this.playerInventory = playerInventory;
 
         if (this.tile != null) {
             this.tile.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent(handler -> {
@@ -52,6 +56,7 @@ public class ContainerPuncher extends Container {
                 // Cards out
                 addSlot(new SlotItemHandler(handler, 4, 203, 193));
             });
+            VCCMod.getNetwork().sendToServer(new MsgRequestMemoryInGui(this.windowId));
         }
         layoutPlayerInventorySlots(8, 174);
     }
@@ -106,6 +111,12 @@ public class ContainerPuncher extends Container {
         return itemstack;
     }
 
+    // Apparently this is called on the server, asking the client to send the latest changes.
+    @Override
+    public void detectAndSendChanges() {
+        super.detectAndSendChanges();
+    }
+
     @Nullable
     public byte[] getMemory() {
         if (this.tile instanceof TilePuncher) {
@@ -117,9 +128,32 @@ public class ContainerPuncher extends Container {
         }
     }
 
+    /**
+     * Update the TilePuncher's memory, truncating the new memory at the end if it's too much.
+     * When called client-side, also sends a packet to the server telling it to update its memory.
+     */
     public void setMemory(byte[] newMemory) {
+        this.setMemoryWithoutPacket(newMemory);
+        if (this.tile.getWorld().isRemote) {
+            // We're on the client; send a packet
+            VCCMod.getNetwork().sendToServer(new MsgSyncMemoryInGui(newMemory, this.windowId));
+        }
+    }
+
+    /**
+     * Update the TilePuncher's memory without sending a packet
+     */
+    public void setMemoryWithoutPacket(byte[] newMemory) {
         if (this.tile instanceof TilePuncher) {
-            ((TilePuncher) this.tile).memory = newMemory;
+            if (newMemory == null || newMemory.length <= MAX_MEMORY_SIZE) {
+                ((TilePuncher) this.tile).memory = newMemory;
+            } else {
+                // hey don't do that
+                byte[] truncated = new byte[MAX_MEMORY_SIZE];
+                System.arraycopy(newMemory, 0, truncated, 0, MAX_MEMORY_SIZE);
+                ((TilePuncher) this.tile).memory = truncated;
+            }
+            this.markDirty();
         } else {
             // this is a problem.
             System.err.printf("The tile entity for the puncher at %s was not a puncher?\n", this.tile.getPos());
@@ -160,19 +194,19 @@ public class ContainerPuncher extends Container {
         addSlotRange(playerInventory, 0, leftCol, topRow, 9, 18);
     }
 
-    private int addSlotRange(IItemHandler handler, int index, int x, int y, int amount, int dx) {
+    private int addSlotRange(IInventory inventory, int index, int x, int y, int amount, int dx) {
         for (int i = 0; i < amount; i++) {
-            addSlot(new SlotItemHandler(handler, index, x, y));
+            addSlot(new Slot(inventory, index, x, y));
             x += dx;
             index++;
         }
         return index;
     }
 
-    private int addSlotBox(IItemHandler handler, int index, int x, int y, int horAmount, int dx, int verAmount,
+    private int addSlotBox(IInventory inventory, int index, int x, int y, int horAmount, int dx, int verAmount,
             int dy) {
         for (int j = 0; j < verAmount; j++) {
-            index = addSlotRange(handler, index, x, y, horAmount, dx);
+            index = addSlotRange(inventory, index, x, y, horAmount, dx);
             y += dy;
         }
         return index;

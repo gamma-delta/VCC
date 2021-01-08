@@ -9,6 +9,7 @@ import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.inventory.InventoryHelper;
 import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.tileentity.TileEntity;
@@ -48,7 +49,6 @@ public class BlockPuncher extends Block {
     }
 
     @SuppressWarnings("deprecation")
-
     @Override
     public ActionResultType onBlockActivated(BlockState state, World world, BlockPos pos, PlayerEntity player,
             Hand handIn, BlockRayTraceResult hit) {
@@ -72,5 +72,31 @@ public class BlockPuncher extends Block {
             }
         }
         return ActionResultType.SUCCESS;
+    }
+
+    // Make the items inside drop when it is broken
+    @Override
+    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!state.isIn(newState.getBlock())) {
+            TileEntity te = worldIn.getTileEntity(pos);
+            if (te instanceof TilePuncher) {
+                TilePuncher puncher = (TilePuncher) te;
+                // Spawn items
+                // i think isMoving is if it's moved by a piston?
+                // don't want to spawn items on being pushed
+                if (!isMoving) {
+                    puncher.itemHandler.ifPresent(handler -> {
+                        for (int i = 0; i < handler.getSlots(); i++) {
+                            InventoryHelper.spawnItemStack(worldIn, pos.getX(), pos.getY(), pos.getZ(),
+                                    handler.getStackInSlot(i));
+                        }
+                    });
+                }
+
+                worldIn.updateComparatorOutputLevel(pos, this);
+            }
+
+            super.onReplaced(state, worldIn, pos, newState, isMoving);
+        }
     }
 }

@@ -1,0 +1,11 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "vcc:block/cpu_tick",
+    "up": "vcc:block/cpu_tick",
+    "north": "vcc:block/cpu_ip_lit",
+    "south": "vcc:block/cpu_sp_lit",
+    "east": "vcc:block/cpu_tick",
+    "west": "vcc:block/cpu_tick"
+  }
+}

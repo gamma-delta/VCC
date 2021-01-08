@@ -99,9 +99,8 @@ public class TilePuncher extends TileEntity {
             public boolean isItemValid(int slot, @Nonnull ItemStack stack) {
                 Item item = stack.getItem();
                 if (slot == 0) {
-                    // Punch card or book or clipboard
-                    return item == Items.WRITABLE_BOOK || item == Items.WRITTEN_BOOK || item == VCCItems.FILLED_PUNCHCARD
-                            .get() || item == VCCItems.CLIPBOARD.get();
+                    // Item I can get data out of
+                    return item == VCCItems.FILLED_PUNCHCARD.get() || getStringDataFromItem(stack) != null;
                 } else if (slot == 1) {
                     // Payment
                     return item == Items.EMERALD || item == VCCItems.COUPON.get();
@@ -130,7 +129,7 @@ public class TilePuncher extends TileEntity {
      * If you need it all at once, concatenate it with newlines, probably.
      */
     @Nullable
-    public static List<String> itemGetStrings(ItemStack stack) {
+    public static List<String> getStringDataFromItem(ItemStack stack) {
         if (stack.getItem() == VCCItems.CLIPBOARD.get()) {
             return Collections.singletonList(Minecraft.getInstance().keyboardListener.getClipboardString());
         }

@@ -1,18 +1,22 @@
 package me.gammadelta.common.item;
 
-import me.gammadelta.common.block.BlockMotherboard;
-import me.gammadelta.common.block.BlockPuncher;
-import me.gammadelta.common.block.BlockRegister;
-import me.gammadelta.common.block.VCCBlocks;
+import me.gammadelta.common.block.*;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.NonNullList;
 import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static me.gammadelta.VCCMod.MOD_ID;
 
@@ -24,6 +28,20 @@ public class VCCItems {
         @Override
         public ItemStack createIcon() {
             return new ItemStack(MOTHERBOARD_ITEM.get());
+        }
+
+        @Override
+        public void fill(NonNullList<ItemStack> items) {
+            // Make collectible coupons appear in the group
+            for (int i = 0; i <= ItemCoupon.MAX_COLLECTIBLE_IDX; i++) {
+                CompoundNBT tag = new CompoundNBT();
+                tag.putInt(ItemCoupon.COLLECTIBLE_INDEX_KEY, i);
+                ItemStack stack = new ItemStack(COUPON::get);
+                stack.setTag(tag);
+                items.add(stack);
+            }
+
+            super.fill(items);
         }
     };
 
@@ -45,6 +63,8 @@ public class VCCItems {
             () -> new BlockItem(VCCBlocks.CHASSIS_BLOCK.get(), new Item.Properties().group(VCC_ITEM_GROUP)));
     public static final RegistryObject<Item> REGISTER_ITEM = ITEMS.register(BlockRegister.NAME,
             () -> new BlockItem(VCCBlocks.REGISTER_BLOCK.get(), new Item.Properties().group(VCC_ITEM_GROUP)));
+    public static final RegistryObject<Item> CPU_ITEM = ITEMS.register(BlockCPU.NAME,
+            () -> new BlockItem(VCCBlocks.CPU_BLOCK.get(), new Item.Properties().group(VCC_ITEM_GROUP)));
     public static final RegistryObject<Item> OVERCLOCK_ITEM = ITEMS.register("overclock",
             () -> new BlockItem(VCCBlocks.OVERCLOCK_BLOCK.get(), new Item.Properties().group(VCC_ITEM_GROUP)));
     public static final RegistryObject<Item> PUNCHER_ITEM = ITEMS.register(BlockPuncher.NAME,

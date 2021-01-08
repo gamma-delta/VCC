@@ -3,10 +3,12 @@ package me.gammadelta.common.block;
 import me.gammadelta.VCCMod;
 import me.gammadelta.common.block.tile.TileMotherboard;
 import me.gammadelta.common.network.MsgHighlightBlocks;
+import me.gammadelta.common.utils.FloodUtils;
 import me.gammadelta.common.utils.Utils;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -26,6 +28,7 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorld;
+import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.network.PacketDistributor;
 
@@ -49,6 +52,14 @@ public class BlockMotherboard extends Block {
     @Override
     public TileEntity createTileEntity(BlockState state, IBlockReader world) {
         return new TileMotherboard();
+    }
+
+    // Make this cancel placing if it finds another motherboard
+    // TODO: is there a way to prevent this from calling the floodfill twice?
+    @Override
+    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos) {
+        TileMotherboard otherMother = FloodUtils.findMotherboard(pos, worldIn);
+        return otherMother == null;
     }
 
     @Override
@@ -85,14 +96,14 @@ public class BlockMotherboard extends Block {
                 CompoundNBT data = te.write(new CompoundNBT());
                 ITextComponent pretty;
                 if (handIn == Hand.MAIN_HAND) {
-                    pretty = data.toFormattedComponent(" ", 0);
+                    pretty = data.toFormattedComponent("    ", 0);
                 } else {
                     // use the offhand to get no indentation
                     pretty = data.toFormattedComponent();
                 }
                 String name = te.getClass().getSimpleName();
 
-                if (player.isSneaking()) {
+                if (Screen.hasControlDown()) {
                     Minecraft.getInstance().keyboardListener.setClipboardString(pretty.getString());
                     player.sendMessage(
                             new TranslationTextComponent("misc.debugNBT.clipboard", name, pretty.getString().length()),
@@ -117,8 +128,8 @@ public class BlockMotherboard extends Block {
     public BlockState updatePostPlacement(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn,
             BlockPos currentPos, BlockPos facingPos) {
         TileMotherboard mother = (TileMotherboard) worldIn.getTileEntity(currentPos);
-        if (facingState.getBlock() instanceof BlockComponent || (mother != null && mother.getControlledBlocks()
-                .contains(facingPos))) {
+        if (facingState.getBlock() instanceof BlockComponent
+                || (mother != null && mother.getControlledBlocks().contains(facingPos))) {
             // Only reflood if the update is a component or if the broken block is owned by the motherboard
             if (mother != null) {
                 mother.updateConnectedComponents();
@@ -129,6 +140,7 @@ public class BlockMotherboard extends Block {
 
     // region Blockstate stuff
 
+
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockItemUseContext context) {
@@ -137,12 +149,14 @@ public class BlockMotherboard extends Block {
         if (p == null || !p.isSneaking()) {
             dir = dir.getOpposite();
         }
-        return getDefaultState().with(BlockStateProperties.FACING, dir).with(BlockStateProperties.LIT, false);
+        return getDefaultState().with(BlockStateProperties.FACING, dir)
+                .with(BlockStateProperties.LIT, false)
+                .with(VCCBlockStates.TICKING, false);
     }
 
     @Override
     protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
-        builder.add(BlockStateProperties.FACING, BlockStateProperties.LIT);
+        builder.add(BlockStateProperties.FACING, BlockStateProperties.LIT, VCCBlockStates.TICKING);
     }
 
     // endregion

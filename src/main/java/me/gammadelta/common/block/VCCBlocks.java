@@ -35,10 +35,12 @@ public class VCCBlocks {
 
     public static final RegistryObject<Block> MOTHERBOARD_BLOCK = BLOCKS.register(BlockMotherboard.NAME,
             BlockMotherboard::new);
-    public static final RegistryObject<Block> CHASSIS_BLOCK = component("chassis");
+    public static final RegistryObject<Block> CPU_BLOCK = BLOCKS.register(BlockCPU.NAME,
+            BlockCPU::new);
     // a register block, not register a block
     public static final RegistryObject<Block> REGISTER_BLOCK = BLOCKS.register(BlockRegister.NAME,
             BlockRegister::new);
+    public static final RegistryObject<Block> CHASSIS_BLOCK = component("chassis");
     public static final RegistryObject<Block> OVERCLOCK_BLOCK = component("overclock");
     public static final RegistryObject<Block> PUNCHER_BLOCK = BLOCKS.register(BlockPuncher.NAME,
             BlockPuncher::new);

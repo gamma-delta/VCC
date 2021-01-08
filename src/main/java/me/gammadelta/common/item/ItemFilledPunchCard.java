@@ -13,7 +13,8 @@ public class ItemFilledPunchCard extends Item implements IMemoryStorageItem {
     public static final String NAME = "filled_punchcard";
 
     public ItemFilledPunchCard() {
-        super(new Item.Properties().group(VCCItems.VCC_ITEM_GROUP).maxStackSize(1));
+        // purposely no group
+        super(new Item.Properties().maxStackSize(1));
     }
 
     @Override

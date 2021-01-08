@@ -1,0 +1,22 @@
+{
+  "overrides": [
+    {
+      "predicate": {
+        "vcc:coupon_state": -0.01
+      },
+      "model": "vcc:item/coupon_broken"
+    },
+    {
+      "predicate": {
+        "vcc:coupon_state": 0.99
+      },
+      "model": "vcc:item/coupon_error"
+    },
+    {
+      "predicate": {
+        "vcc:coupon_state": 1.99
+      },
+      "model": "vcc:item/coupon_collectible"
+    }
+  ]
+}

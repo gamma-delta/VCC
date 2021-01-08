@@ -81,6 +81,6 @@ public interface IMemoryStorageItem {
                 break;
             }
         }
-        tooltip.add(new TranslationTextComponent("tooltip.memoryStored", usedMemory, getMemorySize()));
+        tooltip.add(new TranslationTextComponent("tooltip.memoryStored", usedMemory + 1, getMemorySize()));
     }
 }

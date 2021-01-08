@@ -1,9 +1,6 @@
 package me.gammadelta.datagen;
 
-import me.gammadelta.common.block.BlockMotherboard;
-import me.gammadelta.common.block.BlockPuncher;
-import me.gammadelta.common.block.BlockRegister;
-import me.gammadelta.common.block.VCCBlocks;
+import me.gammadelta.common.block.*;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.data.DataGenerator;
@@ -29,8 +26,10 @@ public class BlockStates extends BlockStateProvider {
     protected void registerStatesAndModels() {
         singleTextureComponent(VCCBlocks.CHASSIS_BLOCK.get(), "chassis");
         singleTextureComponent(VCCBlocks.OVERCLOCK_BLOCK.get(), "overclock");
+
         registerMotherboard();
         registerRegister();
+        registerCPU();
         registerPuncher();
     }
 
@@ -54,15 +53,21 @@ public class BlockStates extends BlockStateProvider {
         BlockModelBuilder unlit = models().cube(BlockMotherboard.NAME + "_unlit", side_unlit, side_unlit,
                 new ResourceLocation(MOD_ID, "block/motherboard_front_unlit"), side_unlit, side_unlit, side_unlit);
         // by registering the default name here, we make its display in the inventory
-        // be the lit version
+        // be the lit, unticking version
         ResourceLocation side_lit = new ResourceLocation(MOD_ID, "block/chassis_lit");
-        BlockModelBuilder lit = models().cube(BlockMotherboard.NAME, side_lit, side_lit,
-                new ResourceLocation(MOD_ID, "block/motherboard_front_lit"), side_lit, side_lit, side_lit);
+        BlockModelBuilder lit_untick = models().cube(BlockMotherboard.NAME, side_lit, side_lit,
+                new ResourceLocation(MOD_ID, "block/motherboard_front_lit_untick"), side_lit, side_lit, side_lit);
+        BlockModelBuilder lit_tick = models().cube(BlockMotherboard.NAME + "_tick", side_lit, side_lit,
+                new ResourceLocation(MOD_ID, "block/motherboard_front_lit_tick"), side_lit, side_lit, side_lit);
         orientedBlock(VCCBlocks.MOTHERBOARD_BLOCK.get(), state -> {
-            if (state.get(BlockStateProperties.LIT)) {
-                return lit;
-            } else {
+            if (!state.get(BlockStateProperties.LIT)) {
                 return unlit;
+            } else {
+                if (state.get(VCCBlockStates.TICKING)) {
+                    return lit_tick;
+                } else {
+                    return lit_untick;
+                }
             }
         });
     }
@@ -82,6 +87,35 @@ public class BlockStates extends BlockStateProvider {
                 return lit;
             } else {
                 return unlit;
+            }
+        });
+    }
+
+    private void registerCPU() {
+        ResourceLocation unlit = new ResourceLocation(MOD_ID, "block/cpu_unlit");
+        ResourceLocation unlitIP = new ResourceLocation(MOD_ID, "block/cpu_ip_unlit");
+        ResourceLocation unlitSP = new ResourceLocation(MOD_ID, "block/cpu_sp_unlit");
+        ResourceLocation litIP = new ResourceLocation(MOD_ID, "block/cpu_ip_lit");
+        ResourceLocation litSP = new ResourceLocation(MOD_ID, "block/cpu_sp_lit");
+        ResourceLocation litUntick = new ResourceLocation(MOD_ID, "block/cpu_untick");
+        ResourceLocation litTick = new ResourceLocation(MOD_ID, "block/cpu_tick");
+
+        BlockModelBuilder modelUnlit = models().cube(BlockCPU.NAME + "_unlit", unlit, unlit, unlitIP, unlitSP, unlit,
+                unlit);
+        BlockModelBuilder modelUntick = models().cube(BlockCPU.NAME, litUntick, litUntick, litIP, litSP, litUntick,
+                litUntick);
+        BlockModelBuilder modelTick = models().cube(BlockCPU.NAME + "_tick", litTick, litTick, litIP, litSP, litTick,
+                litTick);
+
+        orientedBlock(VCCBlocks.CPU_BLOCK.get(), state -> {
+            if (!state.get(BlockStateProperties.LIT)) {
+                return modelUnlit;
+            } else {
+                if (state.get(VCCBlockStates.TICKING)) {
+                    return modelTick;
+                } else {
+                    return modelUntick;
+                }
             }
         });
     }

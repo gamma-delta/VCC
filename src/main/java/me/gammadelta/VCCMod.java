@@ -1,11 +1,17 @@
 package me.gammadelta;
 
 import me.gammadelta.client.VCCParticles;
+import me.gammadelta.common.VCCConfig;
 import me.gammadelta.common.block.VCCBlocks;
+import me.gammadelta.common.item.ItemCoupon;
 import me.gammadelta.common.item.VCCItems;
-import me.gammadelta.common.network.MsgHighlightBlocks;
+import me.gammadelta.common.network.VCCMessages;
 import me.gammadelta.common.recipe.VCCRecipes;
+import me.gammadelta.common.village.VCCProfessionsAndPOIs;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.particles.ParticleType;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
@@ -35,14 +41,15 @@ public class VCCMod {
         this.network = NetworkRegistry.newSimpleChannel(new ResourceLocation(MOD_ID, "network"), () -> "1.0", s -> true,
                 s -> true);
 
-        registerMessages();
-
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
         MinecraftForge.EVENT_BUS.register(VCCParticles.class);
         VCCBlocks.register();
         VCCItems.register();
         VCCRecipes.register();
+        VCCProfessionsAndPOIs.register();
+        VCCMessages.register(network);
+        VCCConfig.init();
 
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         modBus.addGenericListener(ParticleType.class, VCCParticles::register);
@@ -50,11 +57,7 @@ public class VCCMod {
                 () -> () -> modBus.addListener(VCCParticles.FactoryHandler::registerFactories));
     }
 
-    private void registerMessages() {
-        int messageIdx = 0;
-        network.registerMessage(messageIdx++, MsgHighlightBlocks.class, MsgHighlightBlocks::writeToBytes,
-                MsgHighlightBlocks::new, MsgHighlightBlocks::handle);
-    }
+
 
     public static VCCMod getInstance() {
         return instance;

@@ -3,7 +3,7 @@
   "textures": {
     "down": "vcc:block/chassis_lit",
     "up": "vcc:block/chassis_lit",
-    "north": "vcc:block/motherboard_front_lit_untick",
+    "north": "vcc:block/motherboard_front_lit_tick",
     "south": "vcc:block/chassis_lit",
     "east": "vcc:block/chassis_lit",
     "west": "vcc:block/chassis_lit"

@@ -1,95 +1,95 @@
 {
   "variants": {
     "facing=down,lit=false,ticking=false": {
-      "model": "vcc:block/motherboard_unlit",
+      "model": "vcc:block/cpu_unlit",
       "x": 90
     },
     "facing=up,lit=false,ticking=false": {
-      "model": "vcc:block/motherboard_unlit",
+      "model": "vcc:block/cpu_unlit",
       "x": -90
     },
     "facing=north,lit=false,ticking=false": {
-      "model": "vcc:block/motherboard_unlit"
+      "model": "vcc:block/cpu_unlit"
     },
     "facing=south,lit=false,ticking=false": {
-      "model": "vcc:block/motherboard_unlit",
+      "model": "vcc:block/cpu_unlit",
       "y": 180
     },
     "facing=west,lit=false,ticking=false": {
-      "model": "vcc:block/motherboard_unlit",
+      "model": "vcc:block/cpu_unlit",
       "y": 270
     },
     "facing=east,lit=false,ticking=false": {
-      "model": "vcc:block/motherboard_unlit",
+      "model": "vcc:block/cpu_unlit",
       "y": 90
     },
     "facing=down,lit=true,ticking=false": {
-      "model": "vcc:block/motherboard",
+      "model": "vcc:block/cpu",
       "x": 90
     },
     "facing=up,lit=true,ticking=false": {
-      "model": "vcc:block/motherboard",
+      "model": "vcc:block/cpu",
       "x": -90
     },
     "facing=north,lit=true,ticking=false": {
-      "model": "vcc:block/motherboard"
+      "model": "vcc:block/cpu"
     },
     "facing=south,lit=true,ticking=false": {
-      "model": "vcc:block/motherboard",
+      "model": "vcc:block/cpu",
       "y": 180
     },
     "facing=west,lit=true,ticking=false": {
-      "model": "vcc:block/motherboard",
+      "model": "vcc:block/cpu",
       "y": 270
     },
     "facing=east,lit=true,ticking=false": {
-      "model": "vcc:block/motherboard",
+      "model": "vcc:block/cpu",
       "y": 90
     },
     "facing=down,lit=false,ticking=true": {
-      "model": "vcc:block/motherboard_unlit",
+      "model": "vcc:block/cpu_unlit",
       "x": 90
     },
     "facing=up,lit=false,ticking=true": {
-      "model": "vcc:block/motherboard_unlit",
+      "model": "vcc:block/cpu_unlit",
       "x": -90
     },
     "facing=north,lit=false,ticking=true": {
-      "model": "vcc:block/motherboard_unlit"
+      "model": "vcc:block/cpu_unlit"
     },
     "facing=south,lit=false,ticking=true": {
-      "model": "vcc:block/motherboard_unlit",
+      "model": "vcc:block/cpu_unlit",
       "y": 180
     },
     "facing=west,lit=false,ticking=true": {
-      "model": "vcc:block/motherboard_unlit",
+      "model": "vcc:block/cpu_unlit",
       "y": 270
     },
     "facing=east,lit=false,ticking=true": {
-      "model": "vcc:block/motherboard_unlit",
+      "model": "vcc:block/cpu_unlit",
       "y": 90
     },
     "facing=down,lit=true,ticking=true": {
-      "model": "vcc:block/motherboard_tick",
+      "model": "vcc:block/cpu_tick",
       "x": 90
     },
     "facing=up,lit=true,ticking=true": {
-      "model": "vcc:block/motherboard_tick",
+      "model": "vcc:block/cpu_tick",
       "x": -90
     },
     "facing=north,lit=true,ticking=true": {
-      "model": "vcc:block/motherboard_tick"
+      "model": "vcc:block/cpu_tick"
     },
     "facing=south,lit=true,ticking=true": {
-      "model": "vcc:block/motherboard_tick",
+      "model": "vcc:block/cpu_tick",
       "y": 180
     },
     "facing=west,lit=true,ticking=true": {
-      "model": "vcc:block/motherboard_tick",
+      "model": "vcc:block/cpu_tick",
       "y": 270
     },
     "facing=east,lit=true,ticking=true": {
-      "model": "vcc:block/motherboard_tick",
+      "model": "vcc:block/cpu_tick",
       "y": 90
     }
   }

@@ -91,5 +91,12 @@
 
 
     "misc.debugNBT": "VCC TE `%s' has the following NBT: %s",
-    "misc.debugNBT.clipboard": "NBT of VCC TE `%s' has been copied to your clipboard (%d chars)"
+    "misc.debugNBT.clipboard": "NBT of VCC TE `%s' has been copied to your clipboard (%d chars)",
+    "misc.debugNBT.registerIndex": "I am Register %d of %d§r.",
+    "misc.debugNBT.cpuGroup": "I am in CPU Group #%d/%d§r.",
+    "misc.debugNBT.cpuRegisterIndices": "I index normal registers like this:",
+    "misc.debugNBT.cpuRegisterIndices.row": "  R%d may select %s",
+    "misc.debugNBT.cpuRegisterIndices.none": "I can't see any normal registers :(",
+
+    "itemGroup.vcc": "VCC"
 }

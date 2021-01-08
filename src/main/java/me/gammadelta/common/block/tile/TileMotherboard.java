@@ -1,6 +1,7 @@
 package me.gammadelta.common.block.tile;
 
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import me.gammadelta.common.block.VCCBlockStates;
 import me.gammadelta.common.block.VCCBlocks;
 import me.gammadelta.common.program.MotherboardRepr;
 import me.gammadelta.common.utils.FloodUtils;
@@ -15,7 +16,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.util.Constants;
 
 import javax.annotation.Nonnull;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -28,8 +28,6 @@ public class TileMotherboard extends TileEntity implements ITickableTileEntity {
     // used for executing a frame on a high power signal
     private boolean wasPoweredLastTick = false;
     private static String POWERED_KEY = "was_powered_last_tick";
-    private int ticksSinceLastStepped = TICK_LIT_TIME + 1;
-    private static String TICKS_SINCE_LAST_STEPPED_KEY = "ticks_since_last_stepped";
 
     // endregion
 
@@ -68,44 +66,50 @@ public class TileMotherboard extends TileEntity implements ITickableTileEntity {
             // in that case I don't want to do anything!
             return;
         }
-        int numberOfStepsToTake = this.motherboard.overclocks.size();
-        // make a rising edge tick the motherboard
-        boolean powered = world.isBlockPowered(this.getPos());
-        if (!this.wasPoweredLastTick && powered) {
-            numberOfStepsToTake++;
-        }
-        this.wasPoweredLastTick = powered;
 
-        boolean displayLit = false;
-        if (numberOfStepsToTake > 0) {
-            ticksSinceLastStepped = 0;
-            displayLit = true;
-        } else if (ticksSinceLastStepped <= TICK_LIT_TIME) {
-            // we're still in the cooldown for showing the litness
-            ticksSinceLastStepped++;
-            displayLit = true;
+        boolean displayTicking = false;
+
+        // TODO: power
+        boolean hasSufficientPower = true;
+        if (hasSufficientPower) {
+            int numberOfStepsToTake = this.motherboard.overclocks.size();
+            // make a rising edge also tick the motherboard
+            boolean poweredNow = world.isBlockPowered(this.getPos());
+            if (!this.wasPoweredLastTick && poweredNow) {
+                // rising edge detected
+                numberOfStepsToTake++;
+            }
+            this.wasPoweredLastTick = poweredNow;
+
+            if (numberOfStepsToTake > 0) {
+                // TODO: Execution!
+                this.markDirty();
+            }
+
+            displayTicking = numberOfStepsToTake > 0;
         }
 
+        // Update blockstates
         BlockState bs = world.getBlockState(pos);
         boolean isLit = bs.get(BlockStateProperties.LIT);
-        if (isLit != displayLit) {
-            world.setBlockState(pos, bs.with(BlockStateProperties.LIT, displayLit),
-                    // dunno what these do but mcjty has them
-                    Constants.BlockFlags.NOTIFY_NEIGHBORS + Constants.BlockFlags.BLOCK_UPDATE);
+        boolean isTicking = bs.get(VCCBlockStates.TICKING);
+        if (isLit != hasSufficientPower || isTicking != displayTicking) {
+            world.setBlockState(
+                    pos,
+                    bs
+                        .with(BlockStateProperties.LIT, hasSufficientPower)
+                        .with(VCCBlockStates.TICKING, displayTicking),
+                    Constants.BlockFlags.NOTIFY_NEIGHBORS + Constants.BlockFlags.BLOCK_UPDATE
+            );
             this.markDirty();
         }
 
-        if (numberOfStepsToTake > 0) {
-            // TODO: Execution!
-            this.markDirty();
-        }
     }
 
     @Override
     public void read(BlockState state, CompoundNBT nbt) {
         this.wasPoweredLastTick = nbt.getBoolean(POWERED_KEY);
         this.motherboard = new MotherboardRepr(nbt.getCompound(MOTHERBOARD_KEY), this);
-        this.ticksSinceLastStepped = nbt.getInt(TICKS_SINCE_LAST_STEPPED_KEY);
 
         super.read(state, nbt);
     }
@@ -114,7 +118,6 @@ public class TileMotherboard extends TileEntity implements ITickableTileEntity {
     public CompoundNBT write(CompoundNBT tag) {
         tag.putBoolean(POWERED_KEY, this.wasPoweredLastTick);
         tag.put(MOTHERBOARD_KEY, this.motherboard.serialize());
-        tag.putInt(TICKS_SINCE_LAST_STEPPED_KEY, this.ticksSinceLastStepped);
 
         return super.write(tag);
     }

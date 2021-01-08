@@ -1,11 +1,17 @@
 package me.gammadelta.common.item;
 
+import com.mojang.blaze3d.matrix.MatrixStack;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.tileentity.ItemStackTileEntityRenderer;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemModelsProperties;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
@@ -16,11 +22,19 @@ import net.minecraftforge.common.util.Constants;
 import javax.annotation.Nullable;
 import java.util.List;
 
+import static me.gammadelta.VCCMod.MOD_ID;
+
 public class ItemCoupon extends Item {
     public static final String NAME = "coupon";
 
-    private static final String COLLECTIBLE_INDEX_KEY = "collectible_index";
-    private static final String ERROR_KEY = "errors";
+    /**
+     * If this key is present, it's collectible.
+     */
+    public static final String COLLECTIBLE_INDEX_KEY = "collectible_index";
+    /**
+     * If this key is present, it's an error.
+     */
+    public static final String ERROR_KEY = "errors";
 
     public static final String LEX_KEY = "lex";
     public static final String PREPROCESS_KEY = "preprocess";
@@ -40,10 +54,13 @@ public class ItemCoupon extends Item {
     public static final String ERROR_ROW_KEY = "row";
     public static final String ERROR_COL_KEY = "col";
 
-    private static final int MAX_COLLECTIBLE_IDX = 7;
+    public static final int MAX_COLLECTIBLE_IDX = 7;
+
+    public static final ResourceLocation COUPON_STATE_PREDICATE = new ResourceLocation(MOD_ID, "coupon_state");
 
     public ItemCoupon() {
-        super(new Properties().group(VCCItems.VCC_ITEM_GROUP).maxStackSize(1));
+        // Purposely do not put it into a group
+        super(new Properties().maxStackSize(1));
     }
 
     @Override

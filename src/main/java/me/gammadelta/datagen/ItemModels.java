@@ -45,6 +45,7 @@ public class ItemModels extends ItemModelProvider {
         parentedBlock(VCCBlocks.MOTHERBOARD_BLOCK.get(), "block/motherboard");
         parentedBlock(VCCBlocks.CHASSIS_BLOCK.get(), "block/chassis");
         parentedBlock(VCCBlocks.REGISTER_BLOCK.get(), "block/register");
+        parentedBlock(VCCBlocks.CPU_BLOCK.get(), "block/cpu");
         parentedBlock(VCCBlocks.OVERCLOCK_BLOCK.get(), "block/overclock");
         parentedBlock(VCCBlocks.PUNCHER_BLOCK.get(), "block/puncher");
     }

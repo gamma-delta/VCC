@@ -6,6 +6,7 @@
     "north": "vcc:block/motherboard_front_unlit",
     "south": "vcc:block/chassis_unlit",
     "east": "vcc:block/chassis_unlit",
-    "west": "vcc:block/chassis_unlit"
+    "west": "vcc:block/chassis_unlit",
+    "particle": "vcc:block/motherboard_front_unlit"
   }
 }

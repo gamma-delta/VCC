@@ -2,6 +2,7 @@
   "parent": "minecraft:block/cube_column",
   "textures": {
     "side": "vcc:block/register_side_unlit",
-    "end": "vcc:block/register_end_unlit"
+    "end": "vcc:block/register_end_unlit",
+    "particle": "vcc:block/register_end_unlit"
   }
 }

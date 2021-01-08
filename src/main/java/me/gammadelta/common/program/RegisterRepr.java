@@ -34,7 +34,7 @@ public class RegisterRepr {
         this.manifestations = manifestations;
         // initialize value zeroed
         // TODO: if i end up making memory scramble on startup, that has to happen *in the startup*.
-        this.value = new byte[this.manifestations.length - 1];
+        this.value = new byte[this.manifestations.length];
     }
 
     /**

@@ -96,6 +96,7 @@
 
     "misc.debugoggles.register.idx": "Register #%d",
     "misc.debugoggles.cpu.idx": "CPU Group %d",
+    "misc.debug.cpuGroup": "I am in CPU Group %d",
     "misc.debug.cpuRegisterIndices": "I index normal registers like this:",
     "misc.debug.cpuRegisterIndices.row": "  R%d may select %s",
     "misc.debug.cpuRegisterIndices.none": "I can't see any normal registers :(",

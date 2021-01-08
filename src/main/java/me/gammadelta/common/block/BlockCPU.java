@@ -71,7 +71,7 @@ public class BlockCPU extends BlockComponent {
                         if (debugLevel >= 2) {
                             // Also print which CPU group this is in
                             player.sendMessage(
-                                    new TranslationTextComponent("misc.debug.cpuGroup", groupIdx + 1, cpus.size()),
+                                    new TranslationTextComponent("misc.debug.cpuGroup", groupIdx, cpus.size()),
                                     Util.DUMMY_UUID);
                             if (debugLevel >= 3) {
                                 // Also also print the register indices
@@ -91,6 +91,7 @@ public class BlockCPU extends BlockComponent {
                                         // this isn't confusing
                                         for (int idxidx = 0; idxidx < indices.size(); idxidx++) {
                                             int regiIdx = indices.get(idxidx);
+                                            bob.append('#');
                                             bob.append(regiIdx);
                                             if (idxidx < indices.size() - 1) {
                                                 bob.append(", ");

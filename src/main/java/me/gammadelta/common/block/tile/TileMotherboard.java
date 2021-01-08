@@ -1,11 +1,15 @@
 package me.gammadelta.common.block.tile;
 
+import com.mojang.blaze3d.matrix.MatrixStack;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import me.gammadelta.common.block.VCCBlockStates;
 import me.gammadelta.common.block.VCCBlocks;
 import me.gammadelta.common.program.MotherboardRepr;
 import me.gammadelta.common.utils.FloodUtils;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
+import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SUpdateTileEntityPacket;
@@ -30,9 +34,6 @@ public class TileMotherboard extends TileEntity implements ITickableTileEntity {
     private static String POWERED_KEY = "was_powered_last_tick";
 
     // endregion
-
-    // how many ticks ago we need to be stepped in order to display lit
-    private static final int TICK_LIT_TIME = 5;
 
     public TileMotherboard() {
         super(VCCBlocks.MOTHERBOARD_TILE.get());

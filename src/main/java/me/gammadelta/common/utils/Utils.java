@@ -3,18 +3,29 @@ package me.gammadelta.common.utils;
 import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.AbstractObject2IntMap;
-import me.gammadelta.common.program.CPURepr;
+import me.gammadelta.common.block.tile.TileMotherboard;
+import me.gammadelta.common.item.ItemDebugoggles;
+import me.gammadelta.common.item.VCCItems;
+import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.INBT;
 import net.minecraft.nbt.ListNBT;
+import net.minecraft.nbt.NBTUtil;
+import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.world.World;
 
+import javax.annotation.Nullable;
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 
 public final class Utils {
     /**
@@ -170,13 +181,13 @@ public final class Utils {
     /**
      * Given a map of block positions to distances from some center,
      * find the shortest distance of a new block position.
-     *
+     * <p>
      * This only searches blocks it already knows about.
-     *
+     * <p>
      * It also inserts the new block position with the new distance as the key.
-     *
+     * <p>
      * Returns -1 if it can't find the block or anything adjacent to it.
-     *
+     * <p>
      * It should be O(1).
      */
     public static int findDistance(AbstractObject2IntMap<BlockPos> distances, BlockPos needle) {
@@ -205,7 +216,7 @@ public final class Utils {
     /**
      * Sort a list of (T, Distance) pairs into batches.
      */
-    public static<T> ArrayList<ArrayList<T>> batchByDistance(List<Pair<T, Integer>> original) {
+    public static <T> ArrayList<ArrayList<T>> batchByDistance(List<Pair<T, Integer>> original) {
         ArrayList<ArrayList<T>> out = new ArrayList<>();
         ArrayList<T> currentBatch = new ArrayList<>();
         int currentDistance = -1;
@@ -228,4 +239,31 @@ public final class Utils {
         return out;
     }
 
+    /**
+     * Possibly update debugoggles.
+     * Call this in an onBlockActivated method.
+     */
+    public static ActionResultType updateDebugoggles(@Nullable TileMotherboard mother, PlayerEntity player) {
+        // (3 is the index for the head)
+        ItemStack headStack = player.inventory.armorInventory.get(3);
+        if (headStack.getItem() == VCCItems.DEBUGOGGLES.get()) {
+            // the player is wearing debugoggles
+            // Make the debugoggles select this
+            if (mother != null) {
+                CompoundNBT tag = headStack.getOrCreateTag();
+                boolean changed = false;
+                if (!tag.contains(ItemDebugoggles.MOTHERBOARD_POS_KEY)) {
+                    changed = true;
+                } else {
+                    BlockPos oldPos = NBTUtil.readBlockPos(tag.getCompound(ItemDebugoggles.MOTHERBOARD_POS_KEY));
+                    changed = !oldPos.equals(mother.getPos());
+                }
+                tag.put(ItemDebugoggles.MOTHERBOARD_POS_KEY, NBTUtil.writeBlockPos(mother.getPos()));
+                if (changed) {
+                    return ActionResultType.SUCCESS;
+                }
+            }
+        }
+        return ActionResultType.PASS;
+    }
 }

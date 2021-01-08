@@ -74,10 +74,6 @@ public class BlockMotherboard extends Block {
     @Override
     public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player,
             Hand handIn, BlockRayTraceResult hit) {
-        if (worldIn.isRemote) {
-            return ActionResultType.PASS;
-        }
-
         TileEntity te = worldIn.getTileEntity(pos);
         if (!(te instanceof TileMotherboard)) {
             // not sure how this happened...
@@ -85,37 +81,46 @@ public class BlockMotherboard extends Block {
         }
         TileMotherboard mother = (TileMotherboard) te;
 
+        ActionResultType res = ActionResultType.PASS;
+
         int debugLevel = Utils.funniDebugLevel(player, handIn);
         if (debugLevel > 0) {
-            VCCMod.getNetwork()
-                    .send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player), new MsgHighlightBlocks(
-                            new ArrayList<>(mother.getControlledBlocks()), mother.getUUID()
-                    ));
-            if (debugLevel >= 5) {
-                // ADVANCED info
-                CompoundNBT data = te.write(new CompoundNBT());
-                ITextComponent pretty;
-                if (handIn == Hand.MAIN_HAND) {
-                    pretty = data.toFormattedComponent("    ", 0);
-                } else {
-                    // use the offhand to get no indentation
-                    pretty = data.toFormattedComponent();
-                }
-                String name = te.getClass().getSimpleName();
+            if (!worldIn.isRemote) {
+                VCCMod.getNetwork()
+                        .send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player), new MsgHighlightBlocks(
+                                new ArrayList<>(mother.getControlledBlocks()), mother.getUUID()
+                        ));
+                if (debugLevel >= 5) {
+                    // ADVANCED info
+                    CompoundNBT data = te.write(new CompoundNBT());
+                    ITextComponent pretty;
+                    if (handIn == Hand.MAIN_HAND) {
+                        pretty = data.toFormattedComponent("    ", 0);
+                    } else {
+                        // use the offhand to get no indentation
+                        pretty = data.toFormattedComponent();
+                    }
+                    String name = te.getClass().getSimpleName();
 
-                if (Screen.hasControlDown()) {
-                    Minecraft.getInstance().keyboardListener.setClipboardString(pretty.getString());
-                    player.sendMessage(
-                            new TranslationTextComponent("misc.debugNBT.clipboard", name, pretty.getString().length()),
-                            Util.DUMMY_UUID);
-                } else {
-                    player.sendMessage(new TranslationTextComponent("misc.debugNBT", name, pretty), Util.DUMMY_UUID);
+                    if (Screen.hasControlDown()) {
+                        Minecraft.getInstance().keyboardListener.setClipboardString(pretty.getString());
+                        player.sendMessage(
+                                new TranslationTextComponent("misc.debugNBT.clipboard", name,
+                                        pretty.getString().length()),
+                                Util.DUMMY_UUID);
+                    } else {
+                        player.sendMessage(new TranslationTextComponent("misc.debugNBT", name, pretty),
+                                Util.DUMMY_UUID);
+                    }
                 }
             }
-            return ActionResultType.SUCCESS;
+            res = ActionResultType.SUCCESS;
         }
-
-        return super.onBlockActivated(state, worldIn, pos, player, handIn, hit);
+        ActionResultType debugogglesRes = Utils.updateDebugoggles(mother, player);
+        if (debugogglesRes.isSuccess()) {
+            res = debugogglesRes;
+        }
+        return res;
     }
 
     @Override

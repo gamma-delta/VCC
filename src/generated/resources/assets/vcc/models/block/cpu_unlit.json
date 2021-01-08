@@ -6,6 +6,7 @@
     "north": "vcc:block/cpu_ip_unlit",
     "south": "vcc:block/cpu_sp_unlit",
     "east": "vcc:block/cpu_unlit",
-    "west": "vcc:block/cpu_unlit"
+    "west": "vcc:block/cpu_unlit",
+    "particle": "vcc:block/cpu_unlit"
   }
 }

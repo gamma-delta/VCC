@@ -18,10 +18,8 @@ import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
-import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.network.PacketDistributor;
 
@@ -56,13 +54,6 @@ public class BlockRegister extends BlockComponent {
                                 new MsgHighlightBlocks(
                                         Arrays.asList(otherRegi.manifestations), Colors.REGISTER_RED
                                 ));
-                        if (debugLevel >= 2) {
-                            // Also print out which index this is
-                            player.sendMessage(
-                                    new TranslationTextComponent("misc.debugNBT.registerIndex", clusterIdx,
-                                            registers.size()),
-                                    Util.DUMMY_UUID);
-                        }
                         // This breaks only the inner loop.
                         // We want to keep going in case two RegisterReprs
                         // somehow own this block.

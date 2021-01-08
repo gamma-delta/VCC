@@ -50,15 +50,18 @@ public class BlockStates extends BlockStateProvider {
 
     private void registerMotherboard() {
         ResourceLocation side_unlit = new ResourceLocation(MOD_ID, "block/chassis_unlit");
+        ResourceLocation front_unlit = new ResourceLocation(MOD_ID, "block/motherboard_front_unlit");
         BlockModelBuilder unlit = models().cube(BlockMotherboard.NAME + "_unlit", side_unlit, side_unlit,
-                new ResourceLocation(MOD_ID, "block/motherboard_front_unlit"), side_unlit, side_unlit, side_unlit);
+                front_unlit, side_unlit, side_unlit, side_unlit).texture("particle", front_unlit);
         // by registering the default name here, we make its display in the inventory
         // be the lit, unticking version
         ResourceLocation side_lit = new ResourceLocation(MOD_ID, "block/chassis_lit");
-        BlockModelBuilder lit_untick = models().cube(BlockMotherboard.NAME, side_lit, side_lit,
-                new ResourceLocation(MOD_ID, "block/motherboard_front_lit_untick"), side_lit, side_lit, side_lit);
+        ResourceLocation rl_lit_untick = new ResourceLocation(MOD_ID, "block/motherboard_front_lit_untick");
+        BlockModelBuilder lit_untick = models().cube(BlockMotherboard.NAME, side_lit, side_lit, rl_lit_untick
+                , side_lit, side_lit, side_lit).texture("particle", rl_lit_untick);
+        ResourceLocation rl_lit_tick = new ResourceLocation(MOD_ID, "block/motherboard_front_lit_tick");
         BlockModelBuilder lit_tick = models().cube(BlockMotherboard.NAME + "_tick", side_lit, side_lit,
-                new ResourceLocation(MOD_ID, "block/motherboard_front_lit_tick"), side_lit, side_lit, side_lit);
+                rl_lit_tick, side_lit, side_lit, side_lit).texture("particle", rl_lit_tick);
         orientedBlock(VCCBlocks.MOTHERBOARD_BLOCK.get(), state -> {
             if (!state.get(BlockStateProperties.LIT)) {
                 return unlit;
@@ -76,11 +79,13 @@ public class BlockStates extends BlockStateProvider {
     private void registerRegister() {
         ResourceLocation sideUnlit = new ResourceLocation(MOD_ID, "block/register_side_unlit");
         ResourceLocation endUnlit = new ResourceLocation(MOD_ID, "block/register_end_unlit");
-        BlockModelBuilder unlit = models().cubeColumn(BlockRegister.NAME, sideUnlit, endUnlit);
+        BlockModelBuilder unlit = models().cubeColumn(BlockRegister.NAME, sideUnlit, endUnlit)
+                .texture("particle", endUnlit);
 
         ResourceLocation sideLit = new ResourceLocation(MOD_ID, "block/register_side_lit");
         ResourceLocation endLit = new ResourceLocation(MOD_ID, "block/register_end_lit");
-        BlockModelBuilder lit = models().cubeColumn(BlockRegister.NAME + "_lit", sideLit, endLit);
+        BlockModelBuilder lit = models().cubeColumn(BlockRegister.NAME + "_lit", sideLit, endLit)
+                .texture("particle", endLit);
 
         orientedVerticalBlock(VCCBlocks.REGISTER_BLOCK.get(), state -> {
             if (state.get(BlockStateProperties.LIT)) {
@@ -101,11 +106,11 @@ public class BlockStates extends BlockStateProvider {
         ResourceLocation litTick = new ResourceLocation(MOD_ID, "block/cpu_tick");
 
         BlockModelBuilder modelUnlit = models().cube(BlockCPU.NAME + "_unlit", unlit, unlit, unlitIP, unlitSP, unlit,
-                unlit);
+                unlit).texture("particle", unlit);
         BlockModelBuilder modelUntick = models().cube(BlockCPU.NAME, litUntick, litUntick, litIP, litSP, litUntick,
-                litUntick);
+                litUntick).texture("particle", litUntick);
         BlockModelBuilder modelTick = models().cube(BlockCPU.NAME + "_tick", litTick, litTick, litIP, litSP, litTick,
-                litTick);
+                litTick).texture("particle", litTick);
 
         orientedBlock(VCCBlocks.CPU_BLOCK.get(), state -> {
             if (!state.get(BlockStateProperties.LIT)) {

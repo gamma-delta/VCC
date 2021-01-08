@@ -2,6 +2,8 @@ package me.gammadelta.common.block;
 
 import me.gammadelta.VCCMod;
 import me.gammadelta.common.block.tile.TileMotherboard;
+import me.gammadelta.common.item.ItemDebugoggles;
+import me.gammadelta.common.item.VCCItems;
 import me.gammadelta.common.network.MsgHighlightBlocks;
 import me.gammadelta.common.utils.FloodUtils;
 import me.gammadelta.common.utils.Utils;
@@ -10,12 +12,13 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.material.PushReaction;
-import net.minecraft.client.particle.ParticleManager;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.NBTUtil;
 import net.minecraft.state.StateContainer;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.util.ActionResultType;
@@ -31,7 +34,6 @@ import net.minecraftforge.common.ToolType;
 import net.minecraftforge.fml.network.PacketDistributor;
 
 import javax.annotation.Nullable;
-import java.util.Arrays;
 import java.util.Collections;
 
 public class BlockComponent extends Block {
@@ -94,20 +96,24 @@ public class BlockComponent extends Block {
      * This is a separate method so subclasses can call this supermethod without having each super call
      * have to go find the motherboard.
      */
-    public ActionResultType onBlockActivated(@Nullable TileMotherboard mother, BlockState state, World worldIn, BlockPos pos, PlayerEntity player,
+    public ActionResultType onBlockActivated(@Nullable TileMotherboard mother, BlockState state, World worldIn,
+            BlockPos pos, PlayerEntity player,
             Hand handIn, BlockRayTraceResult hit) {
-        if (!worldIn.isRemote) {
-            int debugLevel = Utils.funniDebugLevel(player, handIn);
-            if (debugLevel > 0 && mother != null) {
-                VCCMod.getNetwork()
-                        .send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player), new MsgHighlightBlocks(
-                                Collections.singletonList(mother.getPos()), mother.getUUID()
-                        ));
-                return ActionResultType.SUCCESS;
-            }
-        }
+        ActionResultType res = ActionResultType.PASS;
 
-        return super.onBlockActivated(state, worldIn, pos, player, handIn, hit);
+        int debugLevel = Utils.funniDebugLevel(player, handIn);
+        if (debugLevel > 0 && mother != null && !worldIn.isRemote) {
+            VCCMod.getNetwork()
+                    .send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player), new MsgHighlightBlocks(
+                            Collections.singletonList(mother.getPos()), mother.getUUID()
+                    ));
+            res = ActionResultType.SUCCESS;
+        }
+        ActionResultType debugogglesRes = Utils.updateDebugoggles(mother, player);
+        if (debugogglesRes.isSuccess()) {
+            res = debugogglesRes;
+        }
+        return res;
     }
 
     // On a block update, check if this is lit.
@@ -130,7 +136,7 @@ public class BlockComponent extends Block {
 
     /**
      * Check whether this block ought to be lit and return a new updated state.
-     *
+     * <p>
      * i mean lmao 420 blaze it
      */
     public BlockState getLit(BlockState original, BlockPos pos, IWorld world) {

@@ -1,4 +1,4 @@
-package me.gammadelta.client;
+package me.gammadelta.client.particle;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.particles.ParticleType;

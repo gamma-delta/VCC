@@ -71,18 +71,18 @@ public class BlockCPU extends BlockComponent {
                         if (debugLevel >= 2) {
                             // Also print which CPU group this is in
                             player.sendMessage(
-                                    new TranslationTextComponent("misc.debugNBT.cpuGroup", groupIdx + 1, cpus.size()),
+                                    new TranslationTextComponent("misc.debug.cpuGroup", groupIdx + 1, cpus.size()),
                                     Util.DUMMY_UUID);
                             if (debugLevel >= 3) {
                                 // Also also print the register indices
                                 ArrayList<IntList> registers = cpu.registers;
                                 if (registers.size() == 0) {
                                     player.sendMessage(
-                                            new TranslationTextComponent("misc.debugNBT.cpuRegisterIndices.none"),
+                                            new TranslationTextComponent("misc.debug.cpuRegisterIndices.none"),
                                             Util.DUMMY_UUID);
                                 } else {
                                     player.sendMessage(
-                                            new TranslationTextComponent("misc.debugNBT.cpuRegisterIndices"),
+                                            new TranslationTextComponent("misc.debug.cpuRegisterIndices"),
                                             Util.DUMMY_UUID);
 
                                     for (int regiGroupIdx = 0; regiGroupIdx < registers.size(); regiGroupIdx++) {
@@ -99,7 +99,7 @@ public class BlockCPU extends BlockComponent {
 
                                         player.sendMessage(
                                                 new TranslationTextComponent(
-                                                        "misc.debugNBT.cpuRegisterIndices.row", regiGroupIdx,
+                                                        "misc.debug.cpuRegisterIndices.row", regiGroupIdx,
                                                         bob.toString()),
                                                 Util.DUMMY_UUID);
                                     }

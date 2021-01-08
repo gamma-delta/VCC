@@ -1,4 +1,4 @@
-package me.gammadelta.client;
+package me.gammadelta.client.particle;
 
 import com.mojang.serialization.Codec;
 import net.minecraft.client.particle.IAnimatedSprite;

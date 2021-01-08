@@ -1,7 +1,7 @@
 package me.gammadelta.common.network;
 
 import io.netty.buffer.ByteBuf;
-import me.gammadelta.client.HighlightParticleData;
+import me.gammadelta.client.particle.HighlightParticleData;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.ColorHelper;

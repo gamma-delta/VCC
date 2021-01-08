@@ -226,7 +226,11 @@ public class MotherboardRepr {
                     currentDistance = regiDistance;
                 } else if (currentDistance != regiDistance) {
                     currentDistance = regiDistance;
-                    cpuRegis.add(currentBatch);
+                    // Prevent adding empty lists in case
+                    // we omitted inserting due to a register being an extender
+                    if (!currentBatch.isEmpty()) {
+                        cpuRegis.add(currentBatch);
+                    }
                     currentBatch = new IntArrayList();
                 }
                 Integer regiIdx = registerPosIdxes.get(regiPos);

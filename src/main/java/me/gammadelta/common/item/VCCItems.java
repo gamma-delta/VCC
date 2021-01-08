@@ -13,11 +13,6 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
 import static me.gammadelta.VCCMod.MOD_ID;
 
 @Mod.EventBusSubscriber(modid = MOD_ID)
@@ -52,6 +47,7 @@ public class VCCItems {
             ItemFilledPunchCard::new);
     public static final RegistryObject<Item> CLIPBOARD = dumbUnstackableItem("clipboard");
     public static final RegistryObject<Item> COUPON = ITEMS.register(ItemCoupon.NAME, ItemCoupon::new);
+    public static final RegistryObject<Item> DEBUGOGGLES = ITEMS.register(ItemDebugoggles.NAME, ItemDebugoggles::new);
 
     // endregion
 

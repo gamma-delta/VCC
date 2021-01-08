@@ -1,4 +1,4 @@
-package me.gammadelta.client;
+package me.gammadelta.client.particle;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -7,7 +7,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.particles.IParticleData;
 import net.minecraft.particles.ParticleType;
-import net.minecraft.util.ColorHelper;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.registry.Registry;
 

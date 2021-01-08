@@ -36,8 +36,9 @@
     "item.vcc.punchcard": "Punch Card",
     "item.vcc.filled_punchcard": "Punch Card with Data",
 
-    "item.vcc.clipboard": "Clipboard",
-    "item.vcc.clipboard_compile": "Compiling Clipboard",
+    "item.vcc.debugoggles": "Debugoggles",
+    "item.vcc.debugoggles.motherboard": "Displaying info for motherboard at (%d, %d, %d)",
+    "item.vcc.debugoggles.motherboardnt": "Not displaying info for any motherboard",
 
     "item.vcc.coupon.compilation": "Compilation Coupon",
     "item.vcc.coupon.collectible": "Collectible Coupon",
@@ -92,11 +93,12 @@
 
     "misc.debugNBT": "VCC TE `%s' has the following NBT: %s",
     "misc.debugNBT.clipboard": "NBT of VCC TE `%s' has been copied to your clipboard (%d chars)",
-    "misc.debugNBT.registerIndex": "I am Register %d of %d§r.",
-    "misc.debugNBT.cpuGroup": "I am in CPU Group #%d/%d§r.",
-    "misc.debugNBT.cpuRegisterIndices": "I index normal registers like this:",
-    "misc.debugNBT.cpuRegisterIndices.row": "  R%d may select %s",
-    "misc.debugNBT.cpuRegisterIndices.none": "I can't see any normal registers :(",
+
+    "misc.debugoggles.register.idx": "Register #%d",
+    "misc.debugoggles.cpu.idx": "CPU Group %d",
+    "misc.debug.cpuRegisterIndices": "I index normal registers like this:",
+    "misc.debug.cpuRegisterIndices.row": "  R%d may select %s",
+    "misc.debug.cpuRegisterIndices.none": "I can't see any normal registers :(",
 
     "itemGroup.vcc": "VCC"
 }

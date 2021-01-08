@@ -1,17 +1,14 @@
 package me.gammadelta;
 
-import me.gammadelta.client.VCCParticles;
+import me.gammadelta.client.VCCRenderOverlays;
+import me.gammadelta.client.particle.VCCParticles;
 import me.gammadelta.common.VCCConfig;
 import me.gammadelta.common.block.VCCBlocks;
-import me.gammadelta.common.item.ItemCoupon;
 import me.gammadelta.common.item.VCCItems;
 import me.gammadelta.common.network.VCCMessages;
 import me.gammadelta.common.recipe.VCCRecipes;
 import me.gammadelta.common.village.VCCProfessionsAndPOIs;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.particles.ParticleType;
-import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
@@ -50,13 +47,13 @@ public class VCCMod {
         VCCProfessionsAndPOIs.register();
         VCCMessages.register(network);
         VCCConfig.init();
+        MinecraftForge.EVENT_BUS.register(VCCRenderOverlays.class);
 
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         modBus.addGenericListener(ParticleType.class, VCCParticles::register);
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
                 () -> () -> modBus.addListener(VCCParticles.FactoryHandler::registerFactories));
     }
-
 
 
     public static VCCMod getInstance() {

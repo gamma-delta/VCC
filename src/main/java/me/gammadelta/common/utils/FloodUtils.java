@@ -13,7 +13,6 @@ import net.minecraft.block.BlockState;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IWorld;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 
@@ -42,8 +41,10 @@ public final class FloodUtils {
         Set<BlockPos> placesSearched = new HashSet<>();
 
         placesToLook.add(original);
+        placesSearched.add(original);
         for (Direction d : Direction.values()) {
             placesToLook.add(original.offset(d));
+            placesSearched.add(original.offset(d));
         }
 
         while (found.size() <= VCCConfig.FLOODFILL_MAX_FOUND.get()
@@ -83,8 +84,10 @@ public final class FloodUtils {
         Set<BlockPos> placesSearched = new HashSet<>();
 
         placesToLook.add(original);
+        placesSearched.add(original);
         for (Direction d : Direction.values()) {
             placesToLook.add(original.offset(d));
+            placesSearched.add(original.offset(d));
         }
 
         while (placesSearched.size() <= VCCConfig.FLOODFILL_MAX_SEARCH.get()
@@ -111,7 +114,7 @@ public final class FloodUtils {
     /**
      * Flood fill out from a register block to find all the register blocks
      * part of the logical register.
-     *
+     * <p>
      * (Don't fail upon finding a CPU).
      */
     @Nonnull
@@ -122,7 +125,7 @@ public final class FloodUtils {
     /**
      * Flood fill out from a register block to find all the register blocks
      * part of the logical register.
-     *
+     * <p>
      * For this overload, failOnFindingCPU will make this return null
      * if it finds a CPU not at the parentCPUPos.
      * This is to find IP and SP extenders.
@@ -142,6 +145,7 @@ public final class FloodUtils {
                         Collectors.toList());
 
         placesToLook.add(original);
+        placesSearched.add(original);
 
         while (placesSearched.size() <= VCCConfig.FLOODFILL_MAX_SEARCH.get()
                 && !placesToLook.isEmpty()) {
@@ -171,11 +175,12 @@ public final class FloodUtils {
      * Flood fill out from a CPU's location to find the block positions of the closest block in all the register
      * clusters it can see, along with their distances.
      * It will include extenders, so don't include them in the canidates.
-     *
+     * <p>
      * The algorithm will naturally find the closest register block in a cluster first.
      * It will search through the rest of the blocks in the cluster but not include them in the output.
      */
-    public static ArrayList<Pair<BlockPos, Integer>> findCPURegistersAndDistances(BlockPos original, Set<BlockPos> canidates, IWorldReader world) {
+    public static ArrayList<Pair<BlockPos, Integer>> findCPURegistersAndDistances(BlockPos original,
+            Set<BlockPos> canidates, IWorldReader world) {
         ArrayList<Pair<BlockPos, Integer>> found = new ArrayList<>();
         Queue<Pair<BlockPos, Integer>> placesToLook = new ArrayDeque<>();
         Set<BlockPos> placesSearched = new HashSet<>();
@@ -183,6 +188,7 @@ public final class FloodUtils {
 
         // We are 0 blocks away from ourselves.
         placesToLook.add(new Pair<>(original, 0));
+        placesSearched.add(original);
 
         while (placesSearched.size() <= VCCConfig.FLOODFILL_MAX_SEARCH.get()
                 && !placesToLook.isEmpty()) {

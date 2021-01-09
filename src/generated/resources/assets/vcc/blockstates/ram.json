@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "vcc:block/ram"
+    },
+    "lit=true": {
+      "model": "vcc:block/ram_lit"
+    }
+  }
+}

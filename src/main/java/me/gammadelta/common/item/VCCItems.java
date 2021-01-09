@@ -61,6 +61,14 @@ public class VCCItems {
             () -> new BlockItem(VCCBlocks.REGISTER_BLOCK.get(), new Item.Properties().group(VCC_ITEM_GROUP)));
     public static final RegistryObject<Item> CPU_ITEM = ITEMS.register(BlockCPU.NAME,
             () -> new BlockItem(VCCBlocks.CPU_BLOCK.get(), new Item.Properties().group(VCC_ITEM_GROUP)));
+    public static final RegistryObject<Item> XRAM_ITEM = ITEMS.register(BlockMemory.XRAM_NAME,
+            () -> new BlockItem(VCCBlocks.XRAM_BLOCK.get(), new Item.Properties().group(VCC_ITEM_GROUP)));
+    public static final RegistryObject<Item> EXRAM_ITEM = ITEMS.register(BlockMemory.EXRAM_NAME,
+            () -> new BlockItem(VCCBlocks.EXRAM_BLOCK.get(), new Item.Properties().group(VCC_ITEM_GROUP)));
+    public static final RegistryObject<Item> ROM_ITEM = ITEMS.register(BlockMemory.ROM_NAME,
+            () -> new BlockItem(VCCBlocks.ROM_BLOCK.get(), new Item.Properties().group(VCC_ITEM_GROUP)));
+    public static final RegistryObject<Item> RAM_ITEM = ITEMS.register(BlockMemory.RAM_NAME,
+            () -> new BlockItem(VCCBlocks.RAM_BLOCK.get(), new Item.Properties().group(VCC_ITEM_GROUP)));
     public static final RegistryObject<Item> OVERCLOCK_ITEM = ITEMS.register("overclock",
             () -> new BlockItem(VCCBlocks.OVERCLOCK_BLOCK.get(), new Item.Properties().group(VCC_ITEM_GROUP)));
     public static final RegistryObject<Item> PUNCHER_ITEM = ITEMS.register(BlockPuncher.NAME,

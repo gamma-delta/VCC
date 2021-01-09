@@ -1,15 +1,13 @@
 package me.gammadelta.common.block.tile;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import me.gammadelta.common.block.VCCBlockStates;
 import me.gammadelta.common.block.VCCBlocks;
+import me.gammadelta.common.program.CPURepr;
 import me.gammadelta.common.program.MotherboardRepr;
 import me.gammadelta.common.utils.FloodUtils;
+import me.gammadelta.common.utils.Utils;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
-import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
-import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SUpdateTileEntityPacket;
@@ -20,6 +18,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.util.Constants;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
 import java.util.Set;
 import java.util.UUID;
 
@@ -82,10 +81,20 @@ public class TileMotherboard extends TileEntity implements ITickableTileEntity {
             }
             this.wasPoweredLastTick = poweredNow;
 
-            if (numberOfStepsToTake > 0) {
-                // TODO: Execution!
-                this.markDirty();
+            for (ArrayList<CPURepr> cpuGroup : this.motherboard.cpus) {
+                for (int cpuIdx : Utils.randomIndices(cpuGroup.size(), this.world.rand)) {
+                    CPURepr cpu = cpuGroup.get(cpuIdx);
+                    BlockState cpuState = world.getBlockState(cpu.manifestation);
+                    boolean execute = numberOfStepsToTake > 0;
+                    if (execute) {
+                        // TODO: execution!
+                    }
+                    world.setBlockState(cpu.manifestation, cpuState.with(VCCBlockStates.TICKING, execute));
+
+                    this.markDirty();
+                }
             }
+
 
             displayTicking = numberOfStepsToTake > 0;
         }
@@ -98,8 +107,8 @@ public class TileMotherboard extends TileEntity implements ITickableTileEntity {
             world.setBlockState(
                     pos,
                     bs
-                        .with(BlockStateProperties.LIT, hasSufficientPower)
-                        .with(VCCBlockStates.TICKING, displayTicking),
+                            .with(BlockStateProperties.LIT, hasSufficientPower)
+                            .with(VCCBlockStates.TICKING, displayTicking),
                     Constants.BlockFlags.NOTIFY_NEIGHBORS + Constants.BlockFlags.BLOCK_UPDATE
             );
             this.markDirty();

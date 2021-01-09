@@ -3,6 +3,7 @@ package me.gammadelta.common.block;
 import me.gammadelta.common.block.tile.ContainerPuncher;
 import me.gammadelta.common.block.tile.TileMotherboard;
 import me.gammadelta.common.block.tile.TilePuncher;
+import me.gammadelta.common.program.MemoryType;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
@@ -40,6 +41,14 @@ public class VCCBlocks {
     // a register block, not register a block
     public static final RegistryObject<Block> REGISTER_BLOCK = BLOCKS.register(BlockRegister.NAME,
             BlockRegister::new);
+    public static final RegistryObject<Block> XRAM_BLOCK = BLOCKS.register(BlockMemory.XRAM_NAME,
+            () -> new BlockMemory(MemoryType.XRAM));
+    public static final RegistryObject<Block> EXRAM_BLOCK = BLOCKS.register(BlockMemory.EXRAM_NAME,
+            () -> new BlockMemory(MemoryType.EXRAM));
+    public static final RegistryObject<Block> ROM_BLOCK = BLOCKS.register(BlockMemory.ROM_NAME,
+            () -> new BlockMemory(MemoryType.ROM));
+    public static final RegistryObject<Block> RAM_BLOCK = BLOCKS.register(BlockMemory.RAM_NAME,
+            () -> new BlockMemory(MemoryType.RAM));
     public static final RegistryObject<Block> CHASSIS_BLOCK = component("chassis");
     public static final RegistryObject<Block> OVERCLOCK_BLOCK = component("overclock");
     public static final RegistryObject<Block> PUNCHER_BLOCK = BLOCKS.register(BlockPuncher.NAME,

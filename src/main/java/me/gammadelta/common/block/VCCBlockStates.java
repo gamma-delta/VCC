@@ -1,6 +1,8 @@
 package me.gammadelta.common.block;
 
+import me.gammadelta.common.program.MemoryType;
 import net.minecraft.state.BooleanProperty;
+import net.minecraft.state.EnumProperty;
 import net.minecraft.state.Property;
 
 

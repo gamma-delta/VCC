@@ -94,6 +94,7 @@ public class VCCRenderOverlays {
                     for (byte b : repr.value) {
                         bob.append(String.format("%02x", b));
                     }
+                    bob.append(String.format(" (%d)", repr.getByteCount()));
                     renderFloatingText(neo, avgX + offsetVec.x, avgY - offsetVec.y, avgZ + offsetVec.z,
                             camX, camY, camZ,
                             new StringTextComponent(bob.toString()), buffer);

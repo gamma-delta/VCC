@@ -26,6 +26,10 @@ public class BlockStates extends BlockStateProvider {
     protected void registerStatesAndModels() {
         singleTextureComponent(VCCBlocks.CHASSIS_BLOCK.get(), "chassis");
         singleTextureComponent(VCCBlocks.OVERCLOCK_BLOCK.get(), "overclock");
+        singleTextureComponent(VCCBlocks.XRAM_BLOCK.get(), "xram");
+        singleTextureComponent(VCCBlocks.EXRAM_BLOCK.get(), "exram");
+        singleTextureComponent(VCCBlocks.ROM_BLOCK.get(), "rom");
+        singleTextureComponent(VCCBlocks.RAM_BLOCK.get(), "ram");
 
         registerMotherboard();
         registerRegister();

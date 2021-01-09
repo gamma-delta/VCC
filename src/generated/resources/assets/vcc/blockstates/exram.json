@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "vcc:block/exram"
+    },
+    "lit=true": {
+      "model": "vcc:block/exram_lit"
+    }
+  }
+}

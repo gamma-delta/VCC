@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "vcc:block/rom"
+    },
+    "lit=true": {
+      "model": "vcc:block/rom_lit"
+    }
+  }
+}

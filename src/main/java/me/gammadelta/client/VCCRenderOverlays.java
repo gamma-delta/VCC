@@ -82,18 +82,19 @@ public class VCCRenderOverlays {
 
                     // Offset in the Y direction of the *screen*
                     // not globally.
-                    Vector3d offsetVec = new Vector3d(0, 1, 0)
-                            .rotatePitch(player.rotationPitch * 3.14f / 180 / -2)
-                            .rotateYaw(player.cameraYaw * 3.14f / 180 / -2)
-                            .scale(0.3); // this scale value looks good 0.141
-                    renderFloatingText(neo, avgX - offsetVec.x, avgY - offsetVec.y, avgZ - offsetVec.z,
+                    Vector3d pitched = new Vector3d(0, 1, 0)
+                            .rotatePitch(player.rotationPitch * 3.14f / 180 / 2);
+                    Vector3d offsetVec = pitched
+                            .rotateYaw(player.rotationYaw * 3.14f / 180 * -1)
+                            .scale(0.141); // this scale value looks good
+                    renderFloatingText(neo, avgX - offsetVec.x, avgY + offsetVec.y, avgZ - offsetVec.z,
                             camX, camY, camZ,
                             new TranslationTextComponent("misc.debugoggles.register.idx", i), buffer);
                     StringBuilder bob = new StringBuilder("0x");
                     for (byte b : repr.value) {
                         bob.append(String.format("%02x", b));
                     }
-                    renderFloatingText(neo, avgX + offsetVec.x, avgY + offsetVec.y, avgZ + offsetVec.z,
+                    renderFloatingText(neo, avgX + offsetVec.x, avgY - offsetVec.y, avgZ + offsetVec.z,
                             camX, camY, camZ,
                             new StringTextComponent(bob.toString()), buffer);
                 }

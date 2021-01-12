@@ -11,9 +11,12 @@ import net.minecraft.block.BlockState;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SUpdateTileEntityPacket;
+import net.minecraft.particles.ParticleTypes;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.util.Constants;
 
@@ -52,6 +55,14 @@ public class TileMotherboard extends TileEntity implements ITickableTileEntity {
     }
 
     public void updateConnectedComponents() {
+        int x = this.pos.getX();
+        int y = this.pos.getY();
+        int z = this.pos.getZ();
+        this.world.playSound(x, y, z, SoundEvents.BLOCK_FIRE_EXTINGUISH, SoundCategory.BLOCKS, 1.0f, 1.0f, false);
+        for (int i = 0; i < 30; i++) {
+            this.world.addParticle(ParticleTypes.SMOKE, x, y, z, 0.05, 0.1, 0.05);
+        }
+
         Object2IntOpenHashMap<BlockPos> found = FloodUtils.findUnclaimedComponents(this);
         if (found != null) {
             this.motherboard.updateComponents(this, found);
@@ -72,7 +83,13 @@ public class TileMotherboard extends TileEntity implements ITickableTileEntity {
         // TODO: power
         boolean hasSufficientPower = true;
         if (hasSufficientPower) {
-            int numberOfStepsToTake = this.motherboard.overclocks.size();
+            int numberOfStepsToTake = 0;
+            for (BlockPos oclockPos : this.motherboard.overclocks) {
+                if (!world.isBlockPowered(oclockPos)) {
+                    numberOfStepsToTake++;
+                }
+            }
+
             // make a rising edge also tick the motherboard
             boolean poweredNow = world.isBlockPowered(this.getPos());
             if (!this.wasPoweredLastTick && poweredNow) {
@@ -85,10 +102,10 @@ public class TileMotherboard extends TileEntity implements ITickableTileEntity {
                 for (int cpuIdx : Utils.randomIndices(cpuGroup.size(), this.world.rand)) {
                     CPURepr cpu = cpuGroup.get(cpuIdx);
                     BlockState cpuState = world.getBlockState(cpu.manifestation);
-                    boolean execute = numberOfStepsToTake > 0;
-                    if (execute) {
-                        // TODO: execution!
+                    for (int i = 0; i < numberOfStepsToTake; i++) {
+                        cpu.executeStep(this.motherboard, world.rand);
                     }
+                    boolean execute = numberOfStepsToTake > 0;
                     world.setBlockState(cpu.manifestation, cpuState.with(VCCBlockStates.TICKING, execute));
 
                     this.markDirty();

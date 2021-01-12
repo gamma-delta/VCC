@@ -10,18 +10,19 @@ public class Token {
     public Type type;
     public final String value;
     public final Token alias;
-    public final int row, col;
+    public final int page, row, col;
 
-    public Token(Type type, String value, int row, int col) {
-        this(type, value, null, row, col);
+    public Token(Type type, String value, int row, int col, int page) {
+        this(type, value, null, row, col, page);
     }
 
-    private Token(Type type, String value, Token alias, int row, int col) {
+    private Token(Type type, String value, Token alias, int row, int col, int page) {
         this.type = type;
         this.value = value;
         this.alias = alias;
         this.row = row;
         this.col = col;
+        this.page = page;
     }
 
     /**
@@ -88,14 +89,14 @@ public class Token {
      * Rewrite this token as an alias of the given one.
      */
     public Token rewrite(Token clone) {
-        return new Token(clone.type, clone.value, this, clone.row, clone.col);
+        return new Token(clone.type, clone.value, this, clone.row, clone.col, clone.page);
     }
 
     /**
      * Return this token rewritten with a different type and value.
      */
     public Token rewrite(Type type, String value) {
-        return new Token(type, value, this, row, col);
+        return new Token(type, value, this, row, col, page);
     }
 
     /**
@@ -107,6 +108,9 @@ public class Token {
 
     @Override
     public String toString() {
+        if (this.page != -1) {
+            return String.format("%s at %s:%s:%s", this.canonicalizeWithAlias(), page, row, col);
+        }
         return String.format("%s at %s:%s", this.canonicalizeWithAlias(), row, col);
     }
 

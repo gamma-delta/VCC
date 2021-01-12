@@ -68,7 +68,11 @@ public enum Opcode {
         if (caps.equals("ILLEGAL")) {
             return null;
         }
-        return Opcode.valueOf(caps);
+        try {
+            return Opcode.valueOf(caps);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     /**

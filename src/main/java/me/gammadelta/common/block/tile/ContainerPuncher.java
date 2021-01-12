@@ -14,6 +14,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.IWorldPosCallable;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.network.PacketDistributor;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.SlotItemHandler;
 
@@ -111,10 +112,18 @@ public class ContainerPuncher extends Container {
         return itemstack;
     }
 
-    // Apparently this is called on the server, asking the client to send the latest changes.
+    // Apparently this is called on the server and syncs changes to the client.
     @Override
     public void detectAndSendChanges() {
         super.detectAndSendChanges();
+        int x = this.tile.getPos().getX();
+        int y = this.tile.getPos().getY();
+        int z = this.tile.getPos().getZ();
+        VCCMod.getNetwork().send(
+                PacketDistributor.NEAR.with(
+                        PacketDistributor.TargetPoint.p(x, y, z, 16, this.tile.getWorld().getDimensionKey())),
+                new MsgSyncMemoryInGui(this.getMemory(), this.windowId)
+        );
     }
 
     @Nullable

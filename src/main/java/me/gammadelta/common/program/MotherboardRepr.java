@@ -4,8 +4,10 @@ import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.bytes.ByteArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Object2IntArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import me.gammadelta.common.block.BlockCPU;
+import me.gammadelta.common.block.BlockMemory;
 import me.gammadelta.common.block.VCCBlocks;
 import me.gammadelta.common.block.tile.TileMotherboard;
 import me.gammadelta.common.utils.FloodUtils;
@@ -15,12 +17,17 @@ import net.minecraft.block.BlockState;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.nbt.NBTUtil;
+import net.minecraft.particles.RedstoneParticleData;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.Constants;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static me.gammadelta.common.program.CPURepr.StepResult;
 
 public class MotherboardRepr {
 
@@ -50,7 +57,7 @@ public class MotherboardRepr {
      * These are in no particular order.
      * CPUs cache their distances to each one.
      */
-    private EnumMap<MemoryType, ArrayList<BlockPos>> memoryLocations;
+    public EnumMap<MemoryType, ArrayList<BlockPos>> memoryLocations;
     private static final String MEMORY_LOCATIONS_KEY = "memory_locations";
 
     /**
@@ -125,7 +132,6 @@ public class MotherboardRepr {
      */
     public void updateComponents(TileMotherboard owner, Object2IntMap<BlockPos> components) {
         // TODO: still need to implement:
-        // - memory locations
         // - datafaces
 
         World world = owner.getWorld();
@@ -152,6 +158,10 @@ public class MotherboardRepr {
         // Side note: imagine society if Java had actual tuples
         List<Pair<BlockPos, Pair<List<BlockPos>, List<BlockPos>>>> cpuSkeletons = new ArrayList<>();
 
+        // Maps block positions of memory blocks to their indices.
+        // This doesn't distinguish on type because, all going well, we shouldn't need to.
+        Object2IntMap<BlockPos> memoryBlockIndices = new Object2IntArrayMap<>();
+
         components.forEach((pos, dist) -> {
             BlockState state = owner.getWorld().getBlockState(pos);
             Block component = state.getBlock();
@@ -160,6 +170,10 @@ public class MotherboardRepr {
 
             if (component == VCCBlocks.CHASSIS_BLOCK.get()) {
                 this.chassises.add(pos);
+            } else if (component instanceof BlockMemory) {
+                ArrayList<BlockPos> memLocations = this.memoryLocations.get(((BlockMemory) component).memType);
+                memoryBlockIndices.put(pos, memLocations.size());
+                memLocations.add(pos);
             } else if (component == VCCBlocks.CPU_BLOCK.get()) {
                 // nice
                 Pair<List<BlockPos>, List<BlockPos>> extenders = BlockCPU.findExtenders(pos, state, world);
@@ -204,60 +218,59 @@ public class MotherboardRepr {
         }
 
         // Get the proper data into the CPUReprs.
-        // TODO: memory locations
-        // TODO: this always puts every register in every group.
-        // I'm also not sorting by distance from CPU.
         List<CPURepr> unsortedCPUs = new ArrayList<>();
         for (Pair<BlockPos, Pair<List<BlockPos>, List<BlockPos>>> skelly : cpuSkeletons) {
             BlockPos cpuPos = skelly.getFirst();
 
-            // Add registers by distance to this CPU
-            ArrayList<Pair<BlockPos, Integer>> regiDistances = FloodUtils.findCPURegistersAndDistances(cpuPos,
+            // Add stuff by distance to this CPU
+            FloodUtils.CPUFindResult foundStuff = FloodUtils.findCPUStuff(cpuPos,
                     components.keySet(), world);
-            // Assemble the list of indices
-            ArrayList<IntList> cpuRegis = new ArrayList<>(regiDistances.size());
-            IntList currentBatch = new IntArrayList();
-            int currentDistance = -1;
-            for (Pair<BlockPos, Integer> pair : regiDistances) {
-                BlockPos regiPos = pair.getFirst();
-                int regiDistance = pair.getSecond();
-                if (currentDistance == -1) {
-                    // first batch
-                    currentDistance = regiDistance;
-                } else if (currentDistance != regiDistance) {
-                    currentDistance = regiDistance;
-                    // Prevent adding empty lists in case
-                    // we omitted inserting due to a register being an extender
-                    if (!currentBatch.isEmpty()) {
-                        cpuRegis.add(currentBatch);
-                    }
-                    currentBatch = new IntArrayList();
-                }
-                Integer regiIdx = registerPosIdxes.get(regiPos);
-                if (regiIdx == null) {
-                    // It was an extender register, so we ignore it
-                    continue;
-                }
-                currentBatch.add(regiIdx.intValue());
-            }
-            if (!currentBatch.isEmpty()) {
-                cpuRegis.add(currentBatch);
-            }
 
+            // Registers
+            ArrayList<ArrayList<BlockPos>> regiDistances = Utils.batchByDistance(foundStuff.closestRegisterBlocks);
+            ArrayList<IntList> regiIndices = new ArrayList<>(regiDistances.size());
+            for (int i = 0, regiDistancesSize = regiDistances.size(); i < regiDistancesSize; i++) {
+                ArrayList<BlockPos> regiBlockBatch = regiDistances.get(i);
+                IntArrayList cpuBatch = new IntArrayList(regiBlockBatch.size());
+                for (BlockPos regiPos : regiBlockBatch) {
+                    if (registerPosIdxes.containsKey(regiPos)) {
+                        cpuBatch.add(registerPosIdxes.get(regiPos));
+                    } // Else it's probably an extender
+                }
+                if (!cpuBatch.isEmpty()) {
+                    regiIndices.add(cpuBatch);
+                }
+            }
             List<BlockPos> ipExtender = skelly.getSecond().getFirst();
             List<BlockPos> spExtender = skelly.getSecond().getSecond();
             RegisterRepr ipRepr = ipExtender != null ? new RegisterRepr(ipExtender.toArray(new BlockPos[0])) : null;
             RegisterRepr spRepr = spExtender != null ? new RegisterRepr(spExtender.toArray(new BlockPos[0])) : null;
 
-            EnumMap<MemoryType, ArrayList<IntList>> dontInstantlyNPE = new EnumMap<>(MemoryType.class);
-            dontInstantlyNPE.put(MemoryType.XRAM, new ArrayList<>());
-            dontInstantlyNPE.put(MemoryType.EXRAM, new ArrayList<>());
-            dontInstantlyNPE.put(MemoryType.ROM, new ArrayList<>());
-            dontInstantlyNPE.put(MemoryType.RAM, new ArrayList<>());
+            // Memory
+            EnumMap<MemoryType, ArrayList<IntList>> cpuAllMemoryIndices = new EnumMap<>(MemoryType.class);
+            for (Map.Entry<MemoryType, ArrayList<Pair<BlockPos, Integer>>> entry : foundStuff.memoryBlocks.entrySet()) {
+                MemoryType memType = entry.getKey();
+                ArrayList<ArrayList<BlockPos>> memPositions = Utils.batchByDistance(entry.getValue());
 
-            unsortedCPUs.add(new CPURepr(ipRepr, spRepr, cpuPos, cpuRegis,
-                    // TODO do memory & datafaces
-                    new ArrayList<>(), dontInstantlyNPE));
+                ArrayList<IntList> memoryIndices = new ArrayList<>(memPositions.size());
+                for (ArrayList<BlockPos> memBatch : memPositions) {
+                    IntArrayList cpuBatch = new IntArrayList(memBatch.size());
+                    for (BlockPos memPos : memBatch) {
+                        if (memoryBlockIndices.containsKey(memPos)) {
+                            cpuBatch.add(memoryBlockIndices.getInt(memPos));
+                        }
+                    }
+                    if (!cpuBatch.isEmpty()) {
+                        memoryIndices.add(cpuBatch);
+                    }
+                }
+                cpuAllMemoryIndices.put(memType, memoryIndices);
+            }
+
+
+            unsortedCPUs.add(new CPURepr(ipRepr, spRepr, cpuPos, regiIndices,
+                    // TODO: datafaces
+                    new ArrayList<>(), cpuAllMemoryIndices));
 
         }
 
@@ -448,7 +461,19 @@ public class MotherboardRepr {
         for (ArrayList<CPURepr> cpuGroup : this.cpus) {
             int[] indices = Utils.randomIndices(cpuGroup.size(), world.getRandom());
             for (int cpuIdx : indices) {
-                cpuGroup.get(cpuIdx).executeStep(this, world.rand);
+                CPURepr cpu = cpuGroup.get(cpuIdx);
+                StepResult res = cpu.executeStep(this, world.rand);
+                if (res != StepResult.NORMAL) {
+                    float color = (res == StepResult.CAUGHT_EXCEPTION) ? 1f : 0f;
+                    float pitch = (res == StepResult.CAUGHT_EXCEPTION) ? 1.1f : 0.6f;
+                    for (int i = 0; i < 20; i++) {
+                        world.addParticle(new RedstoneParticleData(color, color, color, 1f),
+                                cpu.manifestation.getX(), cpu.manifestation.getY(), cpu.manifestation.getZ(),
+                                0.05, 0.1, 0.05);
+                    }
+                    world.playSound(cpu.manifestation.getX(), cpu.manifestation.getY(), cpu.manifestation.getZ(),
+                            SoundEvents.BLOCK_FIRE_EXTINGUISH, SoundCategory.BLOCKS, 1f, pitch, false);
+                }
             }
         }
     }

@@ -2,9 +2,12 @@ package me.gammadelta.client.gui;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
+import me.gammadelta.VCCMod;
 import me.gammadelta.common.block.tile.ContainerPuncher;
 import me.gammadelta.common.block.tile.TilePuncher;
 import me.gammadelta.common.item.VCCItems;
+import me.gammadelta.common.network.MsgCompile;
+import me.gammadelta.common.network.MsgPunch;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.gui.widget.button.AbstractButton;
@@ -28,6 +31,9 @@ public class GuiPuncher extends ContainerScreen<ContainerPuncher> {
 
     private Widget copyButton;
     private Widget copyStringButton;
+    private Widget compileStringButton;
+
+    private Widget punchButton;
 
     public GuiPuncher(ContainerPuncher container, PlayerInventory inv, ITextComponent name) {
         super(container, inv, name);
@@ -45,6 +51,9 @@ public class GuiPuncher extends ContainerScreen<ContainerPuncher> {
 
         this.copyButton = this.addButton(new CopyButton());
         this.copyStringButton = this.addButton(new SmolDataInputButton(SmolDataInputButtonType.STRING));
+        this.compileStringButton = this.addButton(new SmolDataInputButton(SmolDataInputButtonType.COMPILE));
+
+        this.punchButton = this.addButton(new PunchButton());
     }
 
     @Override
@@ -57,6 +66,7 @@ public class GuiPuncher extends ContainerScreen<ContainerPuncher> {
             // Use the single copy one
             this.copyButton.visible = true;
             this.copyStringButton.visible = false;
+            this.compileStringButton.visible = false;
 
             // Disable if empty
             this.copyButton.active = !dataStack.isEmpty();
@@ -67,11 +77,20 @@ public class GuiPuncher extends ContainerScreen<ContainerPuncher> {
             // Use the triple one
             this.copyButton.visible = false;
             this.copyStringButton.visible = true;
+            this.compileStringButton.visible = true;
 
-            // Disable if empty
-            boolean visible = !dataStack.isEmpty();
-            this.copyStringButton.visible = visible;
+            // Disable all 3 if empty
+            boolean active = !dataStack.isEmpty();
+            this.copyStringButton.active = active;
+            this.compileStringButton.active = active;
+            if (active) {
+                // Disable compilation if there's something in the error output
+                this.compileStringButton.active = !this.container.getSlot(2).getHasStack() && this.container.getSlot(1)
+                        .getHasStack();
+            }
         }
+
+        this.punchButton.active = this.container.getMemory() != null && this.container.getSlot(3).getHasStack();
     }
 
     @Override
@@ -227,6 +246,13 @@ public class GuiPuncher extends ContainerScreen<ContainerPuncher> {
                 // nice!
                 byte[] newMemory = combinedData.getBytes();
                 GuiPuncher.this.container.setMemory(newMemory);
+            } else if (this.type == SmolDataInputButtonType.LITERALS) {
+                // TODO
+            } else {
+                // Compiling time~~
+                VCCMod.getNetwork()
+                        .sendToServer(
+                                new MsgCompile(GuiPuncher.this.container.windowId, stringData.toArray(new String[0])));
             }
         }
     }
@@ -251,6 +277,23 @@ public class GuiPuncher extends ContainerScreen<ContainerPuncher> {
                 default:
                     return "i hate java";
             }
+        }
+    }
+
+    /**
+     * Button that punches data to a card
+     */
+    private class PunchButton extends AbstractButton {
+        public PunchButton() {
+            super(GuiPuncher.this.guiLeft + 26, GuiPuncher.this.guiTop + 141, 143, 20,
+                    new TranslationTextComponent("gui.vcc.puncher.punch"));
+
+
+        }
+
+        @Override
+        public void onPress() {
+            VCCMod.getNetwork().sendToServer(new MsgPunch(GuiPuncher.this.container.windowId));
         }
     }
 

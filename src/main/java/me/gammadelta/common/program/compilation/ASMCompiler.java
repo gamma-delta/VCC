@@ -1,14 +1,15 @@
 package me.gammadelta.common.program.compilation;
 
+import it.unimi.dsi.fastutil.bytes.ByteArrayList;
 import it.unimi.dsi.fastutil.bytes.ByteList;
 
 import java.util.List;
 
 /**
- * Helpful wrapper class to lex and parse a VCC-ASM program.
+ * Helpful wrapper class to lex and parse and compile a VCC-ASM program.
  */
 public class ASMCompiler {
-    public static List<Instruction> lexAndParse(String input) throws CodeCompileException {
+    public static List<Instruction> lexAndParse(String[] input) throws CodeCompileException {
         List<Token> tokens = new CodeLexer(input).slurp();
         // apparently this mutates the original tokens
         new CodePreprocessor().preprocessTokens(tokens);
@@ -17,12 +18,17 @@ public class ASMCompiler {
         return instrs;
     }
 
-    public static ByteList lexParseAndCompile(String input) throws CodeCompileException, CodeCompileException.BytecodeWriteException {
-        List<Instruction> instructions = lexAndParse(input);
-        return new BytecodeWriter(instructions).writeProgramToBytecode();
+    public static List<Instruction> lexAndParse(String input) throws CodeCompileException {
+        return lexAndParse(new String[]{input});
     }
 
-    /** Pretty-print a list of instructions */
+    public static ByteList compile(String[] input) throws CodeCompileException {
+        return new BytecodeWriter(lexAndParse(input)).writeProgramToBytecode();
+    }
+
+    /**
+     * Pretty-print a list of instructions
+     */
     public static String prettyPrintInstructions(List<Instruction> instrs) {
         StringBuilder bob = new StringBuilder();
         for (int j = 0; j < instrs.size(); j++) {

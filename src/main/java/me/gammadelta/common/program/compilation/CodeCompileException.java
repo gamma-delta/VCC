@@ -13,20 +13,14 @@ import static me.gammadelta.common.item.ItemCoupon.*;
 // We just store the type of problem and the specifics.
 public abstract class CodeCompileException extends Exception {
     private static final long serialVersionUID = 8604300245570679461L;
-    public final String message;
 
-    public final int row;
-    public final int col;
+    public final int page, row, col;
 
-    private CodeCompileException(int row, int col, String message, Object... args) {
-        this(row, col, String.format(message, args));
-    }
 
-    private CodeCompileException(int row, int col, String message) {
-        super(message);
+    private CodeCompileException(int page, int row, int col) {
+        this.page = page;
         this.row = row;
         this.col = col;
-        this.message = message;
     }
 
     /**
@@ -46,11 +40,10 @@ public abstract class CodeCompileException extends Exception {
 
     /**
      * Helper method to put the row and column in a tag.
-     * The LINE key will be put in later by the compiler
-     * (because these errors don't know about the entire program)
      */
     protected CompoundNBT boilerplateRowCol() {
         CompoundNBT out = new CompoundNBT();
+        out.putInt(ERROR_PAGE_KEY, this.page);
         out.putInt(ERROR_ROW_KEY, this.row);
         out.putInt(ERROR_COL_KEY, this.col);
         return out;
@@ -106,16 +99,16 @@ public abstract class CodeCompileException extends Exception {
 
 
     public abstract static class LexException extends CodeCompileException {
-        public LexException(int row, int col, String message, Object... args) {
-            super(row, col, String.format("%d:%d : %s", row, col, String.format(message, args)));
+        public LexException(int page, int row, int col) {
+            super(page, row, col);
         }
 
         public static class TwoStackvalues extends LexException {
             public final String sv1;
             public final String sv2;
 
-            public TwoStackvalues(int row, int col, String sv1, String sv2) {
-                super(row, col, "Tried to put two stackvalues together (%s and %s)", sv1, sv2);
+            public TwoStackvalues(int page, int row, int col, String sv1, String sv2) {
+                super(page, row, col);
                 this.sv1 = sv1;
                 this.sv2 = sv2;
             }
@@ -128,15 +121,15 @@ public abstract class CodeCompileException extends Exception {
     }
 
     public abstract static class PreprocessException extends CodeCompileException {
-        public PreprocessException(int row, int col, String message, Object... args) {
-            super(row, col, String.format("%d:%d : %s", row, col, String.format(message, args)));
+        public PreprocessException(int page, int row, int col) {
+            super(page, row, col);
         }
 
         public static class DirectiveInMiddleOfLine extends PreprocessException {
             public final Token problem;
 
             public DirectiveInMiddleOfLine(Token problem) {
-                super(problem.row, problem.col, "Directive '%s' in middle of line", problem.value);
+                super(problem.page, problem.row, problem.col);
                 this.problem = problem;
             }
 
@@ -150,9 +143,7 @@ public abstract class CodeCompileException extends Exception {
             public final Token problem;
 
             public DefinitionExpansionTooThicc(Token problem) {
-                super(problem.row, problem.col,
-                        "Exceeded definition expansion recursion limit of %d when preprocessing '%s'",
-                        CodePreprocessor.MAX_EXPAND_DEPTH, problem.value);
+                super(problem.page, problem.row, problem.col);
                 this.problem = problem;
             }
 
@@ -166,7 +157,7 @@ public abstract class CodeCompileException extends Exception {
             public final Token problem;
 
             public UnknownDirective(Token problem) {
-                super(problem.row, problem.col, "Unknown directive '%s'", problem.meat());
+                super(problem.page, problem.row, problem.col);
                 this.problem = problem;
             }
 
@@ -182,8 +173,7 @@ public abstract class CodeCompileException extends Exception {
             public final int argcGot;
 
             public BadArity(Token problem, int argcWanted, int argcGot) {
-                super(problem.row, problem.col, "Directive '%s' wants %d arguments but got %d", problem.meat(),
-                        argcWanted, argcGot);
+                super(problem.page, problem.row, problem.col);
                 this.problem = problem;
                 this.argcWanted = argcWanted;
                 this.argcGot = argcGot;
@@ -202,8 +192,7 @@ public abstract class CodeCompileException extends Exception {
             public final int index;
 
             public BadArgType(Token directive, Token problem, Token.Type wanted, int index) {
-                super(problem.row, problem.col, "Directive '%s' wants token type %s for index %d but got %s",
-                        directive.meat(), wanted, index, problem.type);
+                super(problem.page, problem.row, problem.col);
                 this.directive = directive;
                 this.problem = problem;
                 this.wanted = wanted;
@@ -220,7 +209,7 @@ public abstract class CodeCompileException extends Exception {
             public final Token problem;
 
             public Redefinition(Token problem) {
-                super(problem.row, problem.col, "Directive redefines '%s'", problem.meat());
+                super(problem.page, problem.row, problem.col);
                 this.problem = problem;
             }
 
@@ -235,9 +224,9 @@ public abstract class CodeCompileException extends Exception {
      * An exception that happens while parsing.
      */
     public abstract static class ParseException extends CodeCompileException {
-        public ParseException(int row, int col, String message, Object... args) {
+        public ParseException(int page, int row, int col) {
             // java, why do you suck so much
-            super(row, col, String.format("%d:%d : %s", row, col, String.format(message, args)));
+            super(page, row, col);
         }
 
         /**
@@ -247,24 +236,8 @@ public abstract class CodeCompileException extends Exception {
             public final List<ParseException> problems;
 
             public Bunch(List<ParseException> problems) {
-                super(-1, -1, "The following problems occured while parsing:\n%s", prettyPrintProblems(problems));
+                super(-1, -1, -1);
                 this.problems = problems;
-            }
-
-            // java bad
-            private static String prettyPrintProblems(List<ParseException> problems) {
-                StringBuilder bob = new StringBuilder();
-                for (int c = 0; c < problems.size(); c++) {
-                    bob.append("- ");
-                    ParseException e = problems.get(c);
-                    bob.append(e.getClass().getSimpleName());
-                    bob.append(": ");
-                    bob.append(problems.get(c).message);
-                    if (c != problems.size() - 1) {
-                        bob.append('\n');
-                    }
-                }
-                return bob.toString();
             }
 
             @Override
@@ -286,11 +259,7 @@ public abstract class CodeCompileException extends Exception {
             public final Token notAnOpcode;
 
             public ExpectedOpcode(Token notAnOpcode) {
-                super(
-                        notAnOpcode.row, notAnOpcode.col,
-                        "Expected an opcode (i.e. NAME) but found %s of type",
-                        notAnOpcode.value, notAnOpcode.type
-                );
+                super(notAnOpcode.page, notAnOpcode.row, notAnOpcode.col);
                 this.notAnOpcode = notAnOpcode;
             }
 
@@ -304,13 +273,13 @@ public abstract class CodeCompileException extends Exception {
             public final Token unknown;
 
             public UnknownOpcode(Token unknown) {
-                super(unknown.row, unknown.col, "Unknown opcode %s", unknown.value);
+                super(unknown.page, unknown.row, unknown.col);
                 this.unknown = unknown;
             }
 
             @Override
             protected CompoundNBT serialize() {
-                return boilerplate(this.unknown);
+                return boilerplate(this.unknown.value);
             }
         }
 
@@ -319,8 +288,8 @@ public abstract class CodeCompileException extends Exception {
             public final int arityGot;
             public final Opcode opcode;
 
-            public BadArity(int row, int col, Opcode op, int arityWanted, int arityGot) {
-                super(row, col, "Opcode %s wants %d arguments but got %d", op, arityWanted, arityGot);
+            public BadArity(Token token, Opcode op, int arityWanted, int arityGot) {
+                super(token.page, token.row, token.col);
                 this.arityWanted = arityWanted;
                 this.arityGot = arityGot;
                 this.opcode = op;
@@ -340,9 +309,7 @@ public abstract class CodeCompileException extends Exception {
 
 
             public BadArgMatchup(Opcode op, Instruction.Arg.Type argType, int argIndex, Token offendingArg) {
-                super(offendingArg.row, offendingArg.col,
-                        "Opcode %s wants arg type %s for index %d, but argument %s is token type %s which does not match",
-                        op, argType, argIndex, offendingArg.canonicalize(), offendingArg.type);
+                super(offendingArg.page, offendingArg.row, offendingArg.col);
                 this.opcode = op;
                 this.argType = argType;
                 this.argIndex = argIndex;
@@ -361,11 +328,7 @@ public abstract class CodeCompileException extends Exception {
             public final Token usurperLabel;
 
             public ReusedLabel(Token usurper, int originalPos) {
-                super(
-                        usurper.row, usurper.col,
-                        "Label %s overwrote the original label before instruction #%d",
-                        usurper.canonicalize(), originalPos
-                );
+                super(usurper.page, usurper.row, usurper.col);
                 this.originalPos = originalPos;
                 this.usurperLabel = usurper;
             }
@@ -380,11 +343,7 @@ public abstract class CodeCompileException extends Exception {
             public final Token labelUsage;
 
             public UnknownLabel(Token labelUsage) {
-                super(
-                        labelUsage.row, labelUsage.col,
-                        "Tried to use label %s but could not find it",
-                        labelUsage
-                );
+                super(labelUsage.page, labelUsage.row, labelUsage.col);
                 this.labelUsage = labelUsage;
             }
 
@@ -398,9 +357,7 @@ public abstract class CodeCompileException extends Exception {
             public final Token stackvalue;
 
             public StackvalueWithNothingFollowing(Token stackvalue) {
-                super(stackvalue.row, stackvalue.col,
-                        "Stackvalue %s had nothing following it (this shouldn't be possible?)",
-                        stackvalue.canonicalize());
+                super(stackvalue.page, stackvalue.row, stackvalue.col);
                 this.stackvalue = stackvalue;
             }
 
@@ -413,16 +370,15 @@ public abstract class CodeCompileException extends Exception {
 
 
     public abstract static class BytecodeWriteException extends CodeCompileException {
-        private BytecodeWriteException(int row, int col, String message, Object... args) {
-            super(row, col, String.format(message, args));
+        private BytecodeWriteException(int page, int row, int col) {
+            super(page, row, col);
         }
 
         public static class LiteralTooLong extends BytecodeWriteException {
             public final Token literal;
 
             public LiteralTooLong(Token literal) {
-                super(literal.row, literal.col, "Literal %s was too large (maximum is 9,223,372,036,854,775,807 or 2^63 - 1)",
-                        literal.canonicalize());
+                super(literal.page, literal.row, literal.col);
                 this.literal = literal;
             }
 
@@ -436,8 +392,7 @@ public abstract class CodeCompileException extends Exception {
             public final Token stackvalueSize;
 
             public StackvalueSizeOutOfBounds(Token stackvalueSize) {
-                super(stackvalueSize.row, stackvalueSize.col, "Stackvalue %s's size was out of bounds (0-256 inclusive allowed)",
-                        stackvalueSize.canonicalize());
+                super(stackvalueSize.page, stackvalueSize.row, stackvalueSize.col);
                 this.stackvalueSize = stackvalueSize;
             }
 

@@ -4,6 +4,7 @@ import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.ints.IntList;
 import me.gammadelta.VCCMod;
 import me.gammadelta.common.block.tile.TileMotherboard;
+import me.gammadelta.common.item.ItemDebugoggles;
 import me.gammadelta.common.network.MsgHighlightBlocks;
 import me.gammadelta.common.program.CPURepr;
 import me.gammadelta.common.program.MotherboardRepr;
@@ -15,6 +16,9 @@ import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.BlockItemUseContext;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.NBTUtil;
 import net.minecraft.state.StateContainer;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.util.ActionResultType;
@@ -36,13 +40,23 @@ import java.util.List;
 public class BlockCPU extends BlockComponent {
     public static final String NAME = "cpu";
 
-    // TODO: this function is disgusting
     @Override
     public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player,
             Hand handIn, BlockRayTraceResult hit) {
         TileMotherboard tileMotherboard = FloodUtils.findMotherboard(pos, worldIn);
         ActionResultType superAction = super.onBlockActivated(tileMotherboard, state, worldIn, pos, player, handIn,
                 hit);
+
+        ItemStack headStack = player.inventory.armorInventory.get(3);
+        CompoundNBT headTag = headStack.getOrCreateTag();
+        if (tileMotherboard != null && headStack.getItem() instanceof ItemDebugoggles && headTag.contains(
+                ItemDebugoggles.MOTHERBOARD_POS_KEY)) {
+            // We just right-clicked on a computer part, so presumably we know about the motherboard
+            // so we put us the CPU in
+            // TODO: this still plays animation of this is already the wanted CPU.
+            headTag.put(ItemDebugoggles.CPU_POS_KEY, NBTUtil.writeBlockPos(pos));
+            superAction = ActionResultType.SUCCESS;
+        }
 
         int debugLevel = Utils.funniDebugLevel(player, handIn);
         if (debugLevel >= 1 && !worldIn.isRemote && tileMotherboard != null) {
@@ -53,68 +67,76 @@ public class BlockCPU extends BlockComponent {
                 ArrayList<CPURepr> cpuGroup = cpus.get(groupIdx);
                 for (CPURepr cpu : cpuGroup) {
                     if (cpu.manifestation.equals(pos)) {
-                        // Found our CPU!
-                        if (cpu.ipExtender != null) {
-                            VCCMod.getNetwork().send(
-                                    PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player),
-                                    new MsgHighlightBlocks(
-                                            Arrays.asList(cpu.ipExtender.manifestations), Colors.IP_EXTENDER_BLUE
-                                    ));
-                        }
-                        if (cpu.spExtender != null) {
-                            VCCMod.getNetwork().send(
-                                    PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player),
-                                    new MsgHighlightBlocks(
-                                            Arrays.asList(cpu.spExtender.manifestations), Colors.SP_EXTENDER_ORANGE
-                                    ));
-                        }
-                        if (debugLevel >= 2) {
-                            // Also print which CPU group this is in
-                            player.sendMessage(
-                                    new TranslationTextComponent("misc.debug.cpuGroup", groupIdx, cpus.size()),
-                                    Util.DUMMY_UUID);
-                            if (debugLevel >= 3) {
-                                // Also also print the register indices
-                                ArrayList<IntList> registers = cpu.registers;
-                                if (registers.size() == 0) {
-                                    player.sendMessage(
-                                            new TranslationTextComponent("misc.debug.cpuRegisterIndices.none"),
-                                            Util.DUMMY_UUID);
-                                } else {
-                                    player.sendMessage(
-                                            new TranslationTextComponent("misc.debug.cpuRegisterIndices"),
-                                            Util.DUMMY_UUID);
+                        displayDebugInfo(cpu, player, debugLevel, groupIdx, cpus);
+                    }
+                }
+                // Don't break in case this block is somehow owned many times.
+            }
+            superAction = ActionResultType.SUCCESS;
+        }
+        return superAction;
 
-                                    for (int regiGroupIdx = 0; regiGroupIdx < registers.size(); regiGroupIdx++) {
-                                        IntList indices = registers.get(regiGroupIdx);
-                                        StringBuilder bob = new StringBuilder();
-                                        // this isn't confusing
-                                        for (int idxidx = 0; idxidx < indices.size(); idxidx++) {
-                                            int regiIdx = indices.get(idxidx);
-                                            bob.append('#');
-                                            bob.append(regiIdx);
-                                            if (idxidx < indices.size() - 1) {
-                                                bob.append(", ");
-                                            }
-                                        }
+    }
 
-                                        player.sendMessage(
-                                                new TranslationTextComponent(
-                                                        "misc.debug.cpuRegisterIndices.row", regiGroupIdx,
-                                                        bob.toString()),
-                                                Util.DUMMY_UUID);
-                                    }
-                                }
+    /**
+     * Display debug info for this block.
+     */
+    public static void displayDebugInfo(CPURepr cpu, PlayerEntity player, int debugLevel, int groupIdx,
+            ArrayList<ArrayList<CPURepr>> cpus) {
+        // Found our CPU!
+        if (cpu.ipExtender != null) {
+            VCCMod.getNetwork().send(
+                    PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player),
+                    new MsgHighlightBlocks(
+                            Arrays.asList(cpu.ipExtender.manifestations), Colors.IP_EXTENDER_BLUE
+                    ));
+        }
+        if (cpu.spExtender != null) {
+            VCCMod.getNetwork().send(
+                    PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player),
+                    new MsgHighlightBlocks(
+                            Arrays.asList(cpu.spExtender.manifestations), Colors.SP_EXTENDER_ORANGE
+                    ));
+        }
+        if (debugLevel >= 2) {
+            // Also print which CPU group this is in
+            player.sendMessage(
+                    new TranslationTextComponent("misc.debug.cpuGroup", groupIdx, cpus.size()),
+                    Util.DUMMY_UUID);
+            if (debugLevel >= 3) {
+                // Also also print the register indices
+                ArrayList<IntList> registers = cpu.registers;
+                if (registers.size() == 0) {
+                    player.sendMessage(
+                            new TranslationTextComponent("misc.debug.cpuRegisterIndices.none"),
+                            Util.DUMMY_UUID);
+                } else {
+                    player.sendMessage(
+                            new TranslationTextComponent("misc.debug.cpuRegisterIndices"),
+                            Util.DUMMY_UUID);
+
+                    for (int regiGroupIdx = 0; regiGroupIdx < registers.size(); regiGroupIdx++) {
+                        IntList indices = registers.get(regiGroupIdx);
+                        StringBuilder bob = new StringBuilder();
+                        // this isn't confusing
+                        for (int idxidx = 0; idxidx < indices.size(); idxidx++) {
+                            int regiIdx = indices.get(idxidx);
+                            bob.append('#');
+                            bob.append(regiIdx);
+                            if (idxidx < indices.size() - 1) {
+                                bob.append(", ");
                             }
                         }
+
+                        player.sendMessage(
+                                new TranslationTextComponent(
+                                        "misc.debug.cpuRegisterIndices.row", regiGroupIdx,
+                                        bob.toString()),
+                                Util.DUMMY_UUID);
                     }
-                    // Don't break in case this block is somehow owned many times.
                 }
             }
-            return ActionResultType.SUCCESS;
         }
-
-        return superAction;
     }
 
     /**

@@ -1,13 +1,8 @@
 package me.gammadelta.common.item;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
-import net.minecraft.client.renderer.model.ItemCameraTransforms;
-import net.minecraft.client.renderer.tileentity.ItemStackTileEntityRenderer;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemModelsProperties;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
@@ -50,6 +45,7 @@ public class ItemCoupon extends Item {
 
     public static final String ERROR_KEY_KEY = "key";
     public static final String ERROR_VALUES_KEY = "values";
+    public static final String ERROR_PAGE_KEY = "page";
     public static final String ERROR_LINE_KEY = "line";
     public static final String ERROR_ROW_KEY = "row";
     public static final String ERROR_COL_KEY = "col";
@@ -57,6 +53,7 @@ public class ItemCoupon extends Item {
     public static final int MAX_COLLECTIBLE_IDX = 7;
 
     public static final ResourceLocation COUPON_STATE_PREDICATE = new ResourceLocation(MOD_ID, "coupon_state");
+
 
     public ItemCoupon() {
         // Purposely do not put it into a group
@@ -94,37 +91,33 @@ public class ItemCoupon extends Item {
             }
 
         } else if (tag.contains(ERROR_KEY)) {
-            CompoundNBT errors = tag.getCompound(ERROR_KEY);
+            ListNBT errors = tag.getList(ERROR_KEY, Constants.NBT.TAG_COMPOUND);
             /*
-            errors: {
-                lex: [{line:"FOO BAR BAZ" row: 12, col: 34, key: "error.lex.abc", values: ["foo", "bar", "baz"]}]
-                preprocess: [ etc ]
-                compile: [ etc ]
-            }
+            errors: []
              */
-            for (String errorType : ERROR_TYPES) {
-                String masterKey = "item.vcc.coupon.compilation.error." + errorType;
-                if (errors.contains(masterKey)) {
-                    tooltip.add(new TranslationTextComponent("item.vcc.coupon.compilation.error.lex"));
-                    ListNBT problems = errors.getList(masterKey, Constants.NBT.TAG_COMPOUND);
-                    for (int i = 0; i < problems.size(); i++) {
-                        CompoundNBT prob = problems.getCompound(i);
-                        String key = prob.getString(ERROR_KEY_KEY); //'s delivery service
-                        ListNBT valsNBT = prob.getList(ERROR_VALUES_KEY, Constants.NBT.TAG_STRING);
-                        String[] vals = new String[valsNBT.size()];
-                        for (int j = 0; j < valsNBT.size(); j++) {
-                            vals[j] = valsNBT.getString(j);
-                        }
-                        String errorMessage = I18n.format(key, (Object[]) vals);
-
-                        int row = prob.getInt(ERROR_ROW_KEY);
-                        int col = prob.getInt(ERROR_COL_KEY);
-                        String lineContents = prob.getString(ERROR_LINE_KEY);
-                        tooltip.add(
-                                new TranslationTextComponent("item.vcc.coupon.compilation.rowTemplate", lineContents,
-                                        row, col, errorMessage));
-                    }
+            for (int i = 0; i < errors.size(); i++) {
+                CompoundNBT problem = errors.getCompound(i);
+                String key = problem.getString(ERROR_KEY_KEY); //'s delivery service
+                ListNBT valsNBT = problem.getList(ERROR_VALUES_KEY, Constants.NBT.TAG_STRING);
+                String[] vals = new String[valsNBT.size()];
+                for (int j = 0; j < valsNBT.size(); j++) {
+                    vals[j] = valsNBT.getString(j);
                 }
+                String errorMessage = I18n.format(key, (Object[]) vals);
+
+                int page = problem.getInt(ERROR_PAGE_KEY);
+                int row = problem.getInt(ERROR_ROW_KEY);
+                int col = problem.getInt(ERROR_COL_KEY);
+                String lineContents = problem.getString(ERROR_LINE_KEY);
+                ITextComponent out;
+                if (page == -1) {
+                    out = new TranslationTextComponent("item.vcc.coupon.compilation.rowTemplate", lineContents,
+                            row, col, errorMessage);
+                } else {
+                    out = new TranslationTextComponent("item.vcc.coupon.compilation.rowTemplate.book", lineContents,
+                            page, row, col, errorMessage);
+                }
+                tooltip.add(out);
             }
         }
     }

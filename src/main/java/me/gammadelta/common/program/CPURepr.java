@@ -347,7 +347,13 @@ public class CPURepr {
 
     // region Dealing with interpreting bytecode
 
-    public void executeStep(MotherboardRepr mother, Random rand) {
+    public enum StepResult {
+        NORMAL,
+        UNCAUGHT_EXCEPTION,
+        CAUGHT_EXCEPTION
+    }
+
+    public StepResult executeStep(MotherboardRepr mother, Random rand) {
         this.currentIP = BinaryUtils.toLong(this.IP);
         try {
             Opcode opcode = this.readOpcode(mother, rand);
@@ -435,20 +441,24 @@ public class CPURepr {
             // Discard the squish/stretch, we don't need it
             // TODO: write to move flags when incrementing the IP?
             BinaryUtils.writeLong(this.currentIP, this.IP);
+            return StepResult.NORMAL;
         } catch (Emergency e) {
             // oops. go to exram, go directly to exram
             if (this.memoryCounts.get(MemoryType.EXRAM) == 0) {
                 // actually go to the start
                 BinaryUtils.writeLong(0, this.IP);
+                return StepResult.UNCAUGHT_EXCEPTION;
             } else {
                 // go to (a randomly selected) exram
                 int motherExramIdx = Utils.getUncertainNestedInt(this.memoryLocations.get(MemoryType.EXRAM), 0, rand);
                 try {
                     int exramByteIdx = mother.getRegionIndex(MemoryType.EXRAM, motherExramIdx);
                     BinaryUtils.writeLong(exramByteIdx, this.IP);
+                    return StepResult.CAUGHT_EXCEPTION;
                 } catch (Emergency e2) {
                     // just set it to zero, whatever
                     BinaryUtils.writeLong(0, this.IP);
+                    return StepResult.UNCAUGHT_EXCEPTION;
                 }
             }
         }

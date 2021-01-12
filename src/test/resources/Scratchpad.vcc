@@ -1,7 +1,8 @@
-NOP
+MOV 0 R0
 
-TOP:
-JMP MAIN
-JMP TOP
-
-MAIN: NOP
+LOOP:
+    INC R0
+    MOV R0 R1
+    SUB R1 10
+    JNZ R1 LOOP
+    JMP 0

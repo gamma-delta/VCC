@@ -3,11 +3,9 @@ package me.gammadelta.common.utils;
 import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import me.gammadelta.common.VCCConfig;
-import me.gammadelta.common.block.BlockCPU;
-import me.gammadelta.common.block.BlockComponent;
-import me.gammadelta.common.block.BlockMotherboard;
-import me.gammadelta.common.block.BlockRegister;
+import me.gammadelta.common.block.*;
 import me.gammadelta.common.block.tile.TileMotherboard;
+import me.gammadelta.common.program.MemoryType;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.state.properties.BlockStateProperties;
@@ -173,15 +171,15 @@ public final class FloodUtils {
 
     /**
      * Flood fill out from a CPU's location to find the block positions of the closest block in all the register
-     * clusters it can see, along with their distances.
+     * clusters it can see, and memory blocks, along with their distances.
      * It will include extenders, so don't include them in the canidates.
      * <p>
      * The algorithm will naturally find the closest register block in a cluster first.
      * It will search through the rest of the blocks in the cluster but not include them in the output.
      */
-    public static ArrayList<Pair<BlockPos, Integer>> findCPURegistersAndDistances(BlockPos original,
+    public static CPUFindResult findCPUStuff(BlockPos original,
             Set<BlockPos> canidates, IWorldReader world) {
-        ArrayList<Pair<BlockPos, Integer>> found = new ArrayList<>();
+        CPUFindResult found = new CPUFindResult();
         Queue<Pair<BlockPos, Integer>> placesToLook = new ArrayDeque<>();
         Set<BlockPos> placesSearched = new HashSet<>();
         Set<BlockPos> ignoreTheseRegisters = new HashSet<>();
@@ -196,12 +194,14 @@ public final class FloodUtils {
             BlockPos questioning = pair.getFirst();
             int distance = pair.getSecond();
             BlockState state = world.getBlockState(questioning);
-            Block maybeRegi = state.getBlock();
-            if (maybeRegi instanceof BlockRegister && !ignoreTheseRegisters.contains(questioning)) {
+            Block target = state.getBlock();
+            if (target instanceof BlockRegister && !ignoreTheseRegisters.contains(questioning)) {
                 // noice
-                found.add(new Pair<>(questioning, distance));
+                found.closestRegisterBlocks.add(Pair.of(questioning, distance));
                 // Ignore the rest of the registers in this cluster
                 ignoreTheseRegisters.addAll(FloodUtils.findRegisters(questioning, state, world));
+            } else if (target instanceof BlockMemory) {
+                found.memoryBlocks.get(((BlockMemory) target).memType).add(Pair.of(questioning, distance));
             }
             // In any case, add the next things to find to the list
             for (Direction d : Direction.values()) {
@@ -214,5 +214,21 @@ public final class FloodUtils {
         }
 
         return found;
+    }
+
+    /**
+     * Result of a flood fill out from a CPU to figure out how it should index its components
+     */
+    public static class CPUFindResult {
+        public final ArrayList<Pair<BlockPos, Integer>> closestRegisterBlocks;
+        public final EnumMap<MemoryType, ArrayList<Pair<BlockPos, Integer>>> memoryBlocks;
+
+        public CPUFindResult() {
+            closestRegisterBlocks = new ArrayList<>();
+            memoryBlocks = new EnumMap<>(MemoryType.class);
+            for (MemoryType memType : MemoryType.values()) {
+                memoryBlocks.put(memType, new ArrayList<>());
+            }
+        }
     }
 }

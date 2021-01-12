@@ -6,7 +6,6 @@ import it.unimi.dsi.fastutil.objects.AbstractObject2IntMap;
 import me.gammadelta.common.block.tile.TileMotherboard;
 import me.gammadelta.common.item.ItemDebugoggles;
 import me.gammadelta.common.item.VCCItems;
-import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
@@ -17,8 +16,6 @@ import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
 import java.math.BigInteger;
@@ -215,6 +212,7 @@ public final class Utils {
 
     /**
      * Sort a list of (T, Distance) pairs into batches.
+     * They must already be sorted by distance.
      */
     public static <T> ArrayList<ArrayList<T>> batchByDistance(List<Pair<T, Integer>> original) {
         ArrayList<ArrayList<T>> out = new ArrayList<>();
@@ -230,6 +228,7 @@ public final class Utils {
                 // we need to move onto the next slot
                 out.add(currentBatch);
                 currentBatch = new ArrayList<>();
+                currentDistance = distance;
             }
             currentBatch.add(val);
         }
@@ -251,7 +250,7 @@ public final class Utils {
             // Make the debugoggles select this
             if (mother != null) {
                 CompoundNBT tag = headStack.getOrCreateTag();
-                boolean changed = false;
+                boolean changed;
                 if (!tag.contains(ItemDebugoggles.MOTHERBOARD_POS_KEY)) {
                     changed = true;
                 } else {
@@ -259,6 +258,11 @@ public final class Utils {
                     changed = !oldPos.equals(mother.getPos());
                 }
                 tag.put(ItemDebugoggles.MOTHERBOARD_POS_KEY, NBTUtil.writeBlockPos(mother.getPos()));
+                // Also delete the CPU pos
+                if (tag.contains(ItemDebugoggles.CPU_POS_KEY)) {
+                    tag.remove(ItemDebugoggles.CPU_POS_KEY);
+                    changed = true;
+                }
                 if (changed) {
                     return ActionResultType.SUCCESS;
                 }

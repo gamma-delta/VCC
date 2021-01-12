@@ -3,6 +3,7 @@ package me.gammadelta.common.item;
 import me.gammadelta.client.model.DebugogglesModel;
 import me.gammadelta.common.VCCConfig;
 import me.gammadelta.common.block.BlockMotherboard;
+import me.gammadelta.common.program.CPURepr;
 import net.minecraft.block.Block;
 import net.minecraft.client.renderer.entity.model.BipedModel;
 import net.minecraft.client.util.ITooltipFlag;
@@ -33,6 +34,7 @@ public class ItemDebugoggles extends ArmorItem {
     public static final String NAME = "debugoggles";
 
     public static final String MOTHERBOARD_POS_KEY = "motherboard_pos";
+    public static final String CPU_POS_KEY = "cpu_pos";
 
     public ItemDebugoggles() {
         super(new Material(), EquipmentSlotType.HEAD, new Properties().maxStackSize(1).group(VCCItems.VCC_ITEM_GROUP));
@@ -72,6 +74,7 @@ public class ItemDebugoggles extends ArmorItem {
             if (motherboardPos.distanceSq(
                     new Vector3i(player.getPosX(), player.getPosY(), player.getPosZ())) >= radius * radius) {
                 tag.remove(MOTHERBOARD_POS_KEY);
+                tag.remove(CPU_POS_KEY);
             }
         }
     }
@@ -85,6 +88,11 @@ public class ItemDebugoggles extends ArmorItem {
             BlockPos pos = NBTUtil.readBlockPos(tag.getCompound(MOTHERBOARD_POS_KEY));
             tooltip.add(new TranslationTextComponent("item.vcc.debugoggles.motherboard", pos.getX(), pos.getY(),
                     pos.getZ()));
+            if (tag.contains(CPU_POS_KEY)) {
+                BlockPos cpuPos = NBTUtil.readBlockPos(tag.getCompound(MOTHERBOARD_POS_KEY));
+                tooltip.add(new TranslationTextComponent("item.vcc.debugoggles.cpu", cpuPos.getX(), cpuPos.getY(),
+                        cpuPos.getZ()));
+            }
         } else {
             tooltip.add(new TranslationTextComponent("item.vcc.debugoggles.motherboardnt"));
         }

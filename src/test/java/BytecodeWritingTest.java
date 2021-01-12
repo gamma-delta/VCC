@@ -1,7 +1,5 @@
+import me.gammadelta.common.program.compilation.*;
 import me.gammadelta.common.utils.BinaryUtils;
-import me.gammadelta.common.program.compilation.ASMCompiler;
-import me.gammadelta.common.program.compilation.BytecodeWriter;
-import me.gammadelta.common.program.compilation.Instruction;
 import org.junit.jupiter.api.Test;
 
 import java.net.URL;
@@ -30,7 +28,11 @@ public class BytecodeWritingTest {
     }
 
     private static void compileAndDump(String program) throws Exception {
-        List<Instruction> instructions = ASMCompiler.lexAndParse(program);
+        List<Token> tokens = new CodeLexer(new String[]{program}).slurp();
+        for (Token token : tokens) {
+            System.out.println(token);
+        }
+        List<Instruction> instructions = new CodeParser().parseInstructions(tokens);
         List<Byte> bytecode = new BytecodeWriter(instructions).writeProgramToBytecode();
         System.out.printf("=== Program ===\n%s\n\n"
                 + "=== Intermediate ===\n%s\n\n"

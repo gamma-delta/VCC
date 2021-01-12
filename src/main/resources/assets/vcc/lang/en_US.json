@@ -23,6 +23,7 @@
     "gui.vcc.puncher.compile.noPayment": "You need to insert an Emerald or a Coupon as payment to compile",
     "gui.vcc.puncher.compile.noVillager": "A villager needs to have claimed this as a workstation so they can compile the program for you",
     "gui.vcc.puncher.punch": "Punch Data",
+    "gui.vcc.puncher.tooltip": "Shift-click to also scroll data forward by 256 bytes",
     "gui.vcc.puncher.punch.noData": "Can't punch because there is no data in the table",
     "gui.vcc.puncher.punch.noCards": "Can't punch because there are no blank cards to punch",
     "gui.vcc.puncher.erase": "Erase Data",
@@ -37,8 +38,9 @@
     "item.vcc.filled_punchcard": "Punch Card with Data",
 
     "item.vcc.debugoggles": "Debugoggles",
-    "item.vcc.debugoggles.motherboard": "Displaying info for motherboard at (%d, %d, %d)",
-    "item.vcc.debugoggles.motherboardnt": "Not displaying info for any motherboard",
+    "item.vcc.debugoggles.motherboard": "Selected motherboard at (%d, %d, %d)",
+    "item.vcc.debugoggles.motherboardnt": "No motherboard selected",
+    "item.vcc.debugoggles.cpu": "Selected CPU at (%d, %d, %d)",
 
     "item.vcc.coupon.compilation": "Compilation Coupon",
     "item.vcc.coupon.collectible": "Collectible Coupon",
@@ -96,10 +98,16 @@
 
     "misc.debugoggles.register.idx": "Register #%d",
     "misc.debugoggles.cpu.idx": "CPU Group %d",
+    "misc.debugoggles.cpu.selected": "Selected CPU",
+    "misc.debugoggles.cpu.ipsp": "IP %d | SP %d",
+    "misc.debugoggles.memory.XRAM": "XRAM Group #%d",
+    "misc.debugoggles.memory.EXRAM": "EXRAM Group #%d",
+    "misc.debugoggles.memory.ROM": "ROM Group #%d",
+    "misc.debugoggles.memory.RAM": "RAM Group #%d",
     "misc.debug.cpuGroup": "I am in CPU Group %d",
     "misc.debug.cpuRegisterIndices": "I index normal registers like this:",
     "misc.debug.cpuRegisterIndices.row": "  R%d may select %s",
-    "misc.debug.cpuRegisterIndices.none": "I can't see any normal registers :(",
+    "misc.debug.cpuRegisterIndices.none": "I can't see any normal registers :(";
 
     "itemGroup.vcc": "VCC"
 }

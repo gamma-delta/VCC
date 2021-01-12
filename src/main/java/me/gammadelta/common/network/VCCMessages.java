@@ -11,5 +11,9 @@ public class VCCMessages {
                 MsgSyncMemoryInGui::new, MsgSyncMemoryInGui::handle);
         network.registerMessage(messageIdx++, MsgRequestMemoryInGui.class, MsgRequestMemoryInGui::writeToBytes,
                 MsgRequestMemoryInGui::new, MsgRequestMemoryInGui::handle);
+        network.registerMessage(messageIdx++, MsgCompile.class, MsgCompile::writeToBytes,
+                MsgCompile::new, MsgCompile::handle);
+        network.registerMessage(messageIdx++, MsgPunch.class, MsgPunch::writeToBytes,
+                MsgPunch::new, MsgPunch::handle);
     }
 }

@@ -84,7 +84,7 @@ public class CodeParser {
 			if (i != args.length) {
 				problems.add(
 						new CodeCompileException.ParseException.BadArity(
-								argument.row, argument.col, op, args.length, i
+								argument, op, args.length, i
 						)
 				);
 				// Keep consuming tokens to the end of line if it's too few

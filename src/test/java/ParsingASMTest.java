@@ -1,11 +1,8 @@
-import me.gammadelta.common.program.compilation.ASMCompiler;
-import me.gammadelta.common.program.compilation.CodeCompileException;
-import me.gammadelta.common.program.compilation.Instruction;
+import me.gammadelta.vcc.common.program.compilation.ASMCompiler;
+import me.gammadelta.vcc.common.program.compilation.CodeCompileException;
+import me.gammadelta.vcc.common.program.compilation.Instruction;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;

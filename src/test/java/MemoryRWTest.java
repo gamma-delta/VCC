@@ -3,11 +3,11 @@ import it.unimi.dsi.fastutil.bytes.ByteArrayList;
 import it.unimi.dsi.fastutil.bytes.ByteList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import me.gammadelta.common.utils.BinaryUtils;
-import me.gammadelta.common.program.CPURepr;
-import me.gammadelta.common.program.MemoryType;
-import me.gammadelta.common.program.MotherboardRepr;
-import me.gammadelta.common.program.Permissions;
+import me.gammadelta.vcc.common.utils.BinaryUtils;
+import me.gammadelta.vcc.common.program.CPURepr;
+import me.gammadelta.vcc.common.program.MemoryType;
+import me.gammadelta.vcc.common.program.MotherboardRepr;
+import me.gammadelta.vcc.common.program.Permissions;
 import net.minecraft.util.math.BlockPos;
 import org.junit.jupiter.api.Test;
 

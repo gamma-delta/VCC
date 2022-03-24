@@ -1,5 +1,5 @@
-import me.gammadelta.common.program.compilation.*;
-import me.gammadelta.common.utils.BinaryUtils;
+import me.gammadelta.vcc.common.program.compilation.*;
+import me.gammadelta.vcc.common.utils.BinaryUtils;
 import org.junit.jupiter.api.Test;
 
 import java.net.URL;

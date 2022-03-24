@@ -1,7 +1,7 @@
 import it.unimi.dsi.fastutil.bytes.ByteArrayList;
 import it.unimi.dsi.fastutil.bytes.ByteList;
 import it.unimi.dsi.fastutil.bytes.ByteLists;
-import me.gammadelta.common.utils.BinaryUtils;
+import me.gammadelta.vcc.common.utils.BinaryUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
